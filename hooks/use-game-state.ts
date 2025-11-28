@@ -31,6 +31,9 @@ export interface UseGameStateReturn {
   isCellCorrect: (position: CellPosition) => boolean | null;
 }
 
+const STARTING_LIVES = 1;
+const MAX_LIVES = 3;
+
 export function useGameState(puzzle: Puzzle): UseGameStateReturn {
   const [shuffledWords, setShuffledWords] = useState(() => shuffleWords(puzzle));
   
@@ -39,7 +42,7 @@ export function useGameState(puzzle: Puzzle): UseGameStateReturn {
     placements: [],
     selectedWordId: null,
     isSolved: false,
-    mistakes: 0,
+    lives: STARTING_LIVES,
   }));
 
   // Reset when puzzle changes
@@ -50,7 +53,7 @@ export function useGameState(puzzle: Puzzle): UseGameStateReturn {
       placements: [],
       selectedWordId: null,
       isSolved: false,
-      mistakes: 0,
+      lives: STARTING_LIVES,
     });
   }, [puzzle]);
 
@@ -100,12 +103,16 @@ export function useGameState(puzzle: Puzzle): UseGameStateReturn {
 
       const newPlacements = [...placements, newPlacement];
       const solved = isPuzzleSolved(newPlacements, puzzle);
+      const isCorrect = isPlacementCorrect(word, position, puzzle);
 
       setGameState(prev => ({
         ...prev,
         placements: newPlacements,
         selectedWordId: null,
         isSolved: solved,
+        lives: isCorrect 
+          ? Math.min(prev.lives + 1, MAX_LIVES)  // Gain a life (max 3)
+          : prev.lives - 1,                       // Lose a life
       }));
 
       return true;
@@ -130,7 +137,7 @@ export function useGameState(puzzle: Puzzle): UseGameStateReturn {
       placements: [],
       selectedWordId: null,
       isSolved: false,
-      mistakes: 0,
+      lives: STARTING_LIVES,
     });
   }, [puzzle]);
 

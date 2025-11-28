@@ -1,0 +1,13 @@
+html, body, #root, #__next {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background-color: #0f0f1a;
+}
+
+/* Ensure the app container fills the viewport */
+body > div {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}

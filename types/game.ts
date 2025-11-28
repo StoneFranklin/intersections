@@ -2,6 +2,8 @@
  * Core types for the Fenceposts word puzzle game
  */
 
+export type Difficulty = 'easy' | 'medium' | 'hard';
+
 export interface Category {
   id: string;
   label: string;
@@ -10,19 +12,28 @@ export interface Category {
 export interface Word {
   id: string;
   text: string;
-  /** The correct row category ID this word belongs to */
+  /** The correct left row category ID this word belongs to */
   correctRowId: string;
   /** The correct column category ID this word belongs to */
   correctColId: string;
+  /** The correct right row category ID this word belongs to (medium/hard only) */
+  correctRightId?: string;
+  /** The correct bottom column category ID this word belongs to (hard only) */
+  correctBottomId?: string;
 }
 
 export interface Puzzle {
   id: string;
   title: string;
-  /** Row categories (e.g., word lengths) */
+  difficulty: Difficulty;
+  /** Left row categories */
   rowCategories: Category[];
-  /** Column categories (e.g., semantic themes) */
+  /** Column categories (top) */
   colCategories: Category[];
+  /** Right row categories (medium/hard only) */
+  rightCategories?: Category[];
+  /** Bottom column categories (hard only) */
+  bottomCategories?: Category[];
   /** All words in this puzzle */
   words: Word[];
 }
@@ -45,11 +56,11 @@ export interface GameState {
   selectedWordId: string | null;
   /** Whether the puzzle is solved */
   isSolved: boolean;
-  /** Number of incorrect placements made */
-  mistakes: number;
+  /** Current number of lives */
+  lives: number;
 }
 
-/** Check if a word placement is correct */
+/** Check if a word placement is correct based on puzzle difficulty */
 export function isPlacementCorrect(
   word: Word,
   position: CellPosition,
@@ -58,9 +69,32 @@ export function isPlacementCorrect(
   const rowCategory = puzzle.rowCategories[position.rowIndex];
   const colCategory = puzzle.colCategories[position.colIndex];
   
+  // Easy: Just check row and column
+  if (puzzle.difficulty === 'easy') {
+    return (
+      word.correctRowId === rowCategory.id &&
+      word.correctColId === colCategory.id
+    );
+  }
+  
+  // Medium: Also check right category
+  if (puzzle.difficulty === 'medium') {
+    const rightCategory = puzzle.rightCategories?.[position.rowIndex];
+    return (
+      word.correctRowId === rowCategory.id &&
+      word.correctColId === colCategory.id &&
+      word.correctRightId === rightCategory?.id
+    );
+  }
+  
+  // Hard: Check all four categories
+  const rightCategory = puzzle.rightCategories?.[position.rowIndex];
+  const bottomCategory = puzzle.bottomCategories?.[position.colIndex];
   return (
     word.correctRowId === rowCategory.id &&
-    word.correctColId === colCategory.id
+    word.correctColId === colCategory.id &&
+    word.correctRightId === rightCategory?.id &&
+    word.correctBottomId === bottomCategory?.id
   );
 }
 

@@ -24,7 +24,7 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "baseUrl": "/word-game"
+      "backgroundColor": "#0f0f1a"
     },
     "plugins": [
       "expo-router",
@@ -43,7 +43,8 @@
     ],
     "experiments": {
       "typedRoutes": true,
-      "reactCompiler": true
+      "reactCompiler": true,
+      "baseUrl": "/word-game"
     }
   }
 }
