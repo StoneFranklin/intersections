@@ -1,0 +1,143 @@
+import { CellPosition, Puzzle, Word } from '@/types/game';
+import React from 'react';
+import { Platform, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { GameCell } from './game-cell';
+
+interface GameGridProps {
+  puzzle: Puzzle;
+  getWordAtCell: (position: CellPosition) => Word | null;
+  isCellCorrect: (position: CellPosition) => boolean | null;
+  selectedWordId: string | null;
+  onCellPress: (position: CellPosition) => void;
+  onCellLongPress: (position: CellPosition) => void;
+}
+
+export function GameGrid({
+  puzzle,
+  getWordAtCell,
+  isCellCorrect,
+  selectedWordId,
+  onCellPress,
+  onCellLongPress,
+}: GameGridProps) {
+  const { rowCategories, colCategories } = puzzle;
+  const { width, height } = useWindowDimensions();
+  
+  // Calculate responsive sizes based on screen dimensions
+  // Add more margin on mobile to prevent cutoff
+  const horizontalMargin = Platform.OS === 'web' ? 32 : 48;
+  const availableWidth = width - horizontalMargin;
+  const availableHeight = height - 300; // space for header, word tray, footer
+  
+  // Grid has 5 columns (1 header + 4 cells) and 5 rows (1 header + 4 cells)
+  const numCols = colCategories.length + 1;
+  const numRows = rowCategories.length + 1;
+  
+  // Calculate cell size to fit within available space
+  // Account for header being wider (1.3x) by adjusting calculation
+  const effectiveCols = numCols + 0.3; // header takes 1.3 cell widths
+  const maxCellWidth = availableWidth / effectiveCols;
+  const maxCellHeight = availableHeight / numRows;
+  const cellSize = Math.min(maxCellWidth, maxCellHeight, Platform.OS === 'web' ? 120 : 70);
+  
+  // Header cells are slightly wider for labels
+  const headerWidth = cellSize * 1.3;
+  const fontSize = Math.max(10, Math.min(cellSize / 6, 16));
+
+  return (
+    <View style={styles.container}>
+      {/* Column headers */}
+      <View style={styles.headerRow}>
+        <View style={[styles.cornerCell, { width: headerWidth, height: cellSize * 0.8 }]} />
+        {colCategories.map((col) => (
+          <View 
+            key={col.id} 
+            style={[
+              styles.colHeader, 
+              { width: cellSize, height: cellSize * 0.8 }
+            ]}
+          >
+            <Text style={[styles.headerText, { fontSize }]} numberOfLines={2}>
+              {col.label}
+            </Text>
+          </View>
+        ))}
+      </View>
+
+      {/* Grid rows */}
+      {rowCategories.map((row, rowIndex) => (
+        <View key={row.id} style={styles.gridRow}>
+          {/* Row header */}
+          <View 
+            style={[
+              styles.rowHeader, 
+              { width: headerWidth, height: cellSize }
+            ]}
+          >
+            <Text style={[styles.headerText, { fontSize }]} numberOfLines={2}>
+              {row.label}
+            </Text>
+          </View>
+
+          {/* Cells */}
+          {colCategories.map((_, colIndex) => {
+            const position: CellPosition = { rowIndex, colIndex };
+            const word = getWordAtCell(position);
+            const isCorrect = isCellCorrect(position);
+
+            return (
+              <GameCell
+                key={`${rowIndex}-${colIndex}`}
+                position={position}
+                word={word}
+                isCorrect={isCorrect}
+                isSelected={!!selectedWordId && !word}
+                onPress={() => onCellPress(position)}
+                onLongPress={() => onCellLongPress(position)}
+                size={cellSize}
+              />
+            );
+          })}
+        </View>
+      ))}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    padding: 8,
+    alignSelf: 'center',
+  },
+  headerRow: {
+    flexDirection: 'row',
+    marginBottom: 4,
+  },
+  cornerCell: {
+    margin: 2,
+  },
+  colHeader: {
+    margin: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#3a5a8a',
+    borderRadius: 8,
+    padding: 4,
+  },
+  gridRow: {
+    flexDirection: 'row',
+  },
+  rowHeader: {
+    margin: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#5a3a8a',
+    borderRadius: 8,
+    padding: 4,
+  },
+  headerText: {
+    color: '#fff',
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+});

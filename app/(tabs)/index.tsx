@@ -1,98 +1,215 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { GameGrid, WordTray } from '@/components/game';
+import { generatePuzzle } from '@/data/puzzle-generator';
+import { useGameState } from '@/hooks/use-game-state';
+import { CellPosition, Puzzle } from '@/types/game';
+import * as Haptics from 'expo-haptics';
+import React, { useCallback, useState } from 'react';
+import {
+  Alert,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+export default function GameScreen() {
+  const [puzzle, setPuzzle] = useState<Puzzle>(() => generatePuzzle());
+  
+  const {
+    gameState,
+    unplacedWords,
+    getWordAtCell,
+    selectWord,
+    placeWordAtCell,
+    removeWordFromCell,
+    resetGame,
+    isCellCorrect,
+  } = useGameState(puzzle);
 
-export default function HomeScreen() {
+  const handleNewPuzzle = useCallback(() => {
+    const newPuzzle = generatePuzzle();
+    setPuzzle(newPuzzle);
+  }, []);
+
+  const handleCellPress = (position: CellPosition) => {
+    const existingWord = getWordAtCell(position);
+    
+    if (existingWord) {
+      // Cell has a word - remove it
+      removeWordFromCell(position);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      return;
+    }
+
+    if (gameState.selectedWordId) {
+      // Place selected word
+      const success = placeWordAtCell(position);
+      if (success) {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      }
+    }
+  };
+
+  const handleCellLongPress = (position: CellPosition) => {
+    const word = getWordAtCell(position);
+    if (word) {
+      removeWordFromCell(position);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    }
+  };
+
+  const handleWordSelect = (wordId: string | null) => {
+    selectWord(wordId);
+    if (wordId) {
+      Haptics.selectionAsync();
+    }
+  };
+
+  const handleReset = () => {
+    Alert.alert(
+      'Reset Puzzle',
+      'Are you sure you want to reset the puzzle?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Reset',
+          style: 'destructive',
+          onPress: () => {
+            resetGame();
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+          },
+        },
+      ]
+    );
+  };
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    <SafeAreaView style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.title}>{puzzle.title}</Text>
+        <Text style={styles.subtitle}>
+          Place each word where its row and column categories meet
+        </Text>
+      </View>
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+      {/* Win Banner */}
+      {gameState.isSolved && (
+        <View style={styles.winBanner}>
+          <Text style={styles.winText}>Puzzle Solved!</Text>
+          <TouchableOpacity style={styles.playAgainButton} onPress={handleNewPuzzle}>
+            <Text style={styles.playAgainText}>New Puzzle</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Game Grid */}
+      <View style={styles.gridContainer}>
+        <GameGrid
+          puzzle={puzzle}
+          getWordAtCell={getWordAtCell}
+          isCellCorrect={isCellCorrect}
+          selectedWordId={gameState.selectedWordId}
+          onCellPress={handleCellPress}
+          onCellLongPress={handleCellLongPress}
+        />
+      </View>
+
+      {/* Word Tray */}
+      <WordTray
+        words={unplacedWords}
+        selectedWordId={gameState.selectedWordId}
+        onWordSelect={handleWordSelect}
+      />
+
+      {/* Footer Buttons */}
+      <View style={styles.footer}>
+        <TouchableOpacity style={styles.resetButton} onPress={handleReset}>
+          <Text style={styles.resetText}>Reset</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.newPuzzleButton} onPress={handleNewPuzzle}>
+          <Text style={styles.newPuzzleText}>New Puzzle</Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  container: {
+    flex: 1,
+    backgroundColor: '#0f0f1a',
   },
-  stepContainer: {
-    gap: 8,
+  header: {
+    padding: 16,
+    paddingTop: 8,
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 4,
+  },
+  subtitle: {
+    fontSize: 13,
+    color: '#888',
+    textAlign: 'center',
+  },
+  winBanner: {
+    backgroundColor: '#2d5a3d',
+    padding: 16,
+    marginHorizontal: 16,
+    borderRadius: 12,
+    alignItems: 'center',
     marginBottom: 8,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  winText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#4ade80',
+    marginBottom: 8,
+  },
+  playAgainButton: {
+    backgroundColor: '#4ade80',
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  playAgainText: {
+    color: '#0f0f1a',
+    fontWeight: '600',
+  },
+  gridContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  footer: {
+    padding: 12,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 12,
+  },
+  resetButton: {
+    backgroundColor: '#3a3a5e',
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+  resetText: {
+    color: '#aaa',
+    fontWeight: '600',
+  },
+  newPuzzleButton: {
+    backgroundColor: '#3a5a8a',
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+  newPuzzleText: {
+    color: '#fff',
+    fontWeight: '600',
   },
 });
