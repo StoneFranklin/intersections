@@ -62,7 +62,7 @@ export function GameGrid({
   const effectiveCols = numCols + 0.3; // header is 1.3x width
   const maxCellWidth = availableWidth / effectiveCols;
   const maxCellHeight = availableHeight / numRows;
-  const cellSize = Math.min(maxCellWidth, maxCellHeight, Platform.OS === 'web' ? 120 : 70);
+  const cellSize = Math.min(maxCellWidth, maxCellHeight, Platform.OS === 'web' ? 90 : 90);
   
   // Header cells are slightly wider for labels
   const headerWidth = cellSize * 1.3;

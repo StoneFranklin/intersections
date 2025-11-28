@@ -87,3 +87,20 @@ export function isPuzzleSolved(
   
   return true;
 }
+
+// types.ts
+export type CategoryId = string;
+
+export interface FencepostsCell {
+  word: string;
+  rowCategoryId: CategoryId;
+  colCategoryId: CategoryId;
+}
+
+export interface FencepostsDailyPuzzle {
+  date: string;                  // "YYYY-MM-DD"
+  rowCategoryIds: CategoryId[];  // length 4
+  colCategoryIds: CategoryId[];  // length 4
+  cells: FencepostsCell[];       // length 16, row-major
+}
+

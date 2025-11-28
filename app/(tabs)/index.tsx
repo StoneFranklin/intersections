@@ -1,5 +1,6 @@
 import { GameGrid, WordTray } from '@/components/game';
 import { generateDailyPuzzle } from '@/data/puzzle-generator';
+import { fetchTodaysPuzzle } from '@/data/puzzleApi';
 import { useGameState } from '@/hooks/use-game-state';
 import { CellPosition, Puzzle } from '@/types/game';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -61,9 +62,29 @@ export default function GameScreen() {
     checkCompletion();
   }, []);
 
-  const handlePlayDaily = () => {
-    setPuzzle(generateDailyPuzzle());
-    setIsPlaying(true);
+  const [fetchingPuzzle, setFetchingPuzzle] = useState(false);
+
+  const handlePlayDaily = async () => {
+    setFetchingPuzzle(true);
+    try {
+      // Try to fetch from database first
+      const dbPuzzle = await fetchTodaysPuzzle();
+      if (dbPuzzle) {
+        setPuzzle(dbPuzzle);
+      } else {
+        // Fallback to static puzzle if DB fetch fails
+        console.log('No puzzle in DB, using static fallback');
+        setPuzzle(generateDailyPuzzle());
+      }
+      setIsPlaying(true);
+    } catch (e) {
+      console.error('Error fetching puzzle:', e);
+      // Fallback to static puzzle on error
+      setPuzzle(generateDailyPuzzle());
+      setIsPlaying(true);
+    } finally {
+      setFetchingPuzzle(false);
+    }
   };
 
   const handleComplete = async () => {
@@ -88,12 +109,13 @@ export default function GameScreen() {
             <TouchableOpacity
               style={[styles.playButton, dailyCompleted && styles.completedButton]}
               onPress={handlePlayDaily}
+              disabled={fetchingPuzzle}
             >
               <Text style={styles.playButtonLabel}>
-                {dailyCompleted ? '✓ Daily Puzzle' : "Today's Puzzle"}
+                {fetchingPuzzle ? 'Loading...' : dailyCompleted ? '✓ Daily Puzzle' : "Today's Puzzle"}
               </Text>
               <Text style={styles.playButtonDesc}>
-                {dailyCompleted ? 'Completed!' : 'New puzzle every day'}
+                {fetchingPuzzle ? 'Fetching puzzle' : dailyCompleted ? 'Completed!' : 'New puzzle every day'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -226,9 +248,20 @@ function GameContent({ puzzle, onBack, onComplete }: GameContentProps) {
         <Text style={styles.subtitle}>
           Place words where categories intersect
         </Text>
-        <Text style={[styles.livesText, gameState.lives <= 1 && styles.livesTextDanger]}>
-          {'❤️'.repeat(gameState.lives)}
-        </Text>
+      </View>
+
+      {/* Lives Display */}
+      <View style={styles.livesContainer}>
+        <Text style={styles.livesLabel}>Lives</Text>
+        {[1, 2, 3].map((i) => (
+          <View 
+            key={i} 
+            style={[
+              styles.heart,
+              i <= gameState.lives ? styles.heartFilled : styles.heartEmpty
+            ]} 
+          />
+        ))}
       </View>
 
       {/* Win Banner */}
@@ -327,45 +360,76 @@ const styles = StyleSheet.create({
   // Header styles
   header: {
     padding: 16,
-    paddingTop: 8,
+    paddingTop: 12,
+    paddingBottom: 16,
     alignItems: 'center',
+    backgroundColor: '#1a1a2e',
+    borderBottomWidth: 1,
+    borderBottomColor: '#2a2a4e',
+    marginBottom: 8,
   },
   headerTop: {
     flexDirection: 'row',
     alignItems: 'center',
     width: '100%',
-    marginBottom: 4,
+    marginBottom: 6,
   },
   headerBackButton: {
-    paddingVertical: 4,
-    paddingHorizontal: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    backgroundColor: '#2a2a4e',
+    borderRadius: 8,
   },
   headerBackText: {
-    color: '#888',
+    color: '#aaa',
     fontSize: 14,
   },
   headerSpacer: {
-    width: 60,
+    width: 70,
+  },
+  livesContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    marginBottom: 8,
+  },
+  livesLabel: {
+    color: '#888',
+    fontSize: 13,
+    fontWeight: '600',
+    marginRight: 4,
+  },
+  heart: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+  },
+  heartFilled: {
+    backgroundColor: '#ef4444',
+    shadowColor: '#ef4444',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 4,
+  },
+  heartEmpty: {
+    backgroundColor: '#3a3a5e',
+    borderWidth: 1,
+    borderColor: '#4a4a6e',
   },
   title: {
     flex: 1,
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: 'bold',
     color: '#fff',
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 13,
-    color: '#888',
+    color: '#777',
     textAlign: 'center',
-  },
-  livesText: {
-    fontSize: 20,
-    marginTop: 8,
-    color: '#fff',
-  },
-  livesTextDanger: {
-    opacity: 0.8,
   },
   // Game over styles
   gameOverOverlay: {
@@ -424,8 +488,9 @@ const styles = StyleSheet.create({
   // Grid container
   gridContainer: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     alignItems: 'center',
+    paddingTop: 8,
   },
   // Footer styles
   footer: {
