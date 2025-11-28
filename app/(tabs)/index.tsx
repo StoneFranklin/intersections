@@ -1,10 +1,10 @@
 import { GameGrid, WordTray } from '@/components/game';
-import { generateDailyPuzzle, generatePuzzle } from '@/data/puzzle-generator';
+import { generateDailyPuzzle } from '@/data/puzzle-generator';
 import { useGameState } from '@/hooks/use-game-state';
 import { CellPosition, Puzzle } from '@/types/game';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Alert,
   Platform,
@@ -66,11 +66,6 @@ export default function GameScreen() {
     setIsPlaying(true);
   };
 
-  const handlePlayPractice = () => {
-    setPuzzle(generatePuzzle());
-    setIsPlaying(true);
-  };
-
   const handleComplete = async () => {
     try {
       const todayKey = getTodayKey();
@@ -101,14 +96,6 @@ export default function GameScreen() {
                 {dailyCompleted ? 'Completed!' : 'New puzzle every day'}
               </Text>
             </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.practiceButton}
-              onPress={handlePlayPractice}
-            >
-              <Text style={styles.practiceButtonLabel}>Practice Mode</Text>
-              <Text style={styles.practiceButtonDesc}>Random puzzles</Text>
-            </TouchableOpacity>
           </View>
 
           {loading ? null : (
@@ -128,7 +115,6 @@ export default function GameScreen() {
   return (
     <GameContent 
       puzzle={puzzle} 
-      setPuzzle={setPuzzle}
       onBack={() => setIsPlaying(false)}
       onComplete={handleComplete}
     />
@@ -137,12 +123,11 @@ export default function GameScreen() {
 
 interface GameContentProps {
   puzzle: Puzzle;
-  setPuzzle: (p: Puzzle) => void;
   onBack: () => void;
   onComplete: () => void;
 }
 
-function GameContent({ puzzle, setPuzzle, onBack, onComplete }: GameContentProps) {
+function GameContent({ puzzle, onBack, onComplete }: GameContentProps) {
   const {
     gameState,
     unplacedWords,
@@ -155,11 +140,6 @@ function GameContent({ puzzle, setPuzzle, onBack, onComplete }: GameContentProps
   } = useGameState(puzzle);
 
   const isGameOver = gameState.lives <= 0;
-
-  const handleNewPuzzle = useCallback(() => {
-    const newPuzzle = generatePuzzle();
-    setPuzzle(newPuzzle);
-  }, [setPuzzle]);
 
   const handleCellPress = (position: CellPosition) => {
     if (isGameOver || gameState.isSolved) return;
@@ -224,11 +204,8 @@ function GameContent({ puzzle, setPuzzle, onBack, onComplete }: GameContentProps
         <View style={styles.gameOverOverlay}>
           <Text style={styles.gameOverEmoji}>💔</Text>
           <Text style={styles.gameOverText}>Game Over!</Text>
-          <TouchableOpacity style={styles.tryAgainButton} onPress={handleNewPuzzle}>
-            <Text style={styles.tryAgainText}>Try Again</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.backButton} onPress={onBack}>
-            <Text style={styles.backButtonText}>Back to Menu</Text>
+          <TouchableOpacity style={styles.tryAgainButton} onPress={onBack}>
+            <Text style={styles.tryAgainText}>Back to Menu</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -283,13 +260,10 @@ function GameContent({ puzzle, setPuzzle, onBack, onComplete }: GameContentProps
         onWordSelect={handleWordSelect}
       />
 
-      {/* Footer Buttons */}
+      {/* Footer Button */}
       <View style={styles.footer}>
         <TouchableOpacity style={styles.resetButton} onPress={handleReset}>
           <Text style={styles.resetText}>Reset</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.newPuzzleButton} onPress={handleNewPuzzle}>
-          <Text style={styles.newPuzzleText}>New Puzzle</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -344,22 +318,6 @@ const styles = StyleSheet.create({
   playButtonDesc: {
     fontSize: 14,
     color: '#aaa',
-  },
-  practiceButton: {
-    backgroundColor: '#3a3a5e',
-    padding: 20,
-    borderRadius: 16,
-    alignItems: 'center',
-  },
-  practiceButtonLabel: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#fff',
-    marginBottom: 4,
-  },
-  practiceButtonDesc: {
-    fontSize: 14,
-    color: '#888',
   },
   dateText: {
     marginTop: 40,
@@ -438,14 +396,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 18,
   },
-  backButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-  },
-  backButtonText: {
-    color: '#888',
-    fontSize: 16,
-  },
   // Win banner styles
   winBanner: {
     backgroundColor: '#2d5a3d',
@@ -492,16 +442,6 @@ const styles = StyleSheet.create({
   },
   resetText: {
     color: '#aaa',
-    fontWeight: '600',
-  },
-  newPuzzleButton: {
-    backgroundColor: '#3a5a8a',
-    paddingHorizontal: 24,
-    paddingVertical: 10,
-    borderRadius: 20,
-  },
-  newPuzzleText: {
-    color: '#fff',
     fontWeight: '600',
   },
 });
