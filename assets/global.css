@@ -6,8 +6,19 @@ html, body, #root, #__next {
 }
 
 /* Ensure the app container fills the viewport */
+/* Use dvh (dynamic viewport height) for mobile browsers */
 body > div {
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
+}
+
+/* Fix for mobile viewport issues */
+html {
+  height: -webkit-fill-available;
+}
+body {
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
 }

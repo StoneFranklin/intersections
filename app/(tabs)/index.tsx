@@ -7,13 +7,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
 import React, { useEffect, useState } from 'react';
 import {
-  Alert,
   Platform,
   SafeAreaView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 
 // Safe haptics wrapper for web
@@ -157,7 +156,6 @@ function GameContent({ puzzle, onBack, onComplete }: GameContentProps) {
     selectWord,
     placeWordAtCell,
     removeWordFromCell,
-    resetGame,
     isCellCorrect,
   } = useGameState(puzzle);
 
@@ -201,24 +199,6 @@ function GameContent({ puzzle, onBack, onComplete }: GameContentProps) {
     }
   };
 
-  const handleReset = () => {
-    Alert.alert(
-      'Reset Puzzle',
-      'Are you sure you want to reset the puzzle?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Reset',
-          style: 'destructive',
-          onPress: () => {
-            resetGame();
-            haptics.notification(Haptics.NotificationFeedbackType.Warning);
-          },
-        },
-      ]
-    );
-  };
-
   // Full screen game over overlay
   if (isGameOver) {
     return (
@@ -238,16 +218,33 @@ function GameContent({ puzzle, onBack, onComplete }: GameContentProps) {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <View style={styles.headerTop}>
-          <TouchableOpacity onPress={onBack} style={styles.headerBackButton}>
-            <Text style={styles.headerBackText}>← Menu</Text>
-          </TouchableOpacity>
-          <Text style={styles.title}>Intersections</Text>
-          <View style={styles.headerSpacer} />
-        </View>
-        <Text style={styles.subtitle}>
+        <TouchableOpacity onPress={onBack} style={styles.headerBackButton}>
+          <Text style={styles.headerBackIcon}>‹</Text>
+        </TouchableOpacity>
+        <Text style={styles.instructions}>
           Place words where categories intersect
         </Text>
+      </View>
+
+      {/* Win Banner */}
+      {gameState.isSolved && (
+        <View style={styles.winBanner}>
+          <Text style={styles.winText}>Puzzle Solved!</Text>
+          <TouchableOpacity style={styles.playAgainButton} onPress={() => { onComplete(); onBack(); }}>
+            <Text style={styles.playAgainText}>Back to Menu</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+      {/* Game Grid */}
+      <View style={styles.gridContainer}>
+        <GameGrid
+          puzzle={puzzle}
+          getWordAtCell={getWordAtCell}
+          isCellCorrect={isCellCorrect}
+          selectedWordId={gameState.selectedWordId}
+          onCellPress={handleCellPress}
+          onCellLongPress={handleCellLongPress}
+        />
       </View>
 
       {/* Lives Display */}
@@ -264,41 +261,12 @@ function GameContent({ puzzle, onBack, onComplete }: GameContentProps) {
         ))}
       </View>
 
-      {/* Win Banner */}
-      {gameState.isSolved && (
-        <View style={styles.winBanner}>
-          <Text style={styles.winText}>Puzzle Solved!</Text>
-          <TouchableOpacity style={styles.playAgainButton} onPress={() => { onComplete(); onBack(); }}>
-            <Text style={styles.playAgainText}>Back to Menu</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {/* Game Grid */}
-      <View style={styles.gridContainer}>
-        <GameGrid
-          puzzle={puzzle}
-          getWordAtCell={getWordAtCell}
-          isCellCorrect={isCellCorrect}
-          selectedWordId={gameState.selectedWordId}
-          onCellPress={handleCellPress}
-          onCellLongPress={handleCellLongPress}
-        />
-      </View>
-
       {/* Word Tray */}
       <WordTray
         words={unplacedWords}
         selectedWordId={gameState.selectedWordId}
         onWordSelect={handleWordSelect}
       />
-
-      {/* Footer Button */}
-      <View style={styles.footer}>
-        <TouchableOpacity style={styles.resetButton} onPress={handleReset}>
-          <Text style={styles.resetText}>Reset</Text>
-        </TouchableOpacity>
-      </View>
     </SafeAreaView>
   );
 }
@@ -361,31 +329,25 @@ const styles = StyleSheet.create({
   header: {
     padding: 16,
     paddingTop: 12,
-    paddingBottom: 16,
+    paddingBottom: 12,
     alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: '#1a1a2e',
     borderBottomWidth: 1,
     borderBottomColor: '#2a2a4e',
-    marginBottom: 8,
-  },
-  headerTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: '100%',
-    marginBottom: 6,
+    minHeight: 44,
+    position: 'relative',
   },
   headerBackButton: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    backgroundColor: '#2a2a4e',
-    borderRadius: 8,
+    position: 'absolute',
+    left: 12,
+    top: '50%',
+    transform: [{ translateY: '-50%' }],
+    padding: 8,
   },
-  headerBackText: {
-    color: '#aaa',
-    fontSize: 14,
-  },
-  headerSpacer: {
-    width: 70,
+  headerBackIcon: {
+    color: 'white',
+    fontSize: 28,
   },
   livesContainer: {
     flexDirection: 'row',
@@ -393,8 +355,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     paddingHorizontal: 16,
-    paddingVertical: 10,
-    marginBottom: 8,
+    paddingVertical: 12,
   },
   livesLabel: {
     color: '#888',
@@ -419,17 +380,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#4a4a6e',
   },
-  title: {
-    flex: 1,
-    fontSize: 26,
-    fontWeight: 'bold',
-    color: '#fff',
+  instructions: {
+    fontSize: 14,
+    color: 'white',
     textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: 13,
-    color: '#777',
-    textAlign: 'center',
+    marginBottom: 8,
+    marginTop: 8,
   },
   // Game over styles
   gameOverOverlay: {
@@ -487,26 +443,7 @@ const styles = StyleSheet.create({
   },
   // Grid container
   gridContainer: {
-    flex: 1,
-    justifyContent: 'flex-start',
     alignItems: 'center',
     paddingTop: 8,
-  },
-  // Footer styles
-  footer: {
-    padding: 12,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 12,
-  },
-  resetButton: {
-    backgroundColor: '#3a3a5e',
-    paddingHorizontal: 24,
-    paddingVertical: 10,
-    borderRadius: 20,
-  },
-  resetText: {
-    color: '#aaa',
-    fontWeight: '600',
   },
 });

@@ -121,6 +121,20 @@ export function useGameState(puzzle: Puzzle): UseGameStateReturn {
   );
 
   const removeWordFromCell = useCallback((position: CellPosition) => {
+    // Check if the word at this position is correct - if so, don't allow removal
+    const placement = gameState.placements.find(
+      p => p.position.rowIndex === position.rowIndex && 
+           p.position.colIndex === position.colIndex
+    );
+    
+    if (placement) {
+      const word = puzzle.words.find(w => w.id === placement.wordId);
+      if (word && isPlacementCorrect(word, position, puzzle)) {
+        // Word is correctly placed, don't allow removal
+        return;
+      }
+    }
+
     setGameState(prev => ({
       ...prev,
       placements: prev.placements.filter(
@@ -129,7 +143,7 @@ export function useGameState(puzzle: Puzzle): UseGameStateReturn {
       ),
       isSolved: false,
     }));
-  }, []);
+  }, [gameState.placements, puzzle]);
 
   const resetGame = useCallback(() => {
     setGameState({
