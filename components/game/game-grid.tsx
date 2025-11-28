@@ -20,10 +20,7 @@ export function GameGrid({
   onCellPress,
   onCellLongPress,
 }: GameGridProps) {
-  const { rowCategories, colCategories, rightCategories, bottomCategories, difficulty } = puzzle;
-  
-  const hasRight = difficulty === 'medium' || difficulty === 'hard';
-  const hasBottom = difficulty === 'hard';
+  const { rowCategories, colCategories } = puzzle;
   
   // Use state for dimensions to properly update after hydration
   const [dimensions, setDimensions] = useState(() => {
@@ -54,17 +51,15 @@ export function GameGrid({
   // Calculate responsive sizes based on screen dimensions
   const horizontalMargin = Platform.OS === 'web' ? 32 : 48;
   const availableWidth = width - horizontalMargin;
-  const availableHeight = height - (hasBottom ? 350 : 300); // more space if bottom headers
+  const availableHeight = height - 300;
   
-  // Grid columns: left header + 4 cells + (right header if medium/hard)
-  const numHeaderCols = 1 + (hasRight ? 1 : 0);
-  const numCols = colCategories.length + numHeaderCols;
-  // Grid rows: top header + 4 cells + (bottom header if hard)
-  const numHeaderRows = 1 + (hasBottom ? 1 : 0);
-  const numRows = rowCategories.length + numHeaderRows;
+  // Grid columns: left header + N cells
+  const numCols = colCategories.length + 1;
+  // Grid rows: top header + N cells
+  const numRows = rowCategories.length + 1;
   
   // Calculate cell size to fit within available space
-  const effectiveCols = numCols + (numHeaderCols * 0.3); // headers are 1.3x width
+  const effectiveCols = numCols + 0.3; // header is 1.3x width
   const maxCellWidth = availableWidth / effectiveCols;
   const maxCellHeight = availableHeight / numRows;
   const cellSize = Math.min(maxCellWidth, maxCellHeight, Platform.OS === 'web' ? 120 : 70);
@@ -91,9 +86,6 @@ export function GameGrid({
             </Text>
           </View>
         ))}
-        {hasRight && (
-          <View style={[styles.cornerCell, { width: headerWidth, height: cellSize * 0.8 }]} />
-        )}
       </View>
 
       {/* Grid rows */}
@@ -130,45 +122,8 @@ export function GameGrid({
               />
             );
           })}
-
-          {/* Right row header (medium/hard only) */}
-          {hasRight && rightCategories && (
-            <View 
-              style={[
-                styles.rightHeader, 
-                { width: headerWidth, height: cellSize }
-              ]}
-            >
-              <Text style={[styles.headerText, { fontSize }]} numberOfLines={2}>
-                {rightCategories[rowIndex].label}
-              </Text>
-            </View>
-          )}
         </View>
       ))}
-
-      {/* Bottom column headers (hard only) */}
-      {hasBottom && bottomCategories && (
-        <View style={styles.headerRow}>
-          <View style={[styles.cornerCell, { width: headerWidth, height: cellSize * 0.8 }]} />
-          {bottomCategories.map((col) => (
-            <View 
-              key={col.id} 
-              style={[
-                styles.bottomHeader, 
-                { width: cellSize, height: cellSize * 0.8 }
-              ]}
-            >
-              <Text style={[styles.headerText, { fontSize }]} numberOfLines={2}>
-                {col.label}
-              </Text>
-            </View>
-          ))}
-          {hasRight && (
-            <View style={[styles.cornerCell, { width: headerWidth, height: cellSize * 0.8 }]} />
-          )}
-        </View>
-      )}
     </View>
   );
 }
@@ -201,22 +156,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#5a3a8a',
-    borderRadius: 8,
-    padding: 4,
-  },
-  rightHeader: {
-    margin: 2,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#8a5a3a',
-    borderRadius: 8,
-    padding: 4,
-  },
-  bottomHeader: {
-    margin: 2,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#3a8a5a',
     borderRadius: 8,
     padding: 4,
   },

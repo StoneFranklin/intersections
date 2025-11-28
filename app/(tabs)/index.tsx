@@ -1,7 +1,8 @@
 import { GameGrid, WordTray } from '@/components/game';
 import { generateDailyPuzzle, generatePuzzle } from '@/data/puzzle-generator';
 import { useGameState } from '@/hooks/use-game-state';
-import { CellPosition, Difficulty, Puzzle } from '@/types/game';
+import { CellPosition, Puzzle } from '@/types/game';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
@@ -33,58 +34,92 @@ const haptics = {
   },
 };
 
-const DIFFICULTY_LABELS: Record<Difficulty, string> = {
-  easy: '⭐ Easy',
-  medium: '⭐⭐ Medium', 
-  hard: '⭐⭐⭐ Hard',
-};
-
-const DIFFICULTY_DESCRIPTIONS: Record<Difficulty, string> = {
-  easy: 'Match 2 categories (left + top)',
-  medium: 'Match 3 categories (left + top + right)',
-  hard: 'Match 4 categories (left + top + right + bottom)',
-};
+// Get today's date string for storage key
+function getTodayKey(): string {
+  const today = new Date();
+  return `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
+}
 
 export default function GameScreen() {
   const [puzzle, setPuzzle] = useState<Puzzle | null>(null);
-  const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty | null>(null);
-  
-  // Generate puzzle when difficulty is selected
-  useEffect(() => {
-    if (selectedDifficulty) {
-      setPuzzle(generateDailyPuzzle(selectedDifficulty));
-    }
-  }, [selectedDifficulty]);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [dailyCompleted, setDailyCompleted] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  // Show difficulty selector
-  if (!selectedDifficulty || !puzzle) {
+  // Check if today's puzzle was already completed
+  useEffect(() => {
+    const checkCompletion = async () => {
+      try {
+        const todayKey = getTodayKey();
+        const completed = await AsyncStorage.getItem(`completed-${todayKey}`);
+        setDailyCompleted(completed === 'true');
+      } catch (e) {
+        console.log('Error checking completion:', e);
+      }
+      setLoading(false);
+    };
+    checkCompletion();
+  }, []);
+
+  const handlePlayDaily = () => {
+    setPuzzle(generateDailyPuzzle());
+    setIsPlaying(true);
+  };
+
+  const handlePlayPractice = () => {
+    setPuzzle(generatePuzzle());
+    setIsPlaying(true);
+  };
+
+  const handleComplete = async () => {
+    try {
+      const todayKey = getTodayKey();
+      await AsyncStorage.setItem(`completed-${todayKey}`, 'true');
+      setDailyCompleted(true);
+    } catch (e) {
+      console.log('Error saving completion:', e);
+    }
+  };
+
+  // Show main menu
+  if (!isPlaying || !puzzle) {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.difficultySelector}>
-          <Text style={styles.selectorTitle}>Fenceposts</Text>
-          <Text style={styles.selectorSubtitle}>Daily Puzzles</Text>
+        <View style={styles.mainMenu}>
+          <Text style={styles.menuTitle}>Fenceposts</Text>
+          <Text style={styles.menuSubtitle}>A Daily Word Puzzle</Text>
           
-          <View style={styles.difficultyButtons}>
-            {(['easy', 'medium', 'hard'] as Difficulty[]).map((diff) => (
-              <TouchableOpacity
-                key={diff}
-                style={[
-                  styles.difficultyButton,
-                  diff === 'easy' && styles.easyButton,
-                  diff === 'medium' && styles.mediumButton,
-                  diff === 'hard' && styles.hardButton,
-                ]}
-                onPress={() => setSelectedDifficulty(diff)}
-              >
-                <Text style={styles.difficultyButtonLabel}>
-                  {DIFFICULTY_LABELS[diff]}
-                </Text>
-                <Text style={styles.difficultyButtonDesc}>
-                  {DIFFICULTY_DESCRIPTIONS[diff]}
-                </Text>
-              </TouchableOpacity>
-            ))}
+          <View style={styles.menuButtons}>
+            <TouchableOpacity
+              style={[styles.playButton, dailyCompleted && styles.completedButton]}
+              onPress={handlePlayDaily}
+            >
+              <Text style={styles.playButtonLabel}>
+                {dailyCompleted ? '✓ Daily Puzzle' : "Today's Puzzle"}
+              </Text>
+              <Text style={styles.playButtonDesc}>
+                {dailyCompleted ? 'Completed!' : 'New puzzle every day'}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.practiceButton}
+              onPress={handlePlayPractice}
+            >
+              <Text style={styles.practiceButtonLabel}>Practice Mode</Text>
+              <Text style={styles.practiceButtonDesc}>Random puzzles</Text>
+            </TouchableOpacity>
           </View>
+
+          {loading ? null : (
+            <Text style={styles.dateText}>
+              {new Date().toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                month: 'long', 
+                day: 'numeric' 
+              })}
+            </Text>
+          )}
         </View>
       </SafeAreaView>
     );
@@ -94,8 +129,8 @@ export default function GameScreen() {
     <GameContent 
       puzzle={puzzle} 
       setPuzzle={setPuzzle}
-      difficulty={selectedDifficulty}
-      onBack={() => setSelectedDifficulty(null)}
+      onBack={() => setIsPlaying(false)}
+      onComplete={handleComplete}
     />
   );
 }
@@ -103,11 +138,11 @@ export default function GameScreen() {
 interface GameContentProps {
   puzzle: Puzzle;
   setPuzzle: (p: Puzzle) => void;
-  difficulty: Difficulty;
   onBack: () => void;
+  onComplete: () => void;
 }
 
-function GameContent({ puzzle, setPuzzle, difficulty, onBack }: GameContentProps) {
+function GameContent({ puzzle, setPuzzle, onBack, onComplete }: GameContentProps) {
   const {
     gameState,
     unplacedWords,
@@ -122,9 +157,9 @@ function GameContent({ puzzle, setPuzzle, difficulty, onBack }: GameContentProps
   const isGameOver = gameState.lives <= 0;
 
   const handleNewPuzzle = useCallback(() => {
-    const newPuzzle = generatePuzzle(difficulty);
+    const newPuzzle = generatePuzzle();
     setPuzzle(newPuzzle);
-  }, [setPuzzle, difficulty]);
+  }, [setPuzzle]);
 
   const handleCellPress = (position: CellPosition) => {
     if (isGameOver || gameState.isSolved) return;
@@ -208,11 +243,11 @@ function GameContent({ puzzle, setPuzzle, difficulty, onBack }: GameContentProps
           <TouchableOpacity onPress={onBack} style={styles.headerBackButton}>
             <Text style={styles.headerBackText}>← Menu</Text>
           </TouchableOpacity>
-          <Text style={styles.title}>{DIFFICULTY_LABELS[difficulty]}</Text>
+          <Text style={styles.title}>Fenceposts</Text>
           <View style={styles.headerSpacer} />
         </View>
         <Text style={styles.subtitle}>
-          {DIFFICULTY_DESCRIPTIONS[difficulty]}
+          Place words where categories intersect
         </Text>
         <Text style={[styles.livesText, gameState.lives <= 1 && styles.livesTextDanger]}>
           {'❤️'.repeat(gameState.lives)}
@@ -223,8 +258,8 @@ function GameContent({ puzzle, setPuzzle, difficulty, onBack }: GameContentProps
       {gameState.isSolved && (
         <View style={styles.winBanner}>
           <Text style={styles.winText}>Puzzle Solved!</Text>
-          <TouchableOpacity style={styles.playAgainButton} onPress={handleNewPuzzle}>
-            <Text style={styles.playAgainText}>New Puzzle</Text>
+          <TouchableOpacity style={styles.playAgainButton} onPress={() => { onComplete(); onBack(); }}>
+            <Text style={styles.playAgainText}>Back to Menu</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -266,62 +301,70 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#0f0f1a',
   },
-  // Difficulty selector styles
-  difficultySelector: {
+  // Main menu styles
+  mainMenu: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
   },
-  selectorTitle: {
-    fontSize: 42,
+  menuTitle: {
+    fontSize: 48,
     fontWeight: 'bold',
     color: '#fff',
     marginBottom: 8,
   },
-  selectorSubtitle: {
+  menuSubtitle: {
     fontSize: 18,
     color: '#888',
-    marginBottom: 40,
+    marginBottom: 50,
   },
-  difficultyButtons: {
+  menuButtons: {
     width: '100%',
     maxWidth: 400,
     gap: 16,
   },
-  difficultyButton: {
-    padding: 20,
+  playButton: {
+    backgroundColor: '#2d5a3d',
+    padding: 24,
     borderRadius: 16,
     alignItems: 'center',
   },
-  easyButton: {
-    backgroundColor: '#2d5a3d',
+  completedButton: {
+    backgroundColor: '#1a3d2d',
+    borderWidth: 2,
+    borderColor: '#4ade80',
   },
-  mediumButton: {
-    backgroundColor: '#5a4a2d',
-  },
-  hardButton: {
-    backgroundColor: '#5a2d3d',
-  },
-  difficultyButtonLabel: {
-    fontSize: 22,
+  playButtonLabel: {
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#fff',
     marginBottom: 4,
   },
-  difficultyButtonDesc: {
+  playButtonDesc: {
     fontSize: 14,
-    color: '#ccc',
+    color: '#aaa',
   },
-  // Loading styles
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
+  practiceButton: {
+    backgroundColor: '#3a3a5e',
+    padding: 20,
+    borderRadius: 16,
     alignItems: 'center',
   },
-  loadingText: {
+  practiceButtonLabel: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#fff',
+    marginBottom: 4,
+  },
+  practiceButtonDesc: {
+    fontSize: 14,
     color: '#888',
+  },
+  dateText: {
+    marginTop: 40,
     fontSize: 16,
+    color: '#666',
   },
   // Header styles
   header: {

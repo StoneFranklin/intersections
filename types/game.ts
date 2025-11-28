@@ -12,28 +12,20 @@ export interface Category {
 export interface Word {
   id: string;
   text: string;
-  /** The correct left row category ID this word belongs to */
+  /** The correct row category ID this word belongs to */
   correctRowId: string;
   /** The correct column category ID this word belongs to */
   correctColId: string;
-  /** The correct right row category ID this word belongs to (medium/hard only) */
-  correctRightId?: string;
-  /** The correct bottom column category ID this word belongs to (hard only) */
-  correctBottomId?: string;
 }
 
 export interface Puzzle {
   id: string;
   title: string;
   difficulty: Difficulty;
-  /** Left row categories */
+  /** Row categories (left side) */
   rowCategories: Category[];
   /** Column categories (top) */
   colCategories: Category[];
-  /** Right row categories (medium/hard only) */
-  rightCategories?: Category[];
-  /** Bottom column categories (hard only) */
-  bottomCategories?: Category[];
   /** All words in this puzzle */
   words: Word[];
 }
@@ -60,7 +52,7 @@ export interface GameState {
   lives: number;
 }
 
-/** Check if a word placement is correct based on puzzle difficulty */
+/** Check if a word placement is correct based on row and column */
 export function isPlacementCorrect(
   word: Word,
   position: CellPosition,
@@ -69,32 +61,9 @@ export function isPlacementCorrect(
   const rowCategory = puzzle.rowCategories[position.rowIndex];
   const colCategory = puzzle.colCategories[position.colIndex];
   
-  // Easy: Just check row and column
-  if (puzzle.difficulty === 'easy') {
-    return (
-      word.correctRowId === rowCategory.id &&
-      word.correctColId === colCategory.id
-    );
-  }
-  
-  // Medium: Also check right category
-  if (puzzle.difficulty === 'medium') {
-    const rightCategory = puzzle.rightCategories?.[position.rowIndex];
-    return (
-      word.correctRowId === rowCategory.id &&
-      word.correctColId === colCategory.id &&
-      word.correctRightId === rightCategory?.id
-    );
-  }
-  
-  // Hard: Check all four categories
-  const rightCategory = puzzle.rightCategories?.[position.rowIndex];
-  const bottomCategory = puzzle.bottomCategories?.[position.colIndex];
   return (
     word.correctRowId === rowCategory.id &&
-    word.correctColId === colCategory.id &&
-    word.correctRightId === rightCategory?.id &&
-    word.correctBottomId === bottomCategory?.id
+    word.correctColId === colCategory.id
   );
 }
 

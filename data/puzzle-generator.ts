@@ -1,4 +1,4 @@
-import { Difficulty, Puzzle, Word } from '@/types/game';
+import { Puzzle, Word } from '@/types/game';
 
 /**
  * Seeded random number generator for consistent daily puzzles
@@ -11,7 +11,7 @@ function seededRandom(seed: number): () => number {
 }
 
 /**
- * Shuffle with a seeded random
+ * Shuffle array with seeded random
  */
 function seededShuffle<T>(array: T[], random: () => number): T[] {
   const result = [...array];
@@ -22,8 +22,8 @@ function seededShuffle<T>(array: T[], random: () => number): T[] {
   return result;
 }
 
-// Fixed puzzle data for each difficulty - simulates database content
-const FIXED_EASY_PUZZLE = {
+// Fixed daily puzzle data - simulates database content
+const DAILY_PUZZLE = {
   rowCategories: [
     { id: 'food', label: 'Food' },
     { id: 'animal', label: 'Animals' },
@@ -37,25 +37,25 @@ const FIXED_EASY_PUZZLE = {
     { id: 'round', label: 'Round Things' }
   ],
   words: [
-    // Row 0 (food): apple, strawberry, cherry, tomato
+    // Row 0 (food)
     { text: 'apple', row: 0, col: 0 }, // food + red
     { text: 'grape', row: 0, col: 1 }, // food + small  
     { text: 'peach', row: 0, col: 2 }, // food + soft
     { text: 'orange', row: 0, col: 3 }, // food + round
     
-    // Row 1 (animal): cardinal, hamster, rabbit, ball python
+    // Row 1 (animal)
     { text: 'cardinal', row: 1, col: 0 }, // animal + red
     { text: 'mouse', row: 1, col: 1 }, // animal + small
     { text: 'kitten', row: 1, col: 2 }, // animal + soft  
     { text: 'panda', row: 1, col: 3 }, // animal + round
     
-    // Row 2 (plant): rose, moss, fern, sunflower  
+    // Row 2 (plant)
     { text: 'rose', row: 2, col: 0 }, // plant + red
     { text: 'moss', row: 2, col: 1 }, // plant + small
     { text: 'fern', row: 2, col: 2 }, // plant + soft
     { text: 'lily', row: 2, col: 3 }, // plant + round
     
-    // Row 3 (toy): fire truck, marble, teddy bear, ball
+    // Row 3 (toy)
     { text: 'truck', row: 3, col: 0 }, // toy + red
     { text: 'marble', row: 3, col: 1 }, // toy + small
     { text: 'doll', row: 3, col: 2 }, // toy + soft
@@ -63,184 +63,123 @@ const FIXED_EASY_PUZZLE = {
   ]
 };
 
-const FIXED_MEDIUM_PUZZLE = {
-  rowCategories: [
-    { id: 'food', label: 'Food' },
-    { id: 'animal', label: 'Animals' },
-    { id: 'plant', label: 'Plants' },
-    { id: 'toy', label: 'Toys' }
-  ],
-  colCategories: [
-    { id: 'small', label: 'Small Things' },
-    { id: 'red', label: 'Red Things' },
-    { id: 'soft', label: 'Soft Things' },
-    { id: 'outdoor', label: 'Outdoor Things' }
-  ],
-  rightCategories: [
-    { id: 'sweet', label: 'Sweet Things' },
-    { id: 'fuzzy', label: 'Fuzzy Things' },
-    { id: 'green', label: 'Green Things' },
-    { id: 'round', label: 'Round Things' }
-  ],
-  words: [
-    // Row 0 (food + sweet): cherry, strawberry, peach, apple
-    { text: 'cherry', row: 0, col: 0 }, // food + small + sweet
-    { text: 'strawberry', row: 0, col: 1 }, // food + red + sweet
-    { text: 'peach', row: 0, col: 2 }, // food + soft + sweet
-    { text: 'apple', row: 0, col: 3 }, // food + outdoor + sweet
-    
-    // Row 1 (animal + fuzzy): hamster, fox, rabbit, squirrel
-    { text: 'hamster', row: 1, col: 0 }, // animal + small + fuzzy
-    { text: 'fox', row: 1, col: 1 }, // animal + red + fuzzy  
-    { text: 'rabbit', row: 1, col: 2 }, // animal + soft + fuzzy
-    { text: 'squirrel', row: 1, col: 3 }, // animal + outdoor + fuzzy
-    
-    // Row 2 (plant + green): moss, rose, fern, tree
-    { text: 'moss', row: 2, col: 0 }, // plant + small + green
-    { text: 'rose', row: 2, col: 1 }, // plant + red + green (leaves)
-    { text: 'fern', row: 2, col: 2 }, // plant + soft + green
-    { text: 'tree', row: 2, col: 3 }, // plant + outdoor + green
-    
-    // Row 3 (toy + round): marble, ball, yo-yo, frisbee
-    { text: 'marble', row: 3, col: 0 }, // toy + small + round
-    { text: 'ball', row: 3, col: 1 }, // toy + red + round (red ball)
-    { text: 'yo-yo', row: 3, col: 2 }, // toy + soft + round (soft grip)
-    { text: 'frisbee', row: 3, col: 3 }, // toy + outdoor + round
-  ]
-};
-
-const FIXED_HARD_PUZZLE = {
-  rowCategories: [
-    { id: 'food', label: 'Food' },
-    { id: 'animal', label: 'Animals' },
-    { id: 'plant', label: 'Plants' },
-    { id: 'toy', label: 'Toys' }
-  ],
-  colCategories: [
-    { id: 'small', label: 'Small Things' },
-    { id: 'red', label: 'Red Things' },
-    { id: 'soft', label: 'Soft Things' },
-    { id: 'outdoor', label: 'Outdoor Things' }
-  ],
-  rightCategories: [
-    { id: 'sweet', label: 'Sweet Things' },
-    { id: 'fuzzy', label: 'Fuzzy Things' },
-    { id: 'green', label: 'Green Things' },
-    { id: 'round', label: 'Round Things' }
-  ],
-  bottomCategories: [
-    { id: 'water', label: 'Water Related' },
-    { id: 'indoor', label: 'Indoor Things' },
-    { id: 'big', label: 'Big Things' },
-    { id: 'hard', label: 'Hard Things' }
-  ],
-  words: [
-    // Row 0 (food + sweet): cherry, apple, peach, watermelon
-    { text: 'cherry', row: 0, col: 0 }, // food + small + sweet + water
-    { text: 'apple', row: 0, col: 1 }, // food + red + sweet + indoor
-    { text: 'peach', row: 0, col: 2 }, // food + soft + sweet + big
-    { text: 'coconut', row: 0, col: 3 }, // food + outdoor + sweet + hard
-    
-    // Row 1 (animal + fuzzy): hamster, fox, rabbit, bear
-    { text: 'hamster', row: 1, col: 0 }, // animal + small + fuzzy + water
-    { text: 'fox', row: 1, col: 1 }, // animal + red + fuzzy + indoor
-    { text: 'rabbit', row: 1, col: 2 }, // animal + soft + fuzzy + big
-    { text: 'bear', row: 1, col: 3 }, // animal + outdoor + fuzzy + hard
-    
-    // Row 2 (plant + green): moss, rose, fern, tree
-    { text: 'moss', row: 2, col: 0 }, // plant + small + green + water
-    { text: 'rose', row: 2, col: 1 }, // plant + red + green + indoor
-    { text: 'fern', row: 2, col: 2 }, // plant + soft + green + big
-    { text: 'oak', row: 2, col: 3 }, // plant + outdoor + green + hard
-    
-    // Row 3 (toy + round): marble, ball, yo-yo, frisbee
-    { text: 'marble', row: 3, col: 0 }, // toy + small + round + water (glass marble)
-    { text: 'ball', row: 3, col: 1 }, // toy + red + round + indoor
-    { text: 'balloon', row: 3, col: 2 }, // toy + soft + round + big
-    { text: 'tire', row: 3, col: 3 }, // toy + outdoor + round + hard (tire swing)
-  ]
-};
+// Practice puzzles for random play
+const PRACTICE_PUZZLES = [
+  {
+    rowCategories: [
+      { id: 'vehicle', label: 'Vehicles' },
+      { id: 'clothing', label: 'Clothing' },
+      { id: 'furniture', label: 'Furniture' },
+      { id: 'tool', label: 'Tools' }
+    ],
+    colCategories: [
+      { id: 'metal', label: 'Metal Things' },
+      { id: 'wooden', label: 'Wooden Things' },
+      { id: 'big', label: 'Big Things' },
+      { id: 'old', label: 'Old Things' }
+    ],
+    words: [
+      { text: 'train', row: 0, col: 0 },
+      { text: 'wagon', row: 0, col: 1 },
+      { text: 'bus', row: 0, col: 2 },
+      { text: 'carriage', row: 0, col: 3 },
+      { text: 'buckle', row: 1, col: 0 },
+      { text: 'clogs', row: 1, col: 1 },
+      { text: 'coat', row: 1, col: 2 },
+      { text: 'corset', row: 1, col: 3 },
+      { text: 'bedframe', row: 2, col: 0 },
+      { text: 'dresser', row: 2, col: 1 },
+      { text: 'wardrobe', row: 2, col: 2 },
+      { text: 'armoire', row: 2, col: 3 },
+      { text: 'wrench', row: 3, col: 0 },
+      { text: 'mallet', row: 3, col: 1 },
+      { text: 'ladder', row: 3, col: 2 },
+      { text: 'anvil', row: 3, col: 3 },
+    ]
+  },
+  {
+    rowCategories: [
+      { id: 'drink', label: 'Drinks' },
+      { id: 'sport', label: 'Sports' },
+      { id: 'instrument', label: 'Instruments' },
+      { id: 'weather', label: 'Weather' }
+    ],
+    colCategories: [
+      { id: 'hot', label: 'Hot Things' },
+      { id: 'cold', label: 'Cold Things' },
+      { id: 'fast', label: 'Fast Things' },
+      { id: 'loud', label: 'Loud Things' }
+    ],
+    words: [
+      { text: 'coffee', row: 0, col: 0 },
+      { text: 'smoothie', row: 0, col: 1 },
+      { text: 'espresso', row: 0, col: 2 },
+      { text: 'champagne', row: 0, col: 3 },
+      { text: 'boxing', row: 1, col: 0 },
+      { text: 'hockey', row: 1, col: 1 },
+      { text: 'sprinting', row: 1, col: 2 },
+      { text: 'football', row: 1, col: 3 },
+      { text: 'trumpet', row: 2, col: 0 },
+      { text: 'cello', row: 2, col: 1 },
+      { text: 'violin', row: 2, col: 2 },
+      { text: 'drums', row: 2, col: 3 },
+      { text: 'heatwave', row: 3, col: 0 },
+      { text: 'blizzard', row: 3, col: 1 },
+      { text: 'tornado', row: 3, col: 2 },
+      { text: 'thunder', row: 3, col: 3 },
+    ]
+  },
+  {
+    rowCategories: [
+      { id: 'fruit', label: 'Fruits' },
+      { id: 'vegetable', label: 'Vegetables' },
+      { id: 'dessert', label: 'Desserts' },
+      { id: 'meat', label: 'Meats' }
+    ],
+    colCategories: [
+      { id: 'green', label: 'Green Things' },
+      { id: 'sweet', label: 'Sweet Things' },
+      { id: 'crunchy', label: 'Crunchy Things' },
+      { id: 'tropical', label: 'Tropical Things' }
+    ],
+    words: [
+      { text: 'kiwi', row: 0, col: 0 },
+      { text: 'mango', row: 0, col: 1 },
+      { text: 'apple', row: 0, col: 2 },
+      { text: 'papaya', row: 0, col: 3 },
+      { text: 'broccoli', row: 1, col: 0 },
+      { text: 'corn', row: 1, col: 1 },
+      { text: 'celery', row: 1, col: 2 },
+      { text: 'coconut', row: 1, col: 3 },
+      { text: 'pistachio', row: 2, col: 0 },
+      { text: 'caramel', row: 2, col: 1 },
+      { text: 'brittle', row: 2, col: 2 },
+      { text: 'sorbet', row: 2, col: 3 },
+      { text: 'pesto', row: 3, col: 0 },
+      { text: 'honey ham', row: 3, col: 1 },
+      { text: 'bacon', row: 3, col: 2 },
+      { text: 'jerk', row: 3, col: 3 },
+    ]
+  }
+];
 
 /**
- * Generate an Easy puzzle (2-way intersections)
+ * Convert puzzle data to Puzzle type
  */
-function generateEasyPuzzle(random: () => number): Puzzle | null {
-  const puzzle = FIXED_EASY_PUZZLE;
-  const words: Word[] = [];
-  
-  for (const wordData of puzzle.words) {
-    words.push({
-      id: `w-${wordData.row}-${wordData.col}-${wordData.text}`,
-      text: wordData.text,
-      correctRowId: puzzle.rowCategories[wordData.row].id,
-      correctColId: puzzle.colCategories[wordData.col].id,
-    });
-  }
-  
+function createPuzzle(data: typeof DAILY_PUZZLE, id: string): Puzzle {
+  const words: Word[] = data.words.map((w) => ({
+    id: `w-${w.row}-${w.col}-${w.text}`,
+    text: w.text,
+    correctRowId: data.rowCategories[w.row].id,
+    correctColId: data.colCategories[w.col].id,
+  }));
+
   return {
-    id: `puzzle-easy-${Date.now()}`,
-    title: 'Easy',
+    id,
+    title: 'Fenceposts',
     difficulty: 'easy',
-    rowCategories: puzzle.rowCategories,
-    colCategories: puzzle.colCategories,
-    words,
-  };
-}
-
-/**
- * Generate a Medium puzzle (3-way intersections)
- */
-function generateMediumPuzzle(random: () => number): Puzzle | null {
-  const puzzle = FIXED_MEDIUM_PUZZLE;
-  const words: Word[] = [];
-  
-  for (const wordData of puzzle.words) {
-    words.push({
-      id: `w-${wordData.row}-${wordData.col}-${wordData.text}`,
-      text: wordData.text,
-      correctRowId: puzzle.rowCategories[wordData.row].id,
-      correctColId: puzzle.colCategories[wordData.col].id,
-      correctRightId: puzzle.rightCategories[wordData.row].id,
-    });
-  }
-  
-  return {
-    id: `puzzle-medium-${Date.now()}`,
-    title: 'Medium',
-    difficulty: 'medium',
-    rowCategories: puzzle.rowCategories,
-    colCategories: puzzle.colCategories,
-    rightCategories: puzzle.rightCategories,
-    words,
-  };
-}
-
-/**
- * Generate a Hard puzzle (4-way intersections)
- */
-function generateHardPuzzle(random: () => number): Puzzle | null {
-  const puzzle = FIXED_HARD_PUZZLE;
-  const words: Word[] = [];
-  
-  for (const wordData of puzzle.words) {
-    words.push({
-      id: `w-${wordData.row}-${wordData.col}-${wordData.text}`,
-      text: wordData.text,
-      correctRowId: puzzle.rowCategories[wordData.row].id,
-      correctColId: puzzle.colCategories[wordData.col].id,
-      correctRightId: puzzle.rightCategories[wordData.row].id,
-      correctBottomId: puzzle.bottomCategories[wordData.col].id,
-    });
-  }
-  
-  return {
-    id: `puzzle-hard-${Date.now()}`,
-    title: 'Hard',
-    difficulty: 'hard',
-    rowCategories: puzzle.rowCategories,
-    colCategories: puzzle.colCategories,
-    rightCategories: puzzle.rightCategories,
-    bottomCategories: puzzle.bottomCategories,
+    rowCategories: data.rowCategories,
+    colCategories: data.colCategories,
     words,
   };
 }
@@ -256,67 +195,17 @@ function getDateSeed(date: Date = new Date()): number {
 }
 
 /**
- * Generate a puzzle for a specific difficulty
+ * Generate a random practice puzzle
  */
-export function generatePuzzle(difficulty: Difficulty = 'easy'): Puzzle {
-  const random = seededRandom(Date.now());
-  
-  let puzzle: Puzzle | null = null;
-  let attempts = 0;
-  const maxAttempts = 10;
-  
-  while (!puzzle && attempts < maxAttempts) {
-    attempts++;
-    if (difficulty === 'easy') {
-      puzzle = generateEasyPuzzle(random);
-    } else if (difficulty === 'medium') {
-      puzzle = generateMediumPuzzle(random);
-    } else {
-      puzzle = generateHardPuzzle(random);
-    }
-  }
-  
-  if (!puzzle) {
-    console.warn(`Could not generate ${difficulty} puzzle, falling back to easy`);
-    return generatePuzzle('easy');
-  }
-  
-  return puzzle;
+export function generatePuzzle(): Puzzle {
+  const randomIndex = Math.floor(Math.random() * PRACTICE_PUZZLES.length);
+  return createPuzzle(PRACTICE_PUZZLES[randomIndex], `puzzle-practice-${Date.now()}`);
 }
 
 /**
- * Generate today's daily puzzle for a specific difficulty
+ * Generate today's daily puzzle
  */
-export function generateDailyPuzzle(difficulty: Difficulty): Puzzle {
+export function generateDailyPuzzle(): Puzzle {
   const dateSeed = getDateSeed();
-  // Add offset for each difficulty to get different puzzles
-  const difficultyOffset = difficulty === 'easy' ? 0 : difficulty === 'medium' ? 1000 : 2000;
-  const random = seededRandom(dateSeed + difficultyOffset);
-  
-  let puzzle: Puzzle | null = null;
-  let attempts = 0;
-  const maxAttempts = 20;
-  
-  while (!puzzle && attempts < maxAttempts) {
-    attempts++;
-    if (difficulty === 'easy') {
-      puzzle = generateEasyPuzzle(random);
-    } else if (difficulty === 'medium') {
-      puzzle = generateMediumPuzzle(random);
-    } else {
-      puzzle = generateHardPuzzle(random);
-    }
-  }
-  
-  if (!puzzle) {
-    console.warn(`Could not generate daily ${difficulty} puzzle, falling back to easy`);
-    const fallbackRandom = seededRandom(dateSeed);
-    puzzle = generateEasyPuzzle(fallbackRandom);
-    if (!puzzle) {
-      // Ultimate fallback
-      return generatePuzzle('easy');
-    }
-  }
-  
-  return puzzle;
+  return createPuzzle(DAILY_PUZZLE, `puzzle-daily-${dateSeed}`);
 }
