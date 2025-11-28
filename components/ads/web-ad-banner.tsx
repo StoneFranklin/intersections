@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Platform, View, StyleSheet } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 
 interface WebAdBannerProps {
   adSlot: string;

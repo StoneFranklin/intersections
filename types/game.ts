@@ -1,5 +1,5 @@
 /**
- * Core types for the Fenceposts word puzzle game
+ * Core types for the Intersections word puzzle game
  */
 
 export type Difficulty = 'easy' | 'medium' | 'hard';
@@ -91,16 +91,16 @@ export function isPuzzleSolved(
 // types.ts
 export type CategoryId = string;
 
-export interface FencepostsCell {
+export interface IntersectionsCell {
   word: string;
   rowCategoryId: CategoryId;
   colCategoryId: CategoryId;
 }
 
-export interface FencepostsDailyPuzzle {
+export interface IntersectionsDailyPuzzle {
   date: string;                  // "YYYY-MM-DD"
   rowCategoryIds: CategoryId[];  // length 4
   colCategoryIds: CategoryId[];  // length 4
-  cells: FencepostsCell[];       // length 16, row-major
+  cells: IntersectionsCell[];       // length 16, row-major
 }
 

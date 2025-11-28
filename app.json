@@ -44,7 +44,7 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true,
-      "baseUrl": "/word-game"
+      "baseUrl": "/intersections"
     }
   }
 }

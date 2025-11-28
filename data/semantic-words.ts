@@ -1,5 +1,5 @@
 /**
- * Massive word bank for Fenceposts puzzle generation
+ * Massive word bank for Intersections puzzle generation
  * 50+ categories with 1000+ words for maximum puzzle variety
  */
 

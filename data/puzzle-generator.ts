@@ -176,7 +176,7 @@ function createPuzzle(data: typeof DAILY_PUZZLE, id: string): Puzzle {
 
   return {
     id,
-    title: 'Fenceposts',
+    title: 'Intersections',
     difficulty: 'easy',
     rowCategories: data.rowCategories,
     colCategories: data.colCategories,

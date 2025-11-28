@@ -1,10 +1,10 @@
 import { supabase } from "@/lib/supabase";
-import { FencepostsDailyPuzzle, Puzzle, Word } from "@/types/game";
+import { IntersectionsDailyPuzzle, Puzzle, Word } from "@/types/game";
 
 const GRID_SIZE = 4;
 
 // optional sanity check
-function isFencepostsDailyPuzzle(payload: any): payload is FencepostsDailyPuzzle {
+function isIntersectionsDailyPuzzle(payload: any): payload is IntersectionsDailyPuzzle {
   return (
     payload &&
     typeof payload.date === 'string' &&
@@ -14,7 +14,7 @@ function isFencepostsDailyPuzzle(payload: any): payload is FencepostsDailyPuzzle
   );
 }
 
-export async function getDailyPuzzle(date: string): Promise<FencepostsDailyPuzzle | null> {
+export async function getDailyPuzzle(date: string): Promise<IntersectionsDailyPuzzle | null> {
   const { data, error } = await supabase
     .from('daily_puzzle')
     .select('payload')
@@ -28,7 +28,7 @@ export async function getDailyPuzzle(date: string): Promise<FencepostsDailyPuzzl
 
   const payload = data?.payload;
 
-  if (!isFencepostsDailyPuzzle(payload)) {
+  if (!isIntersectionsDailyPuzzle(payload)) {
     console.error('Daily puzzle payload has unexpected shape:', payload);
     return null;
   }
@@ -48,9 +48,9 @@ function categoryIdToLabel(id: string): string {
 }
 
 /**
- * Convert FencepostsDailyPuzzle (DB format) to Puzzle (game format)
+ * Convert IntersectionsDailyPuzzle (DB format) to Puzzle (game format)
  */
-export function convertToPuzzle(dbPuzzle: FencepostsDailyPuzzle): Puzzle {
+export function convertToPuzzle(dbPuzzle: IntersectionsDailyPuzzle): Puzzle {
   // Convert category IDs to Category objects
   const rowCategories = dbPuzzle.rowCategoryIds.map(id => ({
     id,

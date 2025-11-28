@@ -102,7 +102,7 @@ export default function GameScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.mainMenu}>
-          <Text style={styles.menuTitle}>Fenceposts</Text>
+          <Text style={styles.menuTitle}>Intersections</Text>
           <Text style={styles.menuSubtitle}>A Daily Word Puzzle</Text>
           
           <View style={styles.menuButtons}>
@@ -242,7 +242,7 @@ function GameContent({ puzzle, onBack, onComplete }: GameContentProps) {
           <TouchableOpacity onPress={onBack} style={styles.headerBackButton}>
             <Text style={styles.headerBackText}>← Menu</Text>
           </TouchableOpacity>
-          <Text style={styles.title}>Fenceposts</Text>
+          <Text style={styles.title}>Intersections</Text>
           <View style={styles.headerSpacer} />
         </View>
         <Text style={styles.subtitle}>
