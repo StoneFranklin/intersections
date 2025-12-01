@@ -21,8 +21,10 @@ export function WordTray({ words, selectedWordId, onWordSelect }: WordTrayProps)
     <View style={styles.container}>
       <Text style={styles.title}>Tap a word, then tap a cell to place it:</Text>
       <ScrollView 
+        style={styles.scrollView}
         contentContainerStyle={styles.wordsContainer}
-        showsVerticalScrollIndicator={false}
+        showsVerticalScrollIndicator={true}
+        nestedScrollEnabled={true}
       >
         {words.map((word) => {
           const isSelected = selectedWordId === word.id;
@@ -50,6 +52,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#1a1a2e',
     borderTopWidth: 1,
     borderTopColor: '#2a2a4e',
+    flex: 1,
+  },
+  scrollView: {
+    flex: 1,
   },
   title: {
     color: '#888',
@@ -62,7 +68,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'center',
     gap: 8,
-    paddingBottom: 8,
+    paddingBottom: 12,
   },
   wordChip: {
     backgroundColor: '#2a3a5a',

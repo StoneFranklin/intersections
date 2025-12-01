@@ -104,3 +104,47 @@ export interface IntersectionsDailyPuzzle {
   cells: IntersectionsCell[];       // length 16, row-major
 }
 
+/**
+ * Score tracking for a completed puzzle
+ */
+export interface GameScore {
+  /** Time taken in seconds */
+  timeSeconds: number;
+  /** Number of incorrect placements made */
+  mistakes: number;
+  /** Final calculated score (higher is better) */
+  score: number;
+  /** Number of correct placements (out of 16) */
+  correctPlacements: number;
+  /** Whether the puzzle was fully solved */
+  completed: boolean;
+  /** Percentile rank (0-100, calculated after submission) */
+  percentile?: number;
+}
+
+/**
+ * Calculate score based on correct placements, time, and mistakes
+ * Partial completion gets proportional base score
+ */
+export function calculateScore(
+  timeSeconds: number, 
+  mistakes: number,
+  correctPlacements: number = 16,
+  totalCells: number = 16
+): number {
+  const BASE_SCORE = 1000;
+  const TIME_PENALTY_PER_SECOND = 2;  // -2 points per second
+  const MISTAKE_PENALTY = 50;          // -50 points per mistake
+  
+  // Proportional base score based on correct placements
+  const proportionalBase = Math.floor((correctPlacements / totalCells) * BASE_SCORE);
+  
+  const timePenalty = Math.floor(timeSeconds * TIME_PENALTY_PER_SECOND);
+  const mistakePenalty = mistakes * MISTAKE_PENALTY;
+  
+  const score = proportionalBase - timePenalty - mistakePenalty;
+  
+  // Minimum score of 0
+  return Math.max(0, score);
+}
+

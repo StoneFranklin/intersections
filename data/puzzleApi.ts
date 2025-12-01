@@ -104,3 +104,112 @@ export async function fetchTodaysPuzzle(): Promise<Puzzle | null> {
   
   return convertToPuzzle(dbPuzzle);
 }
+
+/**
+ * Submit a score for today's puzzle
+ * Returns the percentile rank (0-100)
+ */
+export async function submitScore(
+  score: number,
+  timeSeconds: number,
+  mistakes: number
+): Promise<{ percentile: number } | null> {
+  const puzzleDate = getTodayDateString();
+  
+  try {
+    // Insert the score
+    const { error: insertError } = await supabase
+      .from('puzzle_scores')
+      .insert({
+        puzzle_date: puzzleDate,
+        score,
+        time_seconds: timeSeconds,
+        mistakes,
+      });
+
+    if (insertError) {
+      console.error('Error submitting score:', insertError);
+      return null;
+    }
+
+    // Calculate percentile
+    const percentile = await getScorePercentile(puzzleDate, score);
+    return { percentile };
+  } catch (e) {
+    console.error('Error in submitScore:', e);
+    return null;
+  }
+}
+
+/**
+ * Get the percentile rank for a score on a given date
+ * Returns 0-100, where 100 means you beat everyone
+ */
+export async function getScorePercentile(
+  puzzleDate: string,
+  score: number
+): Promise<number> {
+  try {
+    // Get count of scores lower than this score
+    const { count: lowerCount, error: lowerError } = await supabase
+      .from('puzzle_scores')
+      .select('*', { count: 'exact', head: true })
+      .eq('puzzle_date', puzzleDate)
+      .lt('score', score);
+
+    if (lowerError) {
+      console.error('Error getting lower scores:', lowerError);
+      return 50; // Default to 50th percentile on error
+    }
+
+    // Get total count of scores for today
+    const { count: totalCount, error: totalError } = await supabase
+      .from('puzzle_scores')
+      .select('*', { count: 'exact', head: true })
+      .eq('puzzle_date', puzzleDate);
+
+    if (totalError || !totalCount) {
+      console.error('Error getting total scores:', totalError);
+      return 50;
+    }
+
+    // Percentile = (number of scores below / total scores) * 100
+    const percentile = Math.round(((lowerCount || 0) / totalCount) * 100);
+    return percentile;
+  } catch (e) {
+    console.error('Error calculating percentile:', e);
+    return 50;
+  }
+}
+
+/**
+ * Get today's leaderboard stats
+ */
+export async function getTodayStats(): Promise<{
+  totalPlayers: number;
+  averageScore: number;
+  topScore: number;
+} | null> {
+  const puzzleDate = getTodayDateString();
+  
+  try {
+    const { data, error } = await supabase
+      .from('puzzle_scores')
+      .select('score')
+      .eq('puzzle_date', puzzleDate);
+
+    if (error || !data || data.length === 0) {
+      return null;
+    }
+
+    const scores = data.map(d => d.score);
+    const totalPlayers = scores.length;
+    const averageScore = Math.round(scores.reduce((a, b) => a + b, 0) / totalPlayers);
+    const topScore = Math.max(...scores);
+
+    return { totalPlayers, averageScore, topScore };
+  } catch (e) {
+    console.error('Error getting today stats:', e);
+    return null;
+  }
+}

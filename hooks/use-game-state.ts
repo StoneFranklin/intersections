@@ -1,6 +1,8 @@
 import { shuffleWords } from '@/data/puzzles';
 import {
+    calculateScore,
     CellPosition,
+    GameScore,
     GameState,
     isPlacementCorrect,
     isPuzzleSolved,
@@ -8,7 +10,7 @@ import {
     Puzzle,
     Word,
 } from '@/types/game';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 export interface UseGameStateReturn {
   /** Current game state */
@@ -29,10 +31,17 @@ export interface UseGameStateReturn {
   resetGame: () => void;
   /** Check if a specific cell has the correct word */
   isCellCorrect: (position: CellPosition) => boolean | null;
+  /** Current elapsed time in seconds */
+  elapsedTime: number;
+  /** Number of mistakes made */
+  mistakes: number;
+  /** Number of correct placements */
+  correctPlacements: number;
+  /** Final score (valid when puzzle is solved OR game over) */
+  finalScore: GameScore | null;
 }
 
-const STARTING_LIVES = 1;
-const MAX_LIVES = 3;
+const STARTING_LIVES = 3;
 
 export function useGameState(puzzle: Puzzle): UseGameStateReturn {
   const [shuffledWords, setShuffledWords] = useState(() => shuffleWords(puzzle));
@@ -45,6 +54,59 @@ export function useGameState(puzzle: Puzzle): UseGameStateReturn {
     lives: STARTING_LIVES,
   }));
 
+  // Timer state
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const [mistakes, setMistakes] = useState(0);
+  const [finalScore, setFinalScore] = useState<GameScore | null>(null);
+  const startTimeRef = useRef<number>(Date.now());
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Start/stop timer based on game state
+  useEffect(() => {
+    // Start timer when game begins
+    if (!gameState.isSolved && gameState.lives > 0) {
+      timerRef.current = setInterval(() => {
+        setElapsedTime(Math.floor((Date.now() - startTimeRef.current) / 1000));
+      }, 1000);
+    }
+
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, [gameState.isSolved, gameState.lives]);
+
+  // Calculate correct placements
+  const correctPlacements = useMemo(() => {
+    return gameState.placements.filter(placement => {
+      const word = puzzle.words.find(w => w.id === placement.wordId);
+      return word && isPlacementCorrect(word, placement.position, puzzle);
+    }).length;
+  }, [gameState.placements, puzzle]);
+
+  const totalCells = puzzle.words.length;
+  const isGameOver = gameState.lives <= 0;
+
+  // Calculate final score when puzzle is solved OR game over
+  useEffect(() => {
+    const gameEnded = gameState.isSolved || isGameOver;
+    if (gameEnded && !finalScore) {
+      const score = calculateScore(elapsedTime, mistakes, correctPlacements, totalCells);
+      setFinalScore({
+        timeSeconds: elapsedTime,
+        mistakes,
+        score,
+        correctPlacements,
+        completed: gameState.isSolved,
+      });
+      // Stop the timer
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    }
+  }, [gameState.isSolved, isGameOver, elapsedTime, mistakes, correctPlacements, totalCells, finalScore]);
+
   // Reset when puzzle changes
   useEffect(() => {
     setShuffledWords(shuffleWords(puzzle));
@@ -55,6 +117,10 @@ export function useGameState(puzzle: Puzzle): UseGameStateReturn {
       isSolved: false,
       lives: STARTING_LIVES,
     });
+    setElapsedTime(0);
+    setMistakes(0);
+    setFinalScore(null);
+    startTimeRef.current = Date.now();
   }, [puzzle]);
 
   const unplacedWords = useMemo(() => {
@@ -105,14 +171,17 @@ export function useGameState(puzzle: Puzzle): UseGameStateReturn {
       const solved = isPuzzleSolved(newPlacements, puzzle);
       const isCorrect = isPlacementCorrect(word, position, puzzle);
 
+      // Track mistakes
+      if (!isCorrect) {
+        setMistakes(prev => prev + 1);
+      }
+
       setGameState(prev => ({
         ...prev,
         placements: newPlacements,
         selectedWordId: null,
         isSolved: solved,
-        lives: isCorrect 
-          ? Math.min(prev.lives + 1, MAX_LIVES)  // Gain a life (max 3)
-          : prev.lives - 1,                       // Lose a life
+        lives: isCorrect ? prev.lives : prev.lives - 1,  // Only lose lives on mistakes
       }));
 
       return true;
@@ -174,5 +243,9 @@ export function useGameState(puzzle: Puzzle): UseGameStateReturn {
     removeWordFromCell,
     resetGame,
     isCellCorrect,
+    elapsedTime,
+    mistakes,
+    correctPlacements,
+    finalScore,
   };
 }

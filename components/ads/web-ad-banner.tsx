@@ -41,7 +41,7 @@ export function WebAdBanner({ adSlot, style }: WebAdBannerProps) {
           width: '100%',
           height: 90,
         }}
-        data-ad-client="ca-pub-XXXXXXXXXXXXXXXX" // Replace with your publisher ID
+        data-ad-client="ca-pub-6475460515852013" // Replace with your publisher ID
         data-ad-slot={adSlot}
         data-ad-format="horizontal"
         data-full-width-responsive="true"

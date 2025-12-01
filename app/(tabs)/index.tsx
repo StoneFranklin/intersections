@@ -1,19 +1,71 @@
 import { GameGrid, WordTray } from '@/components/game';
 import { generateDailyPuzzle } from '@/data/puzzle-generator';
-import { fetchTodaysPuzzle } from '@/data/puzzleApi';
+import { fetchTodaysPuzzle, submitScore } from '@/data/puzzleApi';
 import { useGameState } from '@/hooks/use-game-state';
-import { CellPosition, Puzzle } from '@/types/game';
+import { CellPosition, GameScore, Puzzle } from '@/types/game';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
 import React, { useEffect, useState } from 'react';
 import {
   Platform,
   SafeAreaView,
+  Share,
   StyleSheet,
   Text,
   TouchableOpacity,
   View
 } from 'react-native';
+
+// Format seconds into MM:SS
+function formatTime(seconds: number): string {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+// Generate share text for score
+function generateShareText(score: GameScore, percentile: number | null): string {
+  const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  
+  let text = `Intersections - ${today}\n\n`;
+  text += `My score today: ${score.score}\n\n`;
+  
+  if (percentile !== null) {
+    text += `Top ${100 - percentile}% of players`;
+  }
+  
+  text += `\n\nPlay at: stonefranklin.github.io/intersections`;
+  
+  return text;
+}
+
+// Share score function
+async function shareScore(score: GameScore, percentile: number | null) {
+  const text = generateShareText(score, percentile);
+  
+  if (Platform.OS === 'web') {
+    // Web share API or fallback to clipboard
+    if (navigator.share) {
+      try {
+        await navigator.share({ text });
+      } catch (e) {
+        // User cancelled or error
+        await navigator.clipboard.writeText(text);
+        alert('Score copied to clipboard!');
+      }
+    } else {
+      await navigator.clipboard.writeText(text);
+      alert('Score copied to clipboard!');
+    }
+  } else {
+    // Native share
+    try {
+      await Share.share({ message: text });
+    } catch (e) {
+      console.error('Share error:', e);
+    }
+  }
+}
 
 // Safe haptics wrapper for web
 const haptics = {
@@ -157,9 +209,34 @@ function GameContent({ puzzle, onBack, onComplete }: GameContentProps) {
     placeWordAtCell,
     removeWordFromCell,
     isCellCorrect,
+    elapsedTime,
+    mistakes,
+    finalScore,
   } = useGameState(puzzle);
 
+  const [percentile, setPercentile] = useState<number | null>(null);
+  const [submittingScore, setSubmittingScore] = useState(false);
+
   const isGameOver = gameState.lives <= 0;
+
+  // Submit score when puzzle is solved OR game over
+  useEffect(() => {
+    const gameEnded = gameState.isSolved || isGameOver;
+    if (gameEnded && finalScore && !submittingScore && percentile === null) {
+      setSubmittingScore(true);
+      submitScore(finalScore.score, finalScore.timeSeconds, finalScore.mistakes)
+        .then((result) => {
+          if (result) {
+            setPercentile(result.percentile);
+          }
+          if (gameState.isSolved) {
+            onComplete();
+          }
+        })
+        .catch(console.error)
+        .finally(() => setSubmittingScore(false));
+    }
+  }, [gameState.isSolved, isGameOver, finalScore, submittingScore, percentile, onComplete]);
 
   const handleCellPress = (position: CellPosition) => {
     if (isGameOver || gameState.isSolved) return;
@@ -200,15 +277,105 @@ function GameContent({ puzzle, onBack, onComplete }: GameContentProps) {
   };
 
   // Full screen game over overlay
-  if (isGameOver) {
+  // Full screen game over overlay with score
+  if (isGameOver && finalScore) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.gameOverOverlay}>
           <Text style={styles.gameOverEmoji}>💔</Text>
           <Text style={styles.gameOverText}>Game Over!</Text>
-          <TouchableOpacity style={styles.tryAgainButton} onPress={onBack}>
-            <Text style={styles.tryAgainText}>Back to Menu</Text>
-          </TouchableOpacity>
+          
+          <View style={styles.scoreCard}>
+            <View style={styles.scoreRow}>
+              <View style={styles.scoreItem}>
+                <Text style={styles.scoreValue}>{finalScore.score}</Text>
+                <Text style={styles.scoreLabel}>Score</Text>
+              </View>
+              <View style={styles.scoreItem}>
+                <Text style={styles.scoreValue}>{finalScore.correctPlacements}/16</Text>
+                <Text style={styles.scoreLabel}>Correct</Text>
+              </View>
+              <View style={styles.scoreItem}>
+                <Text style={styles.scoreValue}>{formatTime(finalScore.timeSeconds)}</Text>
+                <Text style={styles.scoreLabel}>Time</Text>
+              </View>
+            </View>
+          </View>
+
+          {submittingScore && (
+            <Text style={styles.calculatingText}>Calculating rank...</Text>
+          )}
+          
+          {percentile !== null && (
+            <View style={styles.percentileCardGameOver}>
+              <Text style={styles.percentileValueGameOver}>Top {100 - percentile}%</Text>
+              <Text style={styles.percentileLabelGameOver}>of players today</Text>
+            </View>
+          )}
+
+          <View style={styles.buttonRow}>
+            <TouchableOpacity 
+              style={styles.shareButton} 
+              onPress={() => shareScore(finalScore, percentile)}
+            >
+              <Text style={styles.shareButtonText}>Share</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.tryAgainButton} onPress={onBack}>
+              <Text style={styles.tryAgainText}>Menu</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Full screen win overlay
+  if (gameState.isSolved && finalScore) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.winOverlay}>
+          <Text style={styles.winEmoji}>🎉</Text>
+          <Text style={styles.winOverlayTitle}>Puzzle Solved!</Text>
+          
+          <View style={styles.scoreCard}>
+            <View style={styles.scoreRow}>
+              <View style={styles.scoreItem}>
+                <Text style={styles.scoreValue}>{finalScore.score}</Text>
+                <Text style={styles.scoreLabel}>Score</Text>
+              </View>
+              <View style={styles.scoreItem}>
+                <Text style={styles.scoreValue}>{formatTime(finalScore.timeSeconds)}</Text>
+                <Text style={styles.scoreLabel}>Time</Text>
+              </View>
+              <View style={styles.scoreItem}>
+                <Text style={styles.scoreValue}>{finalScore.mistakes}</Text>
+                <Text style={styles.scoreLabel}>Mistakes</Text>
+              </View>
+            </View>
+          </View>
+
+          {submittingScore && (
+            <Text style={styles.calculatingText}>Calculating rank...</Text>
+          )}
+          
+          {percentile !== null && (
+            <View style={styles.percentileCard}>
+              <Text style={styles.percentileValue}>Top {100 - percentile}%</Text>
+              <Text style={styles.percentileLabel}>of players today</Text>
+            </View>
+          )}
+
+          <View style={styles.buttonRow}>
+            <TouchableOpacity 
+              style={styles.shareButtonWin} 
+              onPress={() => shareScore(finalScore, percentile)}
+            >
+              <Text style={styles.shareButtonWinText}>Share</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.menuButton} onPress={onBack}>
+              <Text style={styles.menuButtonText}>Menu</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </SafeAreaView>
     );
@@ -221,20 +388,12 @@ function GameContent({ puzzle, onBack, onComplete }: GameContentProps) {
         <TouchableOpacity onPress={onBack} style={styles.headerBackButton}>
           <Text style={styles.headerBackIcon}>‹</Text>
         </TouchableOpacity>
-        <Text style={styles.instructions}>
-          Place words where categories intersect
-        </Text>
+        <View style={styles.headerCenter}>
+          <Text style={styles.timerText}>{formatTime(elapsedTime)}</Text>
+        </View>
+        <View style={styles.headerRight} />
       </View>
 
-      {/* Win Banner */}
-      {gameState.isSolved && (
-        <View style={styles.winBanner}>
-          <Text style={styles.winText}>Puzzle Solved!</Text>
-          <TouchableOpacity style={styles.playAgainButton} onPress={() => { onComplete(); onBack(); }}>
-            <Text style={styles.playAgainText}>Back to Menu</Text>
-          </TouchableOpacity>
-        </View>
-      )}
       {/* Game Grid */}
       <View style={styles.gridContainer}>
         <GameGrid
@@ -327,23 +486,32 @@ const styles = StyleSheet.create({
   },
   // Header styles
   header: {
-    padding: 16,
-    paddingTop: 12,
-    paddingBottom: 12,
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
+    padding: 12,
+    paddingHorizontal: 16,
     backgroundColor: '#1a1a2e',
     borderBottomWidth: 1,
     borderBottomColor: '#2a2a4e',
     minHeight: 44,
-    position: 'relative',
   },
   headerBackButton: {
-    position: 'absolute',
-    left: 12,
-    top: '50%',
-    transform: [{ translateY: '-50%' }],
     padding: 8,
+    width: 44,
+  },
+  headerCenter: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  headerRight: {
+    width: 44,
+  },
+  timerText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#fff',
+    fontVariant: ['tabular-nums'],
   },
   headerBackIcon: {
     color: 'white',
@@ -393,10 +561,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#1a0a0a',
+    padding: 20,
   },
   gameOverEmoji: {
     fontSize: 80,
-    marginBottom: 20,
+    marginBottom: 16,
   },
   gameOverText: {
     fontSize: 36,
@@ -404,42 +573,143 @@ const styles = StyleSheet.create({
     color: '#ff6b6b',
     marginBottom: 24,
   },
+  percentileCardGameOver: {
+    backgroundColor: '#3d2d2d',
+    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  percentileValueGameOver: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#ff6b6b',
+  },
+  percentileLabelGameOver: {
+    fontSize: 14,
+    color: '#d0a0a0',
+    marginTop: 4,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  shareButton: {
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+    borderColor: '#ff6b6b',
+    paddingHorizontal: 28,
+    paddingVertical: 12,
+    borderRadius: 25,
+  },
+  shareButtonText: {
+    color: '#ff6b6b',
+    fontWeight: '600',
+    fontSize: 18,
+  },
   tryAgainButton: {
     backgroundColor: '#ff6b6b',
-    paddingHorizontal: 32,
+    paddingHorizontal: 28,
     paddingVertical: 14,
     borderRadius: 25,
-    marginBottom: 12,
   },
   tryAgainText: {
     color: '#0f0f1a',
     fontWeight: '600',
     fontSize: 18,
   },
-  // Win banner styles
-  winBanner: {
-    backgroundColor: '#2d5a3d',
-    padding: 16,
-    marginHorizontal: 16,
-    borderRadius: 12,
+  // Win overlay styles (full screen)
+  winOverlay: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 8,
+    backgroundColor: '#0a1a0f',
+    padding: 20,
   },
-  winText: {
-    fontSize: 20,
+  winEmoji: {
+    fontSize: 80,
+    marginBottom: 16,
+  },
+  winOverlayTitle: {
+    fontSize: 36,
     fontWeight: 'bold',
     color: '#4ade80',
-    marginBottom: 8,
+    marginBottom: 32,
   },
-  playAgainButton: {
+  scoreCard: {
+    backgroundColor: '#1a2e1f',
+    borderRadius: 16,
+    padding: 24,
+    width: '100%',
+    maxWidth: 320,
+    marginBottom: 24,
+  },
+  scoreRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  scoreItem: {
+    alignItems: 'center',
+    minWidth: 80,
+  },
+  scoreValue: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  scoreLabel: {
+    fontSize: 12,
+    color: '#888',
+    marginTop: 4,
+    textTransform: 'uppercase',
+  },
+  calculatingText: {
+    fontSize: 16,
+    color: '#888',
+    marginBottom: 16,
+  },
+  percentileCard: {
+    backgroundColor: '#2d5a3d',
+    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  percentileValue: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#4ade80',
+  },
+  percentileLabel: {
+    fontSize: 14,
+    color: '#a0d0b0',
+    marginTop: 4,
+  },
+  shareButtonWin: {
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+    borderColor: '#4ade80',
+    paddingHorizontal: 28,
+    paddingVertical: 12,
+    borderRadius: 25,
+  },
+  shareButtonWinText: {
+    color: '#4ade80',
+    fontWeight: '600',
+    fontSize: 18,
+  },
+  menuButton: {
     backgroundColor: '#4ade80',
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingHorizontal: 28,
+    paddingVertical: 14,
+    borderRadius: 25,
   },
-  playAgainText: {
+  menuButtonText: {
     color: '#0f0f1a',
     fontWeight: '600',
+    fontSize: 18,
   },
   // Grid container
   gridContainer: {
