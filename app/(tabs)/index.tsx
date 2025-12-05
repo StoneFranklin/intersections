@@ -1,6 +1,6 @@
 import { GameGrid, WordTray } from '@/components/game';
 import { generateDailyPuzzle } from '@/data/puzzle-generator';
-import { fetchTodaysPuzzle, submitScore } from '@/data/puzzleApi';
+import { fetchTodaysPuzzle, getPercentile, submitScore } from '@/data/puzzleApi';
 import { useGameState } from '@/hooks/use-game-state';
 import { CellPosition, GameScore, Puzzle } from '@/types/game';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -8,8 +8,10 @@ import * as Haptics from 'expo-haptics';
 import React, { useEffect, useState } from 'react';
 import {
     Image,
+    Modal,
     Platform,
     SafeAreaView,
+    ScrollView,
     Share,
     StyleSheet,
     Text,
@@ -100,6 +102,7 @@ export default function GameScreen() {
   const [savedScore, setSavedScore] = useState<GameScore | null>(null);
   const [dailyCompleted, setDailyCompleted] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [showTutorial, setShowTutorial] = useState(false);
 
   // Check if today's puzzle was already completed
   useEffect(() => {
@@ -113,7 +116,11 @@ export default function GameScreen() {
         if (completed === 'true') {
           const scoreData = await AsyncStorage.getItem(`score-${todayKey}`);
           if (scoreData) {
-            setSavedScore(JSON.parse(scoreData));
+            const score = JSON.parse(scoreData) as GameScore;
+            // Fetch fresh percentile from database
+            const freshPercentile = await getPercentile(score.score);
+            score.percentile = freshPercentile;
+            setSavedScore(score);
           }
         }
       } catch (e) {
@@ -196,6 +203,9 @@ export default function GameScreen() {
                   <Text style={styles.scoreSummaryText}>
                     {savedScore.score} pts • {savedScore.completed ? '16/16' : `${savedScore.correctPlacements}/16`} • {formatTime(savedScore.timeSeconds)}
                   </Text>
+                  {savedScore.percentile !== undefined && (
+                    <Text style={styles.percentileText}>Top {100 - savedScore.percentile}% of players</Text>
+                  )}
                   <Text style={styles.playButtonDesc}>Tap to review</Text>
                 </View>
               ) : (
@@ -205,6 +215,13 @@ export default function GameScreen() {
               )}
             </TouchableOpacity>
           </View>
+
+          <TouchableOpacity 
+            style={styles.howToPlayButton}
+            onPress={() => setShowTutorial(true)}
+          >
+            <Text style={styles.howToPlayText}>How to Play</Text>
+          </TouchableOpacity>
 
           {loading ? null : (
             <Text style={styles.dateText}>
@@ -216,6 +233,60 @@ export default function GameScreen() {
             </Text>
           )}
         </View>
+
+        {/* Tutorial Modal */}
+        <Modal
+          visible={showTutorial}
+          animationType="fade"
+          transparent={true}
+          onRequestClose={() => setShowTutorial(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.tutorialModal}>
+              <ScrollView showsVerticalScrollIndicator={true}>
+                <Text style={styles.tutorialTitle}>How to Play</Text>
+                
+                <Text style={styles.tutorialHeading}>Goal</Text>
+                <Text style={styles.tutorialText}>
+                  Place each word in the grid where its two categories intersect.
+                </Text>
+
+                <Text style={styles.tutorialHeading}>Example</Text>
+                <Text style={styles.tutorialText}>
+                  If the row is "Fruits" and the column is "Red Things", the correct word might be "Apple" — it belongs to both categories!
+                </Text>
+
+                <Text style={styles.tutorialHeading}>How to Play</Text>
+                <Text style={styles.tutorialText}>
+                  1. Tap a word from the tray below the grid{"\n"}
+                  2. Tap a cell in the grid to place it{"\n"}
+                  3. Tap a placed word to remove it{"\n"}
+                  4. Fill all 16 cells correctly to win!
+                </Text>
+
+                <Text style={styles.tutorialHeading}>Lives</Text>
+                <Text style={styles.tutorialText}>
+                  You have 3 lives. Each incorrect placement costs one life. Lose all lives and the game ends.
+                </Text>
+
+                <Text style={styles.tutorialHeading}>Scoring</Text>
+                <Text style={styles.tutorialText}>
+                  • Complete the puzzle: up to 1000 points{"\n"}
+                  • Faster = higher score{"\n"}
+                  • Fewer mistakes = higher score{"\n"}
+                  • Compare your score with other players!
+                </Text>
+              </ScrollView>
+
+              <TouchableOpacity 
+                style={styles.tutorialCloseButton}
+                onPress={() => setShowTutorial(false)}
+              >
+                <Text style={styles.tutorialCloseText}>Got it!</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
       </SafeAreaView>
     );
   }
@@ -255,6 +326,7 @@ function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedSc
 
   const [percentile, setPercentile] = useState<number | null>(null);
   const [submittingScore, setSubmittingScore] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(false);
 
   const isGameOver = gameState.lives <= 0;
 
@@ -340,6 +412,11 @@ function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedSc
                   <Text style={styles.scoreLabel}>Time</Text>
                 </View>
               </View>
+              {savedScore.percentile !== undefined && (
+                <View style={styles.reviewPercentileRow}>
+                  <Text style={styles.reviewPercentileText}>Top {100 - savedScore.percentile}% of players</Text>
+                </View>
+              )}
             </View>
           ) : (
             <View style={styles.scoreCard}>
@@ -488,7 +565,11 @@ function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedSc
         <View style={styles.headerCenter}>
           <Text style={styles.timerText}>{formatTime(elapsedTime)}</Text>
         </View>
-        <View style={styles.headerRight} />
+        <TouchableOpacity onPress={() => setShowTutorial(true)} style={styles.headerHelpButton}>
+          <View style={styles.helpCircle}>
+            <Text style={styles.headerHelpIcon}>?</Text>
+          </View>
+        </TouchableOpacity>
       </View>
 
       {/* Game Grid */}
@@ -523,6 +604,60 @@ function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedSc
         selectedWordId={gameState.selectedWordId}
         onWordSelect={handleWordSelect}
       />
+
+      {/* Tutorial Modal */}
+      <Modal
+        visible={showTutorial}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => setShowTutorial(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.tutorialModal}>
+            <ScrollView showsVerticalScrollIndicator={true}>
+              <Text style={styles.tutorialTitle}>How to Play</Text>
+              
+              <Text style={styles.tutorialHeading}>Goal</Text>
+              <Text style={styles.tutorialText}>
+                Place each word in the grid where its two categories intersect.
+              </Text>
+
+              <Text style={styles.tutorialHeading}>Example</Text>
+              <Text style={styles.tutorialText}>
+                If the row is "Fruits" and the column is "Red Things", the correct word might be "Apple" — it belongs to both categories!
+              </Text>
+
+              <Text style={styles.tutorialHeading}>How to Play</Text>
+              <Text style={styles.tutorialText}>
+                1. Tap a word from the tray below the grid{"\n"}
+                2. Tap a cell in the grid to place it{"\n"}
+                3. Tap a placed word to remove it{"\n"}
+                4. Fill all 16 cells correctly to win!
+              </Text>
+
+              <Text style={styles.tutorialHeading}>Lives</Text>
+              <Text style={styles.tutorialText}>
+                You have 3 lives. Each incorrect placement costs one life. Lose all lives and the game ends.
+              </Text>
+
+              <Text style={styles.tutorialHeading}>Scoring</Text>
+              <Text style={styles.tutorialText}>
+                • Complete the puzzle: up to 1000 points{"\n"}
+                • Faster = higher score{"\n"}
+                • Fewer mistakes = higher score{"\n"}
+                • Compare your score with other players!
+              </Text>
+            </ScrollView>
+
+            <TouchableOpacity 
+              style={styles.tutorialCloseButton}
+              onPress={() => setShowTutorial(false)}
+            >
+              <Text style={styles.tutorialCloseText}>Got it!</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -590,10 +725,76 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 4,
   },
+  percentileText: {
+    fontSize: 14,
+    color: '#f59e0b',
+    fontWeight: '500',
+    marginBottom: 4,
+  },
   dateText: {
     marginTop: 40,
     fontSize: 16,
     color: '#666',
+  },
+  howToPlayButton: {
+    marginTop: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+  },
+  howToPlayText: {
+    fontSize: 16,
+    color: '#888',
+    textDecorationLine: 'underline',
+  },
+  // Tutorial modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  tutorialModal: {
+    backgroundColor: '#1a1a2e',
+    borderRadius: 16,
+    padding: 24,
+    maxWidth: 400,
+    maxHeight: '80%',
+    width: '100%',
+  },
+  tutorialTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#fff',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  tutorialHeading: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#4ade80',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  tutorialText: {
+    fontSize: 15,
+    color: '#ccc',
+    lineHeight: 22,
+  },
+  tutorialCloseButton: {
+    backgroundColor: '#2d5a3d',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    alignItems: 'center',
+    marginTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#2a2a4e',
+  },
+  tutorialCloseText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#fff',
   },
   // Header styles
   header: {
@@ -617,6 +818,26 @@ const styles = StyleSheet.create({
   },
   headerRight: {
     width: 44,
+  },
+  headerHelpButton: {
+    padding: 8,
+    width: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  helpCircle: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#888',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerHelpIcon: {
+    color: '#888',
+    fontSize: 14,
+    fontWeight: '700',
   },
   timerText: {
     fontSize: 20,
@@ -846,6 +1067,18 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#fff',
     marginBottom: 20,
+  },
+  reviewPercentileRow: {
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#2a3a4a',
+    alignItems: 'center',
+  },
+  reviewPercentileText: {
+    fontSize: 18,
+    color: '#f59e0b',
+    fontWeight: '600',
   },
   reviewSubtitle: {
     fontSize: 16,

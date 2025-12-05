@@ -106,6 +106,15 @@ export async function fetchTodaysPuzzle(): Promise<Puzzle | null> {
 }
 
 /**
+ * Get the current percentile for a score (for today's puzzle)
+ * This can be called later to get updated percentile as more players complete
+ */
+export async function getPercentile(score: number): Promise<number> {
+  const puzzleDate = getTodayDateString();
+  return getScorePercentile(puzzleDate, score);
+}
+
+/**
  * Submit a score for today's puzzle
  * Returns the percentile rank (0-100)
  */

@@ -125,6 +125,8 @@ export interface GameScore {
 /**
  * Calculate score based on correct placements, time, and mistakes
  * Partial completion gets proportional base score
+ * Full completion gets a bonus
+ * Max score is 1000
  */
 export function calculateScore(
   timeSeconds: number, 
@@ -132,19 +134,28 @@ export function calculateScore(
   correctPlacements: number = 16,
   totalCells: number = 16
 ): number {
-  const BASE_SCORE = 1000;
-  const TIME_PENALTY_PER_SECOND = 2;  // -2 points per second
+  const MAX_SCORE = 1000;
+  const BASE_SCORE = 800;              // Base for full completion
+  const COMPLETION_BONUS = 200;        // +200 for completing the puzzle (800 + 200 = 1000 max)
+  const TIME_PENALTY_PER_SECOND = 2;   // -2 points per second
   const MISTAKE_PENALTY = 50;          // -50 points per mistake
   
   // Proportional base score based on correct placements
   const proportionalBase = Math.floor((correctPlacements / totalCells) * BASE_SCORE);
   
-  const timePenalty = Math.floor(timeSeconds * TIME_PENALTY_PER_SECOND);
+  // Bonus for full completion
+  const completed = correctPlacements === totalCells;
+  const completionBonus = completed ? COMPLETION_BONUS : 0;
+  
+  // Time penalty caps at 50% of base score
+  const maxTimePenalty = proportionalBase * 0.5;
+  const timePenalty = Math.min(Math.floor(timeSeconds * TIME_PENALTY_PER_SECOND), maxTimePenalty);
+  
   const mistakePenalty = mistakes * MISTAKE_PENALTY;
   
-  const score = proportionalBase - timePenalty - mistakePenalty;
+  const score = proportionalBase + completionBonus - timePenalty - mistakePenalty;
   
-  // Minimum score of 0
-  return Math.max(0, score);
+  // Score between 0 and MAX_SCORE
+  return Math.max(0, Math.min(MAX_SCORE, score));
 }
 
