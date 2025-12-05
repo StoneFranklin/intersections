@@ -7,13 +7,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
 import React, { useEffect, useState } from 'react';
 import {
-  Platform,
-  SafeAreaView,
-  Share,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View
+    Image,
+    Platform,
+    SafeAreaView,
+    Share,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
 } from 'react-native';
 
 // Format seconds into MM:SS
@@ -95,6 +96,8 @@ function getTodayKey(): string {
 export default function GameScreen() {
   const [puzzle, setPuzzle] = useState<Puzzle | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isReviewMode, setIsReviewMode] = useState(false);
+  const [savedScore, setSavedScore] = useState<GameScore | null>(null);
   const [dailyCompleted, setDailyCompleted] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -105,6 +108,14 @@ export default function GameScreen() {
         const todayKey = getTodayKey();
         const completed = await AsyncStorage.getItem(`completed-${todayKey}`);
         setDailyCompleted(completed === 'true');
+        
+        // Load saved score if completed
+        if (completed === 'true') {
+          const scoreData = await AsyncStorage.getItem(`score-${todayKey}`);
+          if (scoreData) {
+            setSavedScore(JSON.parse(scoreData));
+          }
+        }
       } catch (e) {
         console.log('Error checking completion:', e);
       }
@@ -127,25 +138,35 @@ export default function GameScreen() {
         console.log('No puzzle in DB, using static fallback');
         setPuzzle(generateDailyPuzzle());
       }
+      // If already completed, open in review mode
+      setIsReviewMode(dailyCompleted);
       setIsPlaying(true);
     } catch (e) {
       console.error('Error fetching puzzle:', e);
       // Fallback to static puzzle on error
       setPuzzle(generateDailyPuzzle());
+      setIsReviewMode(dailyCompleted);
       setIsPlaying(true);
     } finally {
       setFetchingPuzzle(false);
     }
   };
 
-  const handleComplete = async () => {
+  const handleComplete = async (score: GameScore) => {
     try {
       const todayKey = getTodayKey();
       await AsyncStorage.setItem(`completed-${todayKey}`, 'true');
+      await AsyncStorage.setItem(`score-${todayKey}`, JSON.stringify(score));
       setDailyCompleted(true);
+      setSavedScore(score);
     } catch (e) {
       console.log('Error saving completion:', e);
     }
+  };
+
+  const handleBack = () => {
+    setIsPlaying(false);
+    setIsReviewMode(false);
   };
 
   // Show main menu
@@ -153,6 +174,11 @@ export default function GameScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.mainMenu}>
+          <Image 
+            source={require('@/assets/images/intersections-logo.png')} 
+            style={styles.menuLogo}
+            resizeMode="contain"
+          />
           <Text style={styles.menuTitle}>Intersections</Text>
           <Text style={styles.menuSubtitle}>A Daily Word Puzzle</Text>
           
@@ -163,11 +189,20 @@ export default function GameScreen() {
               disabled={fetchingPuzzle}
             >
               <Text style={styles.playButtonLabel}>
-                {fetchingPuzzle ? 'Loading...' : dailyCompleted ? '✓ Daily Puzzle' : "Today's Puzzle"}
+                {fetchingPuzzle ? 'Loading...' : dailyCompleted ? '✓ Completed' : "Today's Puzzle"}
               </Text>
-              <Text style={styles.playButtonDesc}>
-                {fetchingPuzzle ? 'Fetching puzzle' : dailyCompleted ? 'Completed!' : 'New puzzle every day'}
-              </Text>
+              {dailyCompleted && savedScore ? (
+                <View style={styles.scoreSummary}>
+                  <Text style={styles.scoreSummaryText}>
+                    {savedScore.score} pts • {savedScore.completed ? '16/16' : `${savedScore.correctPlacements}/16`} • {formatTime(savedScore.timeSeconds)}
+                  </Text>
+                  <Text style={styles.playButtonDesc}>Tap to review</Text>
+                </View>
+              ) : (
+                <Text style={styles.playButtonDesc}>
+                  {fetchingPuzzle ? 'Fetching puzzle' : dailyCompleted ? 'Tap to review your answers' : 'New puzzle every day'}
+                </Text>
+              )}
             </TouchableOpacity>
           </View>
 
@@ -188,8 +223,10 @@ export default function GameScreen() {
   return (
     <GameContent 
       puzzle={puzzle} 
-      onBack={() => setIsPlaying(false)}
+      onBack={handleBack}
       onComplete={handleComplete}
+      isReviewMode={isReviewMode}
+      savedScore={savedScore}
     />
   );
 }
@@ -197,10 +234,12 @@ export default function GameScreen() {
 interface GameContentProps {
   puzzle: Puzzle;
   onBack: () => void;
-  onComplete: () => void;
+  onComplete: (score: GameScore) => void;
+  isReviewMode?: boolean;
+  savedScore?: GameScore | null;
 }
 
-function GameContent({ puzzle, onBack, onComplete }: GameContentProps) {
+function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedScore }: GameContentProps) {
   const {
     gameState,
     unplacedWords,
@@ -219,8 +258,10 @@ function GameContent({ puzzle, onBack, onComplete }: GameContentProps) {
 
   const isGameOver = gameState.lives <= 0;
 
-  // Submit score when puzzle is solved OR game over
+  // Submit score when puzzle is solved OR game over (only if not in review mode)
   useEffect(() => {
+    if (isReviewMode) return;
+    
     const gameEnded = gameState.isSolved || isGameOver;
     if (gameEnded && finalScore && !submittingScore && percentile === null) {
       setSubmittingScore(true);
@@ -229,9 +270,8 @@ function GameContent({ puzzle, onBack, onComplete }: GameContentProps) {
           if (result) {
             setPercentile(result.percentile);
           }
-          if (gameState.isSolved) {
-            onComplete();
-          }
+          // Save completion for both win and game over
+          onComplete(finalScore);
         })
         .catch(console.error)
         .finally(() => setSubmittingScore(false));
@@ -239,7 +279,7 @@ function GameContent({ puzzle, onBack, onComplete }: GameContentProps) {
   }, [gameState.isSolved, isGameOver, finalScore, submittingScore, percentile, onComplete]);
 
   const handleCellPress = (position: CellPosition) => {
-    if (isGameOver || gameState.isSolved) return;
+    if (isReviewMode || isGameOver || gameState.isSolved) return;
     
     const existingWord = getWordAtCell(position);
     
@@ -260,7 +300,7 @@ function GameContent({ puzzle, onBack, onComplete }: GameContentProps) {
   };
 
   const handleCellLongPress = (position: CellPosition) => {
-    if (isGameOver || gameState.isSolved) return;
+    if (isReviewMode || isGameOver || gameState.isSolved) return;
     
     const word = getWordAtCell(position);
     if (word) {
@@ -270,13 +310,70 @@ function GameContent({ puzzle, onBack, onComplete }: GameContentProps) {
   };
 
   const handleWordSelect = (wordId: string | null) => {
+    if (isReviewMode) return;
     selectWord(wordId);
     if (wordId) {
       haptics.selection();
     }
   };
 
-  // Full screen game over overlay
+  // Review mode - show the solved puzzle
+  if (isReviewMode) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.reviewOverlay}>
+          <Text style={styles.reviewTitle}>Your Results</Text>
+          
+          {savedScore ? (
+            <View style={styles.scoreCard}>
+              <View style={styles.scoreRow}>
+                <View style={styles.scoreItem}>
+                  <Text style={styles.scoreValue}>{savedScore.score}</Text>
+                  <Text style={styles.scoreLabel}>Score</Text>
+                </View>
+                <View style={styles.scoreItem}>
+                  <Text style={styles.scoreValue}>{savedScore.completed ? '16/16' : `${savedScore.correctPlacements}/16`}</Text>
+                  <Text style={styles.scoreLabel}>Correct</Text>
+                </View>
+                <View style={styles.scoreItem}>
+                  <Text style={styles.scoreValue}>{formatTime(savedScore.timeSeconds)}</Text>
+                  <Text style={styles.scoreLabel}>Time</Text>
+                </View>
+              </View>
+            </View>
+          ) : (
+            <View style={styles.scoreCard}>
+              <Text style={styles.noScoreText}>Score data not available</Text>
+              <Text style={styles.noScoreSubtext}>Completed before scoring was added</Text>
+            </View>
+          )}
+
+          <Text style={styles.reviewSubtitle}>Correct Answers</Text>
+          
+          <View style={styles.reviewGridContainer}>
+            <GameGrid
+              puzzle={puzzle}
+              getWordAtCell={(pos) => {
+                // Show the correct word for each cell
+                const rowCat = puzzle.rowCategories[pos.rowIndex];
+                const colCat = puzzle.colCategories[pos.colIndex];
+                return puzzle.words.find(w => w.correctRowId === rowCat.id && w.correctColId === colCat.id) || null;
+              }}
+              isCellCorrect={() => true}
+              selectedWordId={null}
+              onCellPress={() => {}}
+              onCellLongPress={() => {}}
+            />
+          </View>
+
+          <TouchableOpacity style={styles.menuButton} onPress={onBack}>
+            <Text style={styles.menuButtonText}>Back to Menu</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   // Full screen game over overlay with score
   if (isGameOver && finalScore) {
     return (
@@ -442,6 +539,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
   },
+  menuLogo: {
+    width: 150,
+    height: 150,
+    marginBottom: 20,
+  },
   menuTitle: {
     fontSize: 48,
     fontWeight: 'bold',
@@ -478,6 +580,15 @@ const styles = StyleSheet.create({
   playButtonDesc: {
     fontSize: 14,
     color: '#aaa',
+  },
+  scoreSummary: {
+    alignItems: 'center',
+  },
+  scoreSummaryText: {
+    fontSize: 16,
+    color: '#4ade80',
+    fontWeight: '600',
+    marginBottom: 4,
   },
   dateText: {
     marginTop: 40,
@@ -664,6 +775,17 @@ const styles = StyleSheet.create({
     marginTop: 4,
     textTransform: 'uppercase',
   },
+  noScoreText: {
+    fontSize: 16,
+    color: '#fff',
+    textAlign: 'center',
+  },
+  noScoreSubtext: {
+    fontSize: 12,
+    color: '#888',
+    textAlign: 'center',
+    marginTop: 4,
+  },
   calculatingText: {
     fontSize: 16,
     color: '#888',
@@ -710,6 +832,29 @@ const styles = StyleSheet.create({
     color: '#0f0f1a',
     fontWeight: '600',
     fontSize: 18,
+  },
+  // Review mode styles
+  reviewOverlay: {
+    flex: 1,
+    alignItems: 'center',
+    backgroundColor: '#0f0f1a',
+    padding: 20,
+    paddingTop: 40,
+  },
+  reviewTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 20,
+  },
+  reviewSubtitle: {
+    fontSize: 16,
+    color: '#888',
+    marginTop: 24,
+    marginBottom: 12,
+  },
+  reviewGridContainer: {
+    alignItems: 'center',
   },
   // Grid container
   gridContainer: {

@@ -16,6 +16,9 @@ export default function Root({ children }: PropsWithChildren) {
           content="width=device-width, initial-scale=1, shrink-to-fit=no"
         />
 
+        {/* Favicon */}
+        <link rel="icon" type="image/png" href="/intersections/assets/images/intersections-logo.png" />
+
         {/* Google AdSense - Replace ca-pub-XXXXXXXXXXXXXXXX with your publisher ID */}
         <script
           async

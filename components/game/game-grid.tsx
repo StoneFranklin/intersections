@@ -1,6 +1,6 @@
 import { CellPosition, Puzzle, Word } from '@/types/game';
 import React, { useEffect, useState } from 'react';
-import { Dimensions, Platform, StyleSheet, Text, View } from 'react-native';
+import { Dimensions, Image, Platform, StyleSheet, Text, View } from 'react-native';
 import { GameCell } from './game-cell';
 
 interface GameGridProps {
@@ -68,11 +68,22 @@ export function GameGrid({
   const headerWidth = cellSize * 1.3;
   const fontSize = Math.max(10, Math.min(cellSize / 6, 16));
 
+  // Logo size to fit perfectly in corner cell (accounting for margin)
+  const cornerWidth = headerWidth - 4; // subtract margin
+  const cornerHeight = cellSize * 0.8 - 4; // subtract margin
+  const logoSize = Math.min(cornerWidth, cornerHeight);
+
   return (
     <View style={styles.container}>
       {/* Column headers (top) */}
       <View style={styles.headerRow}>
-        <View style={[styles.cornerCell, { width: headerWidth, height: cellSize * 0.8 }]} />
+        <View style={[styles.cornerCell, { width: headerWidth, height: cellSize * 0.8 }]}>
+          <Image 
+            source={require('@/assets/images/intersections-logo.png')} 
+            style={{ width: logoSize, height: logoSize }}
+            resizeMode="contain"
+          />
+        </View>
         {colCategories.map((col) => (
           <View 
             key={col.id} 
@@ -139,6 +150,10 @@ const styles = StyleSheet.create({
   },
   cornerCell: {
     margin: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#2a3a5a',
+    borderRadius: 8,
   },
   colHeader: {
     margin: 2,
