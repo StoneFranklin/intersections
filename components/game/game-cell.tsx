@@ -1,6 +1,6 @@
 import { CellPosition, Word } from '@/types/game';
-import React from 'react';
-import { StyleSheet, Text, TouchableOpacity } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { Animated, StyleSheet, Text, TouchableOpacity } from 'react-native';
 
 interface GameCellProps {
   position: CellPosition;
@@ -20,6 +20,55 @@ export function GameCell({
   onLongPress,
   size,
 }: GameCellProps) {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const shakeAnim = useRef(new Animated.Value(0)).current;
+  const flashAnim = useRef(new Animated.Value(0)).current;
+  const prevIsCorrect = useRef<boolean | null>(null);
+
+  // Animate on correct/incorrect placement
+  useEffect(() => {
+    if (isCorrect !== null && prevIsCorrect.current === null) {
+      if (isCorrect) {
+        // Pop animation for correct
+        Animated.sequence([
+          Animated.timing(scaleAnim, {
+            toValue: 1.15,
+            duration: 100,
+            useNativeDriver: true,
+          }),
+          Animated.timing(scaleAnim, {
+            toValue: 1,
+            duration: 100,
+            useNativeDriver: true,
+          }),
+        ]).start();
+        
+        // Flash green
+        Animated.sequence([
+          Animated.timing(flashAnim, {
+            toValue: 1,
+            duration: 150,
+            useNativeDriver: false,
+          }),
+          Animated.timing(flashAnim, {
+            toValue: 0,
+            duration: 300,
+            useNativeDriver: false,
+          }),
+        ]).start();
+      } else {
+        // Shake animation for incorrect
+        Animated.sequence([
+          Animated.timing(shakeAnim, { toValue: 10, duration: 50, useNativeDriver: true }),
+          Animated.timing(shakeAnim, { toValue: -10, duration: 50, useNativeDriver: true }),
+          Animated.timing(shakeAnim, { toValue: 10, duration: 50, useNativeDriver: true }),
+          Animated.timing(shakeAnim, { toValue: 0, duration: 50, useNativeDriver: true }),
+        ]).start();
+      }
+    }
+    prevIsCorrect.current = isCorrect;
+  }, [isCorrect, scaleAnim, shakeAnim, flashAnim]);
+
   const getCellStyle = () => {
     if (!word) {
       return isSelected ? styles.cellEmpty : styles.cellEmpty;
@@ -35,30 +84,50 @@ export function GameCell({
 
   const fontSize = Math.max(12, Math.min(size / 5, 18));
 
+  const flashBackgroundColor = flashAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['transparent', 'rgba(74, 222, 128, 0.4)'],
+  });
+
   return (
-    <TouchableOpacity
-      style={[
-        styles.cell, 
-        getCellStyle(), 
-        isSelected && styles.cellHighlight,
-        { width: size, height: size }
-      ]}
-      onPress={onPress}
-      onLongPress={onLongPress}
-      activeOpacity={0.7}
+    <Animated.View
+      style={{
+        transform: [
+          { scale: scaleAnim },
+          { translateX: shakeAnim },
+        ],
+      }}
     >
-      {word ? (
-        <Text 
-          style={[styles.cellText, { fontSize }]} 
-          numberOfLines={1} 
-          adjustsFontSizeToFit
-        >
-          {word.text}
-        </Text>
-      ) : (
-        <Text style={[styles.emptyText, { fontSize: size / 3 }]}>+</Text>
-      )}
-    </TouchableOpacity>
+      <TouchableOpacity
+        style={[
+          styles.cell, 
+          getCellStyle(), 
+          isSelected && styles.cellHighlight,
+          { width: size, height: size }
+        ]}
+        onPress={onPress}
+        onLongPress={onLongPress}
+        activeOpacity={0.7}
+      >
+        <Animated.View 
+          style={[
+            StyleSheet.absoluteFill, 
+            { backgroundColor: flashBackgroundColor, borderRadius: 6 }
+          ]} 
+        />
+        {word ? (
+          <Text 
+            style={[styles.cellText, { fontSize }]} 
+            numberOfLines={1} 
+            adjustsFontSizeToFit
+          >
+            {word.text}
+          </Text>
+        ) : (
+          <Text style={[styles.emptyText, { fontSize: size / 3 }]}>+</Text>
+        )}
+      </TouchableOpacity>
+    </Animated.View>
   );
 }
 

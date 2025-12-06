@@ -5,8 +5,9 @@ import { useGameState } from '@/hooks/use-game-state';
 import { CellPosition, GameScore, Puzzle } from '@/types/game';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
+    Animated,
     Image,
     Modal,
     Platform,
@@ -95,6 +96,13 @@ function getTodayKey(): string {
   return `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
 }
 
+// Get yesterday's date key
+function getYesterdayKey(): string {
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  return `${yesterday.getFullYear()}-${yesterday.getMonth() + 1}-${yesterday.getDate()}`;
+}
+
 export default function GameScreen() {
   const [puzzle, setPuzzle] = useState<Puzzle | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -103,12 +111,14 @@ export default function GameScreen() {
   const [dailyCompleted, setDailyCompleted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showTutorial, setShowTutorial] = useState(false);
+  const [streak, setStreak] = useState(0);
 
-  // Check if today's puzzle was already completed
+  // Check if today's puzzle was already completed and load streak
   useEffect(() => {
     const checkCompletion = async () => {
       try {
         const todayKey = getTodayKey();
+        const yesterdayKey = getYesterdayKey();
         const completed = await AsyncStorage.getItem(`completed-${todayKey}`);
         setDailyCompleted(completed === 'true');
         
@@ -121,6 +131,26 @@ export default function GameScreen() {
             const freshPercentile = await getPercentile(score.score);
             score.percentile = freshPercentile;
             setSavedScore(score);
+          }
+        }
+        
+        // Calculate streak
+        const savedStreak = await AsyncStorage.getItem('streak');
+        const lastStreakDate = await AsyncStorage.getItem('lastStreakDate');
+        
+        if (savedStreak && lastStreakDate) {
+          const streakCount = parseInt(savedStreak, 10);
+          // If completed today, show current streak
+          if (lastStreakDate === todayKey) {
+            setStreak(streakCount);
+          }
+          // If completed yesterday but not today, streak is still valid (waiting for today)
+          else if (lastStreakDate === yesterdayKey) {
+            setStreak(streakCount);
+          }
+          // Otherwise streak is broken
+          else {
+            setStreak(0);
           }
         }
       } catch (e) {
@@ -162,10 +192,30 @@ export default function GameScreen() {
   const handleComplete = async (score: GameScore) => {
     try {
       const todayKey = getTodayKey();
+      const yesterdayKey = getYesterdayKey();
+      
       await AsyncStorage.setItem(`completed-${todayKey}`, 'true');
       await AsyncStorage.setItem(`score-${todayKey}`, JSON.stringify(score));
       setDailyCompleted(true);
       setSavedScore(score);
+      
+      // Update streak
+      const lastStreakDate = await AsyncStorage.getItem('lastStreakDate');
+      const savedStreak = await AsyncStorage.getItem('streak');
+      
+      let newStreak = 1;
+      if (lastStreakDate === yesterdayKey && savedStreak) {
+        // Continuing streak from yesterday
+        newStreak = parseInt(savedStreak, 10) + 1;
+      } else if (lastStreakDate === todayKey && savedStreak) {
+        // Already completed today, keep same streak
+        newStreak = parseInt(savedStreak, 10);
+      }
+      // Otherwise starting fresh streak at 1
+      
+      await AsyncStorage.setItem('streak', newStreak.toString());
+      await AsyncStorage.setItem('lastStreakDate', todayKey);
+      setStreak(newStreak);
     } catch (e) {
       console.log('Error saving completion:', e);
     }
@@ -215,6 +265,13 @@ export default function GameScreen() {
               )}
             </TouchableOpacity>
           </View>
+
+          {streak > 0 && (
+            <View style={styles.streakContainer}>
+              <Text style={styles.streakFlame}>🔥</Text>
+              <Text style={styles.streakText}>{streak} day streak</Text>
+            </View>
+          )}
 
           <TouchableOpacity 
             style={styles.howToPlayButton}
@@ -328,7 +385,40 @@ function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedSc
   const [submittingScore, setSubmittingScore] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
 
+  // Win/Game over animations
+  const overlayOpacity = useRef(new Animated.Value(0)).current;
+  const overlayScale = useRef(new Animated.Value(0.8)).current;
+  const emojiScale = useRef(new Animated.Value(0)).current;
+
   const isGameOver = gameState.lives <= 0;
+
+  // Animate overlay on win or game over
+  useEffect(() => {
+    if (gameState.isSolved || isGameOver) {
+      Animated.parallel([
+        Animated.timing(overlayOpacity, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.spring(overlayScale, {
+          toValue: 1,
+          friction: 8,
+          tension: 40,
+          useNativeDriver: true,
+        }),
+        Animated.sequence([
+          Animated.delay(200),
+          Animated.spring(emojiScale, {
+            toValue: 1,
+            friction: 4,
+            tension: 100,
+            useNativeDriver: true,
+          }),
+        ]),
+      ]).start();
+    }
+  }, [gameState.isSolved, isGameOver, overlayOpacity, overlayScale, emojiScale]);
 
   // Submit score when puzzle is solved OR game over (only if not in review mode)
   useEffect(() => {
@@ -455,8 +545,17 @@ function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedSc
   if (isGameOver && finalScore) {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.gameOverOverlay}>
-          <Text style={styles.gameOverEmoji}>💔</Text>
+        <Animated.View style={[
+          styles.gameOverOverlay,
+          {
+            opacity: overlayOpacity,
+            transform: [{ scale: overlayScale }],
+          }
+        ]}>
+          <Animated.Text style={[
+            styles.gameOverEmoji,
+            { transform: [{ scale: emojiScale }] }
+          ]}>💔</Animated.Text>
           <Text style={styles.gameOverText}>Game Over!</Text>
           
           <View style={styles.scoreCard}>
@@ -498,7 +597,7 @@ function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedSc
               <Text style={styles.tryAgainText}>Menu</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </Animated.View>
       </SafeAreaView>
     );
   }
@@ -507,8 +606,17 @@ function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedSc
   if (gameState.isSolved && finalScore) {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.winOverlay}>
-          <Text style={styles.winEmoji}>🎉</Text>
+        <Animated.View style={[
+          styles.winOverlay,
+          {
+            opacity: overlayOpacity,
+            transform: [{ scale: overlayScale }],
+          }
+        ]}>
+          <Animated.Text style={[
+            styles.winEmoji,
+            { transform: [{ scale: emojiScale }] }
+          ]}>🎉</Animated.Text>
           <Text style={styles.winOverlayTitle}>Puzzle Solved!</Text>
           
           <View style={styles.scoreCard}>
@@ -550,7 +658,7 @@ function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedSc
               <Text style={styles.menuButtonText}>Menu</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </Animated.View>
       </SafeAreaView>
     );
   }
@@ -735,6 +843,26 @@ const styles = StyleSheet.create({
     marginTop: 40,
     fontSize: 16,
     color: '#666',
+  },
+  streakContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 24,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    backgroundColor: '#2a1a0a',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#f59e0b',
+  },
+  streakFlame: {
+    fontSize: 18,
+    marginRight: 6,
+  },
+  streakText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#f59e0b',
   },
   howToPlayButton: {
     marginTop: 20,

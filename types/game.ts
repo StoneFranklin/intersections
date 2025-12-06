@@ -127,6 +127,7 @@ export interface GameScore {
  * Partial completion gets proportional base score
  * Full completion gets a bonus
  * Max score is 1000
+ * Minimum score is 1 per correct placement (never 0 if you got at least 1 right)
  */
 export function calculateScore(
   timeSeconds: number, 
@@ -138,7 +139,10 @@ export function calculateScore(
   const BASE_SCORE = 800;              // Base for full completion
   const COMPLETION_BONUS = 200;        // +200 for completing the puzzle (800 + 200 = 1000 max)
   const TIME_PENALTY_PER_SECOND = 2;   // -2 points per second
-  const MISTAKE_PENALTY = 50;          // -50 points per mistake
+  const MISTAKE_PENALTY = 25;          // -25 points per mistake
+  
+  // Minimum score: 1 point per correct placement
+  const minimumScore = correctPlacements > 0 ? correctPlacements : 0;
   
   // Proportional base score based on correct placements
   const proportionalBase = Math.floor((correctPlacements / totalCells) * BASE_SCORE);
@@ -155,7 +159,7 @@ export function calculateScore(
   
   const score = proportionalBase + completionBonus - timePenalty - mistakePenalty;
   
-  // Score between 0 and MAX_SCORE
-  return Math.max(0, Math.min(MAX_SCORE, score));
+  // Score between minimum and MAX_SCORE
+  return Math.max(minimumScore, Math.min(MAX_SCORE, score));
 }
 
