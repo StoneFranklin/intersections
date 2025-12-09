@@ -6,10 +6,9 @@ import { useGameState } from '@/hooks/use-game-state';
 import { CellPosition, GameScore, Puzzle } from '@/types/game';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
-    Animated,
     Image,
     Modal,
     Platform,
@@ -334,20 +333,26 @@ export default function GameScreen() {
   if (!isPlaying || !puzzle) {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.mainMenu}>
-          <Image 
-            source={require('@/assets/images/intersections-logo.png')} 
-            style={styles.menuLogo}
-            resizeMode="contain"
-          />
-          <Text style={styles.menuTitle}>Intersections</Text>
-          <Text style={styles.menuSubtitle}>A Daily Word Puzzle</Text>
-          
-          <View style={styles.menuButtons}>
-            <TouchableOpacity
-              style={[styles.playButton, dailyCompleted && styles.completedButton]}
-              onPress={handlePlayDaily}
-              disabled={fetchingPuzzle}
+        <ScrollView 
+          style={{ flex: 1 }}
+          contentContainerStyle={styles.mainMenuScroll}
+          showsVerticalScrollIndicator={false}
+          bounces={false}
+        >
+          <View style={styles.mainMenu}>
+            <Image 
+              source={require('@/assets/images/intersections-logo.png')} 
+              style={styles.menuLogo}
+              resizeMode="contain"
+            />
+            <Text style={styles.menuTitle}>Intersections</Text>
+            <Text style={styles.menuSubtitle}>A Daily Word Puzzle</Text>
+            
+            <View style={styles.menuButtons}>
+              <TouchableOpacity
+                style={[styles.playButton, dailyCompleted && styles.completedButton]}
+                onPress={handlePlayDaily}
+                disabled={fetchingPuzzle}
             >
               <Text style={styles.playButtonLabel}>
                 {fetchingPuzzle ? 'Loading...' : dailyCompleted ? '✓ Completed' : "Today's Puzzle"}
@@ -429,7 +434,8 @@ export default function GameScreen() {
               })}
             </Text>
           )}
-        </View>
+          </View>
+        </ScrollView>
 
         {/* Tutorial Modal */}
         <Modal
@@ -687,40 +693,7 @@ function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedSc
   const [submittingScore, setSubmittingScore] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
 
-  // Win/Game over animations
-  const overlayOpacity = useRef(new Animated.Value(0)).current;
-  const overlayScale = useRef(new Animated.Value(0.8)).current;
-  const emojiScale = useRef(new Animated.Value(0)).current;
-
   const isGameOver = gameState.lives <= 0;
-
-  // Animate overlay on win or game over
-  useEffect(() => {
-    if (gameState.isSolved || isGameOver) {
-      Animated.parallel([
-        Animated.timing(overlayOpacity, {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        Animated.spring(overlayScale, {
-          toValue: 1,
-          friction: 8,
-          tension: 40,
-          useNativeDriver: true,
-        }),
-        Animated.sequence([
-          Animated.delay(200),
-          Animated.spring(emojiScale, {
-            toValue: 1,
-            friction: 4,
-            tension: 100,
-            useNativeDriver: true,
-          }),
-        ]),
-      ]).start();
-    }
-  }, [gameState.isSolved, isGameOver, overlayOpacity, overlayScale, emojiScale]);
 
   // Submit score when puzzle is solved OR game over (only if not in review mode)
   useEffect(() => {
@@ -785,9 +758,22 @@ function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedSc
   if (isReviewMode) {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.reviewOverlay}>
-          <Text style={styles.reviewTitle}>Your Results</Text>
-          
+        {/* Header with back arrow */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={onBack} style={styles.headerBackButton}>
+            <Text style={styles.headerBackIcon}>‹</Text>
+          </TouchableOpacity>
+          <View style={styles.headerCenter}>
+            <Text style={styles.reviewHeaderTitle}>Your Results</Text>
+          </View>
+          <View style={styles.headerPlaceholder} />
+        </View>
+
+        <ScrollView 
+          style={{ flex: 1 }}
+          contentContainerStyle={styles.reviewScrollContent}
+          showsVerticalScrollIndicator={false}
+        >
           {savedScore ? (
             <View style={styles.scoreCard}>
               <View style={styles.scoreRow}>
@@ -817,6 +803,15 @@ function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedSc
             </View>
           )}
 
+          {savedScore && (
+            <TouchableOpacity 
+              style={styles.reviewShareButton} 
+              onPress={() => shareScore(savedScore, savedScore.percentile ?? null)}
+            >
+              <Text style={styles.reviewShareButtonText}>Share</Text>
+            </TouchableOpacity>
+          )}
+
           <Text style={styles.reviewSubtitle}>Correct Answers</Text>
           
           <View style={styles.reviewGridContainer}>
@@ -834,11 +829,7 @@ function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedSc
               onCellLongPress={() => {}}
             />
           </View>
-
-          <TouchableOpacity style={styles.menuButton} onPress={onBack}>
-            <Text style={styles.menuButtonText}>Back to Menu</Text>
-          </TouchableOpacity>
-        </View>
+        </ScrollView>
       </SafeAreaView>
     );
   }
@@ -846,18 +837,20 @@ function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedSc
   // Full screen game over overlay with score
   if (isGameOver && finalScore) {
     return (
-      <SafeAreaView style={styles.container}>
-        <Animated.View style={[
-          styles.gameOverOverlay,
-          {
-            opacity: overlayOpacity,
-            transform: [{ scale: overlayScale }],
-          }
-        ]}>
-          <Animated.Text style={[
-            styles.gameOverEmoji,
-            { transform: [{ scale: emojiScale }] }
-          ]}>💔</Animated.Text>
+      <SafeAreaView style={[styles.container, { backgroundColor: '#1a0a0a' }]}>
+        {/* Header with back arrow */}
+        <View style={styles.resultHeader}>
+          <TouchableOpacity onPress={onBack} style={styles.headerBackButton}>
+            <Text style={styles.headerBackIcon}>‹</Text>
+          </TouchableOpacity>
+        </View>
+
+        <ScrollView 
+          style={{ flex: 1 }}
+          contentContainerStyle={styles.resultScrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <Text style={styles.gameOverEmoji}>💔</Text>
           <Text style={styles.gameOverText}>Game Over!</Text>
           
           <View style={styles.scoreCard}>
@@ -888,18 +881,13 @@ function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedSc
             </View>
           )}
 
-          <View style={styles.buttonRow}>
-            <TouchableOpacity 
-              style={styles.shareButton} 
-              onPress={() => shareScore(finalScore, percentile)}
-            >
-              <Text style={styles.shareButtonText}>Share</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.tryAgainButton} onPress={onBack}>
-              <Text style={styles.tryAgainText}>Menu</Text>
-            </TouchableOpacity>
-          </View>
-        </Animated.View>
+          <TouchableOpacity 
+            style={styles.shareButton} 
+            onPress={() => shareScore(finalScore, percentile)}
+          >
+            <Text style={styles.shareButtonText}>Share</Text>
+          </TouchableOpacity>
+        </ScrollView>
       </SafeAreaView>
     );
   }
@@ -907,18 +895,20 @@ function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedSc
   // Full screen win overlay
   if (gameState.isSolved && finalScore) {
     return (
-      <SafeAreaView style={styles.container}>
-        <Animated.View style={[
-          styles.winOverlay,
-          {
-            opacity: overlayOpacity,
-            transform: [{ scale: overlayScale }],
-          }
-        ]}>
-          <Animated.Text style={[
-            styles.winEmoji,
-            { transform: [{ scale: emojiScale }] }
-          ]}>🎉</Animated.Text>
+      <SafeAreaView style={[styles.container, { backgroundColor: '#0a1a0f' }]}>
+        {/* Header with back arrow */}
+        <View style={styles.resultHeader}>
+          <TouchableOpacity onPress={onBack} style={styles.headerBackButton}>
+            <Text style={styles.headerBackIcon}>‹</Text>
+          </TouchableOpacity>
+        </View>
+
+        <ScrollView 
+          style={{ flex: 1 }}
+          contentContainerStyle={styles.resultScrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <Text style={styles.winEmoji}>🎉</Text>
           <Text style={styles.winOverlayTitle}>Puzzle Solved!</Text>
           
           <View style={styles.scoreCard}>
@@ -949,18 +939,13 @@ function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedSc
             </View>
           )}
 
-          <View style={styles.buttonRow}>
-            <TouchableOpacity 
-              style={styles.shareButtonWin} 
-              onPress={() => shareScore(finalScore, percentile)}
-            >
-              <Text style={styles.shareButtonWinText}>Share</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.menuButton} onPress={onBack}>
-              <Text style={styles.menuButtonText}>Menu</Text>
-            </TouchableOpacity>
-          </View>
-        </Animated.View>
+          <TouchableOpacity 
+            style={styles.shareButtonWin} 
+            onPress={() => shareScore(finalScore, percentile)}
+          >
+            <Text style={styles.shareButtonWinText}>Share</Text>
+          </TouchableOpacity>
+        </ScrollView>
       </SafeAreaView>
     );
   }
@@ -1078,11 +1063,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#0f0f1a',
   },
   // Main menu styles
+  mainMenuScroll: {
+    flexGrow: 1,
+    justifyContent: 'center',
+  },
   mainMenu: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
+    paddingVertical: 40,
   },
   menuLogo: {
     width: 150,
@@ -1542,17 +1532,24 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     marginTop: 8,
   },
-  // Game over styles
-  gameOverOverlay: {
-    flex: 1,
-    justifyContent: 'center',
+  // Result header with back arrow
+  resultHeader: {
+    flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1a0a0a',
-    padding: 20,
+    paddingHorizontal: 8,
+    paddingVertical: 8,
   },
+  // Result scroll content
+  resultScrollContent: {
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingBottom: 40,
+  },
+  // Game over styles
   gameOverEmoji: {
     fontSize: 80,
     marginBottom: 16,
+    marginTop: 20,
   },
   gameOverText: {
     fontSize: 36,
@@ -1606,17 +1603,11 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 18,
   },
-  // Win overlay styles (full screen)
-  winOverlay: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#0a1a0f',
-    padding: 20,
-  },
+  // Win overlay styles
   winEmoji: {
     fontSize: 80,
     marginBottom: 16,
+    marginTop: 20,
   },
   winOverlayTitle: {
     fontSize: 36,
@@ -1710,18 +1701,33 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
   // Review mode styles
-  reviewOverlay: {
-    flex: 1,
+  reviewScrollContent: {
     alignItems: 'center',
-    backgroundColor: '#0f0f1a',
-    padding: 20,
-    paddingTop: 40,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 40,
   },
-  reviewTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
+  reviewShareButton: {
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+    borderColor: '#4ade80',
+    paddingHorizontal: 32,
+    paddingVertical: 12,
+    borderRadius: 25,
+    marginTop: 16,
+  },
+  reviewShareButtonText: {
+    color: '#4ade80',
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  reviewHeaderTitle: {
+    fontSize: 18,
+    fontWeight: '600',
     color: '#fff',
-    marginBottom: 20,
+  },
+  headerPlaceholder: {
+    width: 44,
   },
   reviewPercentileRow: {
     marginTop: 16,
