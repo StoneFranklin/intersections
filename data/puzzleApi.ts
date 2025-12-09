@@ -123,6 +123,7 @@ export async function submitScore(
   score: number,
   timeSeconds: number,
   mistakes: number,
+  correctPlacements: number,
   userId?: string
 ): Promise<{ percentile: number } | null> {
   const puzzleDate = getTodayDateString();
@@ -134,12 +135,14 @@ export async function submitScore(
       score: number;
       time_seconds: number;
       mistakes: number;
+      correct_placements: number;
       user_id?: string;
     } = {
       puzzle_date: puzzleDate,
       score,
       time_seconds: timeSeconds,
       mistakes,
+      correct_placements: correctPlacements,
     };
     
     if (userId) {
@@ -345,13 +348,14 @@ export async function getUserTodayScore(userId: string): Promise<{
   score: number;
   timeSeconds: number;
   mistakes: number;
+  correctPlacements: number;
 } | null> {
   const puzzleDate = getTodayDateString();
   
   try {
     const { data, error } = await supabase
       .from('puzzle_scores')
-      .select('score, time_seconds, mistakes')
+      .select('score, time_seconds, mistakes, correct_placements')
       .eq('puzzle_date', puzzleDate)
       .eq('user_id', userId)
       .maybeSingle();
@@ -364,6 +368,7 @@ export async function getUserTodayScore(userId: string): Promise<{
       score: data.score,
       timeSeconds: data.time_seconds,
       mistakes: data.mistakes,
+      correctPlacements: data.correct_placements ?? 16,
     };
   } catch (e) {
     console.error('Error in getUserTodayScore:', e);

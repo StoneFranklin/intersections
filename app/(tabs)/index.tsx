@@ -191,8 +191,8 @@ export default function GameScreen() {
                 score: dbScore.score,
                 timeSeconds: dbScore.timeSeconds,
                 mistakes: dbScore.mistakes,
-                correctPlacements: 16, // Assume completed
-                completed: true,
+                correctPlacements: dbScore.correctPlacements,
+                completed: dbScore.correctPlacements === 16,
                 percentile: freshPercentile,
               });
             }
@@ -355,7 +355,7 @@ export default function GameScreen() {
               {dailyCompleted && savedScore ? (
                 <View style={styles.scoreSummary}>
                   <Text style={styles.scoreSummaryText}>
-                    {savedScore.score} pts • {savedScore.completed ? '16/16' : `${savedScore.correctPlacements}/16`} • {formatTime(savedScore.timeSeconds)}
+                    {savedScore.score} pts • {savedScore.correctPlacements}/16 • {formatTime(savedScore.timeSeconds)}
                   </Text>
                   {savedScore.percentile !== undefined && (
                     <Text style={styles.percentileText}>Top {100 - savedScore.percentile}% of players</Text>
@@ -729,7 +729,7 @@ function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedSc
     const gameEnded = gameState.isSolved || isGameOver;
     if (gameEnded && finalScore && !submittingScore && percentile === null) {
       setSubmittingScore(true);
-      submitScore(finalScore.score, finalScore.timeSeconds, finalScore.mistakes, userId)
+      submitScore(finalScore.score, finalScore.timeSeconds, finalScore.mistakes, finalScore.correctPlacements, userId)
         .then((result) => {
           if (result) {
             setPercentile(result.percentile);
@@ -796,7 +796,7 @@ function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedSc
                   <Text style={styles.scoreLabel}>Score</Text>
                 </View>
                 <View style={styles.scoreItem}>
-                  <Text style={styles.scoreValue}>{savedScore.completed ? '16/16' : `${savedScore.correctPlacements}/16`}</Text>
+                  <Text style={styles.scoreValue}>{savedScore.correctPlacements}/16</Text>
                   <Text style={styles.scoreLabel}>Correct</Text>
                 </View>
                 <View style={styles.scoreItem}>
