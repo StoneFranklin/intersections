@@ -1,12 +1,14 @@
 import { GameGrid, WordTray } from '@/components/game';
+import { useAuth } from '@/contexts/auth-context';
 import { generateDailyPuzzle } from '@/data/puzzle-generator';
-import { fetchTodaysPuzzle, getPercentile, submitScore } from '@/data/puzzleApi';
+import { fetchTodaysPuzzle, getOrCreateProfile, getPercentile, getTodayLeaderboard, getUserStreak, getUserTodayScore, hasUserCompletedToday, LeaderboardEntry, submitScore, updateDisplayName, updateUserStreak } from '@/data/puzzleApi';
 import { useGameState } from '@/hooks/use-game-state';
 import { CellPosition, GameScore, Puzzle } from '@/types/game';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
 import React, { useEffect, useRef, useState } from 'react';
 import {
+    ActivityIndicator,
     Animated,
     Image,
     Modal,
@@ -16,6 +18,7 @@ import {
     Share,
     StyleSheet,
     Text,
+    TextInput,
     TouchableOpacity,
     View
 } from 'react-native';
@@ -104,6 +107,7 @@ function getYesterdayKey(): string {
 }
 
 export default function GameScreen() {
+  const { user, loading: authLoading, signInWithGoogle, signOut } = useAuth();
   const [puzzle, setPuzzle] = useState<Puzzle | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isReviewMode, setIsReviewMode] = useState(false);
@@ -112,6 +116,60 @@ export default function GameScreen() {
   const [loading, setLoading] = useState(true);
   const [showTutorial, setShowTutorial] = useState(false);
   const [streak, setStreak] = useState(0);
+  const [showSignIn, setShowSignIn] = useState(false);
+  const [signingIn, setSigningIn] = useState(false);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [loadingLeaderboard, setLoadingLeaderboard] = useState(false);
+  
+  // Display name state
+  const [displayName, setDisplayName] = useState<string | null>(null);
+  const [showDisplayNameModal, setShowDisplayNameModal] = useState(false);
+  const [displayNameInput, setDisplayNameInput] = useState('');
+  const [savingDisplayName, setSavingDisplayName] = useState(false);
+
+  // Fetch display name when user logs in
+  useEffect(() => {
+    if (user) {
+      getOrCreateProfile(user.id).then(profile => {
+        if (profile) {
+          setDisplayName(profile.displayName);
+          // Show modal if no display name set
+          if (!profile.displayName) {
+            setShowDisplayNameModal(true);
+          }
+        }
+      });
+    } else {
+      setDisplayName(null);
+    }
+  }, [user]);
+
+  const handleSaveDisplayName = async () => {
+    if (!user || !displayNameInput.trim()) return;
+    
+    setSavingDisplayName(true);
+    const success = await updateDisplayName(user.id, displayNameInput.trim());
+    if (success) {
+      setDisplayName(displayNameInput.trim());
+      setShowDisplayNameModal(false);
+      setDisplayNameInput('');
+    }
+    setSavingDisplayName(false);
+  };
+
+  const openLeaderboard = async () => {
+    setShowLeaderboard(true);
+    setLoadingLeaderboard(true);
+    try {
+      const data = await getTodayLeaderboard(user?.id);
+      setLeaderboard(data);
+    } catch (e) {
+      console.error('Error loading leaderboard:', e);
+    } finally {
+      setLoadingLeaderboard(false);
+    }
+  };
 
   // Check if today's puzzle was already completed and load streak
   useEffect(() => {
@@ -119,38 +177,69 @@ export default function GameScreen() {
       try {
         const todayKey = getTodayKey();
         const yesterdayKey = getYesterdayKey();
-        const completed = await AsyncStorage.getItem(`completed-${todayKey}`);
-        setDailyCompleted(completed === 'true');
         
-        // Load saved score if completed
-        if (completed === 'true') {
-          const scoreData = await AsyncStorage.getItem(`score-${todayKey}`);
-          if (scoreData) {
-            const score = JSON.parse(scoreData) as GameScore;
-            // Fetch fresh percentile from database
-            const freshPercentile = await getPercentile(score.score);
-            score.percentile = freshPercentile;
-            setSavedScore(score);
+        // If logged in, check database first
+        if (user) {
+          const dbCompleted = await hasUserCompletedToday(user.id);
+          if (dbCompleted) {
+            setDailyCompleted(true);
+            // Get score from database
+            const dbScore = await getUserTodayScore(user.id);
+            if (dbScore) {
+              const freshPercentile = await getPercentile(dbScore.score);
+              setSavedScore({
+                score: dbScore.score,
+                timeSeconds: dbScore.timeSeconds,
+                mistakes: dbScore.mistakes,
+                correctPlacements: 16, // Assume completed
+                completed: true,
+                percentile: freshPercentile,
+              });
+            }
           }
-        }
-        
-        // Calculate streak
-        const savedStreak = await AsyncStorage.getItem('streak');
-        const lastStreakDate = await AsyncStorage.getItem('lastStreakDate');
-        
-        if (savedStreak && lastStreakDate) {
-          const streakCount = parseInt(savedStreak, 10);
-          // If completed today, show current streak
-          if (lastStreakDate === todayKey) {
-            setStreak(streakCount);
+          
+          // Get streak from database
+          const dbStreak = await getUserStreak(user.id);
+          if (dbStreak) {
+            const todayDate = new Date().toISOString().split('T')[0];
+            const yesterdayDate = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+            
+            if (dbStreak.lastPlayedDate === todayDate || dbStreak.lastPlayedDate === yesterdayDate) {
+              setStreak(dbStreak.currentStreak);
+            } else {
+              setStreak(0);
+            }
           }
-          // If completed yesterday but not today, streak is still valid (waiting for today)
-          else if (lastStreakDate === yesterdayKey) {
-            setStreak(streakCount);
+        } else {
+          // Not logged in - use local storage
+          const completed = await AsyncStorage.getItem(`completed-${todayKey}`);
+          setDailyCompleted(completed === 'true');
+          
+          // Load saved score if completed
+          if (completed === 'true') {
+            const scoreData = await AsyncStorage.getItem(`score-${todayKey}`);
+            if (scoreData) {
+              const score = JSON.parse(scoreData) as GameScore;
+              // Fetch fresh percentile from database
+              const freshPercentile = await getPercentile(score.score);
+              score.percentile = freshPercentile;
+              setSavedScore(score);
+            }
           }
-          // Otherwise streak is broken
-          else {
-            setStreak(0);
+          
+          // Calculate streak from local storage
+          const savedStreak = await AsyncStorage.getItem('streak');
+          const lastStreakDate = await AsyncStorage.getItem('lastStreakDate');
+          
+          if (savedStreak && lastStreakDate) {
+            const streakCount = parseInt(savedStreak, 10);
+            if (lastStreakDate === todayKey) {
+              setStreak(streakCount);
+            } else if (lastStreakDate === yesterdayKey) {
+              setStreak(streakCount);
+            } else {
+              setStreak(0);
+            }
           }
         }
       } catch (e) {
@@ -159,7 +248,7 @@ export default function GameScreen() {
       setLoading(false);
     };
     checkCompletion();
-  }, []);
+  }, [user]);
 
   const [fetchingPuzzle, setFetchingPuzzle] = useState(false);
 
@@ -193,26 +282,41 @@ export default function GameScreen() {
     try {
       const todayKey = getTodayKey();
       const yesterdayKey = getYesterdayKey();
+      const todayDate = new Date().toISOString().split('T')[0];
+      const yesterdayDate = new Date(Date.now() - 86400000).toISOString().split('T')[0];
       
+      // Always save to local storage
       await AsyncStorage.setItem(`completed-${todayKey}`, 'true');
       await AsyncStorage.setItem(`score-${todayKey}`, JSON.stringify(score));
       setDailyCompleted(true);
       setSavedScore(score);
       
-      // Update streak
-      const lastStreakDate = await AsyncStorage.getItem('lastStreakDate');
-      const savedStreak = await AsyncStorage.getItem('streak');
-      
+      // Calculate new streak
       let newStreak = 1;
-      if (lastStreakDate === yesterdayKey && savedStreak) {
-        // Continuing streak from yesterday
-        newStreak = parseInt(savedStreak, 10) + 1;
-      } else if (lastStreakDate === todayKey && savedStreak) {
-        // Already completed today, keep same streak
-        newStreak = parseInt(savedStreak, 10);
-      }
-      // Otherwise starting fresh streak at 1
       
+      if (user) {
+        // Logged in - get streak from database
+        const dbStreak = await getUserStreak(user.id);
+        if (dbStreak && dbStreak.lastPlayedDate === yesterdayDate) {
+          newStreak = dbStreak.currentStreak + 1;
+        } else if (dbStreak && dbStreak.lastPlayedDate === todayDate) {
+          newStreak = dbStreak.currentStreak; // Already played today
+        }
+        // Update streak in database
+        await updateUserStreak(user.id, newStreak, todayDate);
+      } else {
+        // Not logged in - use local storage
+        const lastStreakDate = await AsyncStorage.getItem('lastStreakDate');
+        const savedStreak = await AsyncStorage.getItem('streak');
+        
+        if (lastStreakDate === yesterdayKey && savedStreak) {
+          newStreak = parseInt(savedStreak, 10) + 1;
+        } else if (lastStreakDate === todayKey && savedStreak) {
+          newStreak = parseInt(savedStreak, 10);
+        }
+      }
+      
+      // Save to local storage too (for offline/non-logged in consistency)
       await AsyncStorage.setItem('streak', newStreak.toString());
       await AsyncStorage.setItem('lastStreakDate', todayKey);
       setStreak(newStreak);
@@ -273,12 +377,48 @@ export default function GameScreen() {
             </View>
           )}
 
-          <TouchableOpacity 
-            style={styles.howToPlayButton}
-            onPress={() => setShowTutorial(true)}
-          >
-            <Text style={styles.howToPlayText}>How to Play</Text>
-          </TouchableOpacity>
+          <View style={styles.menuLinksRow}>
+            <TouchableOpacity 
+              style={styles.menuLinkButton}
+              onPress={() => setShowTutorial(true)}
+            >
+              <Text style={styles.menuLinkText}>How to Play</Text>
+            </TouchableOpacity>
+            
+            <Text style={styles.menuLinkDivider}>•</Text>
+            
+            <TouchableOpacity 
+              style={styles.menuLinkButton}
+              onPress={openLeaderboard}
+            >
+              <Text style={styles.menuLinkText}>Leaderboard</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Sign In / Account Button */}
+          {user ? (
+            <View style={styles.accountContainer}>
+              <TouchableOpacity onPress={() => {
+                setDisplayNameInput(displayName || '');
+                setShowDisplayNameModal(true);
+              }}>
+                <Text style={styles.accountDisplayName}>
+                  {displayName || 'Set Display Name'}
+                </Text>
+              </TouchableOpacity>
+              <Text style={styles.accountEmail}>{user.email}</Text>
+              <TouchableOpacity onPress={signOut}>
+                <Text style={styles.signOutText}>Sign Out</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <TouchableOpacity 
+              style={styles.signInButton}
+              onPress={() => setShowSignIn(true)}
+            >
+              <Text style={styles.signInText}>Sign In</Text>
+            </TouchableOpacity>
+          )}
 
           {loading ? null : (
             <Text style={styles.dateText}>
@@ -344,6 +484,166 @@ export default function GameScreen() {
             </View>
           </View>
         </Modal>
+
+        {/* Sign In Modal */}
+        <Modal
+          visible={showSignIn}
+          animationType="fade"
+          transparent={true}
+          onRequestClose={() => setShowSignIn(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.signInModal}>
+              <Text style={styles.signInModalTitle}>Sign In</Text>
+              <Text style={styles.signInModalSubtitle}>
+                Sync your scores and streaks across devices
+              </Text>
+
+              <TouchableOpacity
+                style={styles.googleButton}
+                onPress={async () => {
+                  setSigningIn(true);
+                  try {
+                    await signInWithGoogle();
+                    setShowSignIn(false);
+                  } catch (e) {
+                    console.error('Sign in error:', e);
+                  } finally {
+                    setSigningIn(false);
+                  }
+                }}
+                disabled={signingIn}
+              >
+                <Text style={styles.googleButtonText}>
+                  {signingIn ? 'Signing in...' : '🔵 Continue with Google'}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.signInCancelButton}
+                onPress={() => setShowSignIn(false)}
+              >
+                <Text style={styles.signInCancelText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Leaderboard Modal */}
+        <Modal
+          visible={showLeaderboard}
+          animationType="fade"
+          transparent={true}
+          onRequestClose={() => setShowLeaderboard(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.leaderboardModal}>
+              <Text style={styles.leaderboardTitle}>🏆 Today's Leaderboard</Text>
+              
+              {loadingLeaderboard ? (
+                <ActivityIndicator size="large" color="#6a9fff" style={{ marginVertical: 40 }} />
+              ) : leaderboard.length === 0 ? (
+                <Text style={styles.leaderboardEmpty}>No scores yet today. Be the first!</Text>
+              ) : (
+                <ScrollView style={styles.leaderboardList} showsVerticalScrollIndicator={true}>
+                  {leaderboard.map((entry, index) => (
+                    <View 
+                      key={index} 
+                      style={[
+                        styles.leaderboardRow,
+                        entry.isCurrentUser && styles.leaderboardRowCurrentUser,
+                        entry.rank > 10 && styles.leaderboardRowSeparated,
+                      ]}
+                    >
+                      <Text style={styles.leaderboardRank}>
+                        {entry.rank === 1 ? '🥇' : entry.rank === 2 ? '🥈' : entry.rank === 3 ? '🥉' : `#${entry.rank}`}
+                      </Text>
+                      <View style={styles.leaderboardInfo}>
+                        <Text style={[
+                          styles.leaderboardName,
+                          entry.isCurrentUser && styles.leaderboardNameCurrentUser,
+                        ]}>
+                          {entry.displayName || 'Anonymous'}
+                          {entry.isCurrentUser && ' (you)'}
+                        </Text>
+                        <Text style={styles.leaderboardTime}>
+                          {formatTime(entry.timeSeconds)}
+                        </Text>
+                      </View>
+                      <Text style={[
+                        styles.leaderboardScore,
+                        entry.isCurrentUser && styles.leaderboardScoreCurrentUser,
+                      ]}>
+                        {entry.score}
+                      </Text>
+                    </View>
+                  ))}
+                </ScrollView>
+              )}
+
+              <TouchableOpacity
+                style={styles.leaderboardCloseButton}
+                onPress={() => setShowLeaderboard(false)}
+              >
+                <Text style={styles.leaderboardCloseText}>Close</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Display Name Modal */}
+        <Modal
+          visible={showDisplayNameModal}
+          animationType="fade"
+          transparent={true}
+          onRequestClose={() => setShowDisplayNameModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.displayNameModal}>
+              <Text style={styles.displayNameTitle}>
+                {displayName ? 'Edit Display Name' : 'Set Your Display Name'}
+              </Text>
+              <Text style={styles.displayNameSubtitle}>
+                This name will appear on the leaderboard
+              </Text>
+
+              <TextInput
+                style={styles.displayNameInput}
+                value={displayNameInput}
+                onChangeText={setDisplayNameInput}
+                placeholder="Enter display name"
+                placeholderTextColor="#666"
+                maxLength={20}
+                autoFocus
+              />
+
+              <TouchableOpacity
+                style={[
+                  styles.displayNameSaveButton,
+                  (!displayNameInput.trim() || savingDisplayName) && styles.displayNameSaveButtonDisabled
+                ]}
+                onPress={handleSaveDisplayName}
+                disabled={!displayNameInput.trim() || savingDisplayName}
+              >
+                <Text style={styles.displayNameSaveText}>
+                  {savingDisplayName ? 'Saving...' : 'Save'}
+                </Text>
+              </TouchableOpacity>
+
+              {displayName && (
+                <TouchableOpacity
+                  style={styles.displayNameCancelButton}
+                  onPress={() => {
+                    setShowDisplayNameModal(false);
+                    setDisplayNameInput('');
+                  }}
+                >
+                  <Text style={styles.displayNameCancelText}>Cancel</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+        </Modal>
       </SafeAreaView>
     );
   }
@@ -355,6 +655,7 @@ export default function GameScreen() {
       onComplete={handleComplete}
       isReviewMode={isReviewMode}
       savedScore={savedScore}
+      userId={user?.id}
     />
   );
 }
@@ -365,9 +666,10 @@ interface GameContentProps {
   onComplete: (score: GameScore) => void;
   isReviewMode?: boolean;
   savedScore?: GameScore | null;
+  userId?: string;
 }
 
-function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedScore }: GameContentProps) {
+function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedScore, userId }: GameContentProps) {
   const {
     gameState,
     unplacedWords,
@@ -427,7 +729,7 @@ function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedSc
     const gameEnded = gameState.isSolved || isGameOver;
     if (gameEnded && finalScore && !submittingScore && percentile === null) {
       setSubmittingScore(true);
-      submitScore(finalScore.score, finalScore.timeSeconds, finalScore.mistakes)
+      submitScore(finalScore.score, finalScore.timeSeconds, finalScore.mistakes, userId)
         .then((result) => {
           if (result) {
             setPercentile(result.percentile);
@@ -864,15 +1166,240 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#f59e0b',
   },
-  howToPlayButton: {
-    marginTop: 20,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
+  // Sign in styles
+  signInButton: {
+    marginTop: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
   },
-  howToPlayText: {
+  signInText: {
+    fontSize: 14,
+    color: '#6a9fff',
+  },
+  accountContainer: {
+    marginTop: 16,
+    alignItems: 'center',
+    gap: 4,
+  },
+  accountDisplayName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#6a9fff',
+    marginBottom: 2,
+  },
+  accountEmail: {
+    fontSize: 13,
+    color: '#666',
+  },
+  signOutText: {
+    fontSize: 14,
+    color: '#888',
+    marginTop: 4,
+  },
+  // Display name modal styles
+  displayNameModal: {
+    backgroundColor: '#1a1a2e',
+    borderRadius: 16,
+    padding: 24,
+    maxWidth: 360,
+    width: '100%',
+    alignItems: 'center',
+  },
+  displayNameTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 8,
+  },
+  displayNameSubtitle: {
+    fontSize: 14,
+    color: '#888',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  displayNameInput: {
+    backgroundColor: '#2a2a4e',
+    borderRadius: 8,
+    padding: 14,
+    fontSize: 16,
+    color: '#fff',
+    width: '100%',
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#3a3a6e',
+  },
+  displayNameSaveButton: {
+    backgroundColor: '#4ade80',
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    width: '100%',
+    alignItems: 'center',
+  },
+  displayNameSaveButtonDisabled: {
+    backgroundColor: '#2a4a3a',
+  },
+  displayNameSaveText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  displayNameCancelButton: {
+    marginTop: 12,
+    paddingVertical: 8,
+  },
+  displayNameCancelText: {
+    fontSize: 15,
+    color: '#888',
+  },
+  signInModal: {
+    backgroundColor: '#1a1a2e',
+    borderRadius: 16,
+    padding: 24,
+    maxWidth: 360,
+    width: '100%',
+    alignItems: 'center',
+  },
+  signInModalTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 8,
+  },
+  signInModalSubtitle: {
+    fontSize: 14,
+    color: '#888',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  googleButton: {
+    backgroundColor: '#fff',
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    width: '100%',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  googleButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+  },
+  signInCancelButton: {
+    paddingVertical: 12,
+  },
+  signInCancelText: {
+    fontSize: 16,
+    color: '#888',
+  },
+  // Menu links row
+  menuLinksRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 20,
+    gap: 12,
+  },
+  menuLinkButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+  },
+  menuLinkText: {
     fontSize: 16,
     color: '#888',
     textDecorationLine: 'underline',
+  },
+  menuLinkDivider: {
+    fontSize: 16,
+    color: '#555',
+  },
+  // Leaderboard modal styles
+  leaderboardModal: {
+    backgroundColor: '#1a1a2e',
+    borderRadius: 16,
+    padding: 24,
+    maxWidth: 400,
+    maxHeight: '80%',
+    width: '100%',
+  },
+  leaderboardTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fff',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  leaderboardEmpty: {
+    fontSize: 16,
+    color: '#888',
+    textAlign: 'center',
+    marginVertical: 40,
+  },
+  leaderboardList: {
+    maxHeight: 400,
+  },
+  leaderboardRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#2a2a4e',
+  },
+  leaderboardRowCurrentUser: {
+    backgroundColor: 'rgba(106, 159, 255, 0.15)',
+    borderRadius: 8,
+  },
+  leaderboardRowSeparated: {
+    marginTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#2a2a4e',
+    borderStyle: 'dashed',
+  },
+  leaderboardRank: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#888',
+    width: 40,
+    textAlign: 'center',
+  },
+  leaderboardInfo: {
+    flex: 1,
+    marginLeft: 8,
+  },
+  leaderboardName: {
+    fontSize: 16,
+    color: '#fff',
+    fontWeight: '500',
+  },
+  leaderboardNameCurrentUser: {
+    color: '#6a9fff',
+  },
+  leaderboardTime: {
+    fontSize: 13,
+    color: '#888',
+    marginTop: 2,
+  },
+  leaderboardScore: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#4ade80',
+    marginLeft: 12,
+  },
+  leaderboardScoreCurrentUser: {
+    color: '#6a9fff',
+  },
+  leaderboardCloseButton: {
+    marginTop: 20,
+    paddingVertical: 14,
+    backgroundColor: '#2a3a5a',
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  leaderboardCloseText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
   },
   // Tutorial modal styles
   modalOverlay: {

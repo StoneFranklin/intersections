@@ -1,3 +1,4 @@
+import { AuthProvider } from '@/contexts/auth-context';
 import { DarkTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -25,15 +26,17 @@ const customDarkTheme = {
 
 export default function RootLayout() {
   return (
-    <View style={styles.container}>
-      <ThemeProvider value={customDarkTheme}>
-        <Stack screenOptions={{ contentStyle: { backgroundColor: '#0f0f1a' } }}>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-        </Stack>
-        <StatusBar style="light" />
-      </ThemeProvider>
-    </View>
+    <AuthProvider>
+      <View style={styles.container}>
+        <ThemeProvider value={customDarkTheme}>
+          <Stack screenOptions={{ contentStyle: { backgroundColor: '#0f0f1a' } }}>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+          </Stack>
+          <StatusBar style="light" />
+        </ThemeProvider>
+      </View>
+    </AuthProvider>
   );
 }
 
