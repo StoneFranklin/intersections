@@ -126,6 +126,32 @@ export default function GameScreen() {
   const [showDisplayNameModal, setShowDisplayNameModal] = useState(false);
   const [displayNameInput, setDisplayNameInput] = useState('');
   const [savingDisplayName, setSavingDisplayName] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [signInBannerDismissed, setSignInBannerDismissed] = useState(true); // Start hidden until we check
+
+  // Check if sign-in banner was dismissed
+  useEffect(() => {
+    const checkBannerDismissed = async () => {
+      try {
+        const dismissed = await AsyncStorage.getItem('signInBannerDismissed');
+        setSignInBannerDismissed(dismissed === 'true');
+      } catch (e) {
+        setSignInBannerDismissed(false);
+      }
+    };
+    if (!user) {
+      checkBannerDismissed();
+    }
+  }, [user]);
+
+  const dismissSignInBanner = async () => {
+    setSignInBannerDismissed(true);
+    try {
+      await AsyncStorage.setItem('signInBannerDismissed', 'true');
+    } catch (e) {
+      console.error('Error saving banner dismissed state:', e);
+    }
+  };
 
   // Fetch display name when user logs in
   useEffect(() => {
@@ -333,6 +359,62 @@ export default function GameScreen() {
   if (!isPlaying || !puzzle) {
     return (
       <SafeAreaView style={styles.container}>
+        {/* Header Bar */}
+        <View style={styles.homeHeader}>
+          <View style={styles.homeHeaderLeft}>
+            {streak > 0 && (
+              <View style={styles.headerStreakBadge}>
+                <Text style={styles.headerStreakFlame}>🔥</Text>
+                <Text style={styles.headerStreakText}>{streak}</Text>
+              </View>
+            )}
+          </View>
+          <View style={styles.homeHeaderRight}>
+            {user ? (
+              <TouchableOpacity 
+                style={styles.headerProfileButton}
+                onPress={() => setShowProfileMenu(true)}
+              >
+                <View style={styles.headerProfileIcon}>
+                  <Text style={styles.headerProfileInitial}>
+                    {(displayName || user.email || 'U').charAt(0).toUpperCase()}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity 
+                style={styles.headerSignInButton}
+                onPress={() => setShowSignIn(true)}
+              >
+                <Text style={styles.headerSignInText}>Sign In</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+
+        {/* Sign In Banner (dismissible, for guests only) */}
+        {!user && !signInBannerDismissed && (
+          <View style={styles.signInBanner}>
+            <View style={styles.signInBannerContent}>
+              <View style={styles.signInBannerText}>
+                <Text style={styles.signInBannerTitle}>Sign in to track stats, compete on leaderboards & sync across devices</Text>
+              </View>
+              <TouchableOpacity 
+                style={styles.signInBannerButton}
+                onPress={() => setShowSignIn(true)}
+              >
+                <Text style={styles.signInBannerButtonText}>Sign In</Text>
+              </TouchableOpacity>
+            </View>
+            <TouchableOpacity 
+              style={styles.signInBannerDismiss}
+              onPress={dismissSignInBanner}
+            >
+              <Text style={styles.signInBannerDismissText}>×</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         <ScrollView 
           style={{ flex: 1 }}
           contentContainerStyle={styles.mainMenuScroll}
@@ -373,57 +455,29 @@ export default function GameScreen() {
                 </Text>
               )}
             </TouchableOpacity>
-          </View>
 
-          {streak > 0 && (
-            <View style={styles.streakContainer}>
-              <Text style={styles.streakFlame}>🔥</Text>
-              <Text style={styles.streakText}>{streak} day streak</Text>
-            </View>
-          )}
-
-          <View style={styles.menuLinksRow}>
-            <TouchableOpacity 
-              style={styles.menuLinkButton}
-              onPress={() => setShowTutorial(true)}
-            >
-              <Text style={styles.menuLinkText}>How to Play</Text>
-            </TouchableOpacity>
-            
-            <Text style={styles.menuLinkDivider}>•</Text>
-            
-            <TouchableOpacity 
-              style={styles.menuLinkButton}
+            {/* Leaderboard Card */}
+            <TouchableOpacity
+              style={styles.leaderboardCard}
               onPress={openLeaderboard}
             >
-              <Text style={styles.menuLinkText}>Leaderboard</Text>
+              <View style={styles.leaderboardCardLeft}>
+                <Text style={styles.leaderboardCardIcon}>🏆</Text>
+                <View>
+                  <Text style={styles.leaderboardCardTitle}>Leaderboard</Text>
+                  <Text style={styles.leaderboardCardDesc}>See how you rank today</Text>
+                </View>
+              </View>
+              <Text style={styles.leaderboardCardArrow}>›</Text>
             </TouchableOpacity>
           </View>
 
-          {/* Sign In / Account Button */}
-          {user ? (
-            <View style={styles.accountContainer}>
-              <TouchableOpacity onPress={() => {
-                setDisplayNameInput(displayName || '');
-                setShowDisplayNameModal(true);
-              }}>
-                <Text style={styles.accountDisplayName}>
-                  {displayName || 'Set Display Name'}
-                </Text>
-              </TouchableOpacity>
-              <Text style={styles.accountEmail}>{user.email}</Text>
-              <TouchableOpacity onPress={signOut}>
-                <Text style={styles.signOutText}>Sign Out</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <TouchableOpacity 
-              style={styles.signInButton}
-              onPress={() => setShowSignIn(true)}
-            >
-              <Text style={styles.signInText}>Sign In</Text>
-            </TouchableOpacity>
-          )}
+          <TouchableOpacity 
+            style={styles.howToPlayButton}
+            onPress={() => setShowTutorial(true)}
+          >
+            <Text style={styles.howToPlayText}>How to Play</Text>
+          </TouchableOpacity>
 
           {loading ? null : (
             <Text style={styles.dateText}>
@@ -533,6 +587,65 @@ export default function GameScreen() {
               </TouchableOpacity>
             </View>
           </View>
+        </Modal>
+
+        {/* Profile Menu Modal */}
+        <Modal
+          visible={showProfileMenu}
+          animationType="fade"
+          transparent={true}
+          onRequestClose={() => setShowProfileMenu(false)}
+        >
+          <TouchableOpacity 
+            style={styles.modalOverlay} 
+            activeOpacity={1} 
+            onPress={() => setShowProfileMenu(false)}
+          >
+            <View style={styles.profileMenuModal}>
+              {/* Profile Header */}
+              <View style={styles.profileMenuHeader}>
+                <View style={styles.profileMenuAvatar}>
+                  <Text style={styles.profileMenuAvatarText}>
+                    {(displayName || user?.email || 'U').charAt(0).toUpperCase()}
+                  </Text>
+                </View>
+                <View style={styles.profileMenuInfo}>
+                  <Text style={styles.profileMenuName}>
+                    {displayName || 'No display name'}
+                  </Text>
+                  <Text style={styles.profileMenuEmail}>{user?.email}</Text>
+                </View>
+              </View>
+
+              {/* Menu Options */}
+              <View style={styles.profileMenuDivider} />
+              
+              <TouchableOpacity 
+                style={styles.profileMenuItem}
+                onPress={() => {
+                  setShowProfileMenu(false);
+                  setDisplayNameInput(displayName || '');
+                  setShowDisplayNameModal(true);
+                }}
+              >
+                <Text style={styles.profileMenuItemIcon}>✏️</Text>
+                <Text style={styles.profileMenuItemText}>Edit Display Name</Text>
+              </TouchableOpacity>
+
+              <View style={styles.profileMenuDivider} />
+
+              <TouchableOpacity 
+                style={styles.profileMenuItem}
+                onPress={() => {
+                  setShowProfileMenu(false);
+                  signOut();
+                }}
+              >
+                <Text style={styles.profileMenuItemIcon}>🚪</Text>
+                <Text style={styles.profileMenuItemTextDanger}>Sign Out</Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
         </Modal>
 
         {/* Leaderboard Modal */}
@@ -1062,6 +1175,71 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#0f0f1a',
   },
+  // Home header styles
+  homeHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#2a2a4e',
+  },
+  homeHeaderLeft: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  homeHeaderRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerStreakBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#2a1a0a',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#f59e0b',
+  },
+  headerStreakFlame: {
+    fontSize: 14,
+    marginRight: 4,
+  },
+  headerStreakText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#f59e0b',
+  },
+  headerProfileButton: {
+    padding: 4,
+  },
+  headerProfileIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#4a4a8e',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerProfileInitial: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  headerSignInButton: {
+    backgroundColor: '#2a3f5f',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+  },
+  headerSignInText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#6a9fff',
+  },
   // Main menu styles
   mainMenuScroll: {
     flexGrow: 1,
@@ -1115,6 +1293,109 @@ const styles = StyleSheet.create({
   playButtonDesc: {
     fontSize: 14,
     color: '#aaa',
+  },
+  // Leaderboard card styles
+  leaderboardCard: {
+    backgroundColor: '#1a2a3e',
+    borderRadius: 12,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: '#2a4a6e',
+  },
+  leaderboardCardLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  leaderboardCardIcon: {
+    fontSize: 28,
+  },
+  leaderboardCardTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  leaderboardCardDesc: {
+    fontSize: 13,
+    color: '#888',
+    marginTop: 2,
+  },
+  leaderboardCardArrow: {
+    fontSize: 24,
+    color: '#6a9fff',
+    fontWeight: '300',
+  },
+  // How to play button
+  howToPlayButton: {
+    marginTop: 16,
+    paddingVertical: 8,
+  },
+  howToPlayText: {
+    fontSize: 15,
+    color: '#888',
+    textDecorationLine: 'underline',
+  },
+  // Sign in banner styles
+  signInBanner: {
+    backgroundColor: '#1a2a3e',
+    borderBottomWidth: 1,
+    borderBottomColor: '#2a4a6e',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  signInBannerContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  signInBannerText: {
+    flex: 1,
+  },
+  signInBannerTitle: {
+    fontSize: 13,
+    color: '#ccc',
+    lineHeight: 18,
+  },
+  signInBannerButton: {
+    backgroundColor: '#4285f4',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+  },
+  signInBannerButtonText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  signInBannerDismiss: {
+    padding: 8,
+    marginLeft: 4,
+  },
+  signInBannerDismissText: {
+    fontSize: 20,
+    color: '#666',
+    fontWeight: '300',
+  },
+  // Account section (for signed in users)
+  accountSection: {
+    marginTop: 24,
+    alignItems: 'center',
+    gap: 4,
+  },
+  accountSectionEmail: {
+    fontSize: 13,
+    color: '#666',
+  },
+  accountSectionSignOut: {
+    fontSize: 14,
+    color: '#888',
+    marginTop: 4,
   },
   scoreSummary: {
     alignItems: 'center',
@@ -1282,6 +1563,69 @@ const styles = StyleSheet.create({
   signInCancelText: {
     fontSize: 16,
     color: '#888',
+  },
+  // Profile menu modal styles
+  profileMenuModal: {
+    backgroundColor: '#1a1a2e',
+    borderRadius: 16,
+    padding: 16,
+    maxWidth: 320,
+    width: '100%',
+  },
+  profileMenuHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 8,
+    gap: 12,
+  },
+  profileMenuAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#4a4a8e',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  profileMenuAvatarText: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  profileMenuInfo: {
+    flex: 1,
+  },
+  profileMenuName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  profileMenuEmail: {
+    fontSize: 13,
+    color: '#888',
+    marginTop: 2,
+  },
+  profileMenuDivider: {
+    height: 1,
+    backgroundColor: '#2a2a4e',
+    marginVertical: 8,
+  },
+  profileMenuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 8,
+    gap: 12,
+  },
+  profileMenuItemIcon: {
+    fontSize: 18,
+  },
+  profileMenuItemText: {
+    fontSize: 15,
+    color: '#fff',
+  },
+  profileMenuItemTextDanger: {
+    fontSize: 15,
+    color: '#ef4444',
   },
   // Menu links row
   menuLinksRow: {
