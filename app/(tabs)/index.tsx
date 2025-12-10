@@ -434,25 +434,39 @@ export default function GameScreen() {
               <TouchableOpacity
                 style={[styles.playButton, dailyCompleted && styles.completedButton]}
                 onPress={handlePlayDaily}
-                disabled={fetchingPuzzle}
+                disabled={fetchingPuzzle || loading}
             >
-              <Text style={styles.playButtonLabel}>
-                {fetchingPuzzle ? 'Loading...' : dailyCompleted ? '✓ Completed' : "Today's Puzzle"}
-              </Text>
-              {dailyCompleted && savedScore ? (
-                <View style={styles.scoreSummary}>
-                  <Text style={styles.scoreSummaryText}>
-                    {savedScore.score} pts • {savedScore.correctPlacements}/16 • {formatTime(savedScore.timeSeconds)}
-                  </Text>
-                  {savedScore.percentile !== undefined && (
-                    <Text style={styles.percentileText}>Top {100 - savedScore.percentile}% of players</Text>
-                  )}
-                  <Text style={styles.playButtonDesc}>Tap to review</Text>
+              {loading ? (
+                <View style={styles.playButtonLoading}>
+                  <ActivityIndicator size="small" color="#fff" />
+                  <Text style={styles.playButtonLoadingText}>Loading...</Text>
                 </View>
               ) : (
-                <Text style={styles.playButtonDesc}>
-                  {fetchingPuzzle ? 'Fetching puzzle' : dailyCompleted ? 'Tap to review your answers' : 'New puzzle every day'}
-                </Text>
+                <>
+                  <Text style={styles.playButtonLabel}>
+                    {fetchingPuzzle ? 'Loading...' : dailyCompleted ? '✓ Completed' : "Today's Puzzle"}
+                  </Text>
+                  {dailyCompleted && savedScore ? (
+                    <View style={styles.scoreSummary}>
+                      <Text style={styles.scoreSummaryText}>
+                        {savedScore.score} pts • {savedScore.correctPlacements}/16 • {formatTime(savedScore.timeSeconds)}
+                      </Text>
+                      {savedScore.percentile !== undefined && (
+                        <Text style={styles.percentileText}>Top {100 - savedScore.percentile}% of players</Text>
+                      )}
+                      <Text style={styles.playButtonDesc}>Tap to review</Text>
+                    </View>
+                  ) : dailyCompleted && !savedScore ? (
+                    <View style={styles.scoreSummaryLoading}>
+                      <ActivityIndicator size="small" color="#4ade80" />
+                      <Text style={styles.playButtonDesc}>Loading score...</Text>
+                    </View>
+                  ) : (
+                    <Text style={styles.playButtonDesc}>
+                      {fetchingPuzzle ? 'Fetching puzzle' : 'New puzzle every day'}
+                    </Text>
+                  )}
+                </>
               )}
             </TouchableOpacity>
 
@@ -1399,6 +1413,23 @@ const styles = StyleSheet.create({
   },
   scoreSummary: {
     alignItems: 'center',
+  },
+  scoreSummaryLoading: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 4,
+  },
+  playButtonLoading: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 8,
+  },
+  playButtonLoadingText: {
+    fontSize: 18,
+    color: '#fff',
+    fontWeight: '500',
   },
   scoreSummaryText: {
     fontSize: 16,
