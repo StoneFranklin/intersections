@@ -6,6 +6,7 @@ import { useGameState } from '@/hooks/use-game-state';
 import { CellPosition, GameScore, Puzzle } from '@/types/game';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
+import { Link } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
@@ -502,6 +503,27 @@ export default function GameScreen() {
               })}
             </Text>
           )}
+
+          {/* Footer Links */}
+          <View style={styles.footerLinks}>
+            <Link href={"/about" as any} asChild>
+              <TouchableOpacity>
+                <Text style={styles.footerLinkText}>About</Text>
+              </TouchableOpacity>
+            </Link>
+            <Text style={styles.footerLinkDivider}>•</Text>
+            <Link href={"/privacy" as any} asChild>
+              <TouchableOpacity>
+                <Text style={styles.footerLinkText}>Privacy</Text>
+              </TouchableOpacity>
+            </Link>
+            <Text style={styles.footerLinkDivider}>•</Text>
+            <Link href={"/terms" as any} asChild>
+              <TouchableOpacity>
+                <Text style={styles.footerLinkText}>Terms</Text>
+              </TouchableOpacity>
+            </Link>
+          </View>
           </View>
         </ScrollView>
 
@@ -1447,6 +1469,22 @@ const styles = StyleSheet.create({
     marginTop: 40,
     fontSize: 16,
     color: '#666',
+  },
+  footerLinks: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 24,
+    marginBottom: 20,
+    gap: 12,
+  },
+  footerLinkText: {
+    fontSize: 13,
+    color: '#555',
+  },
+  footerLinkDivider: {
+    fontSize: 13,
+    color: '#333',
   },
   streakContainer: {
     flexDirection: 'row',
