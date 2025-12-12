@@ -19,10 +19,10 @@ export default function Root({ children }: PropsWithChildren) {
         {/* Favicon */}
         <link rel="icon" type="image/png" href="/intersections/assets/images/intersections-logo.png" />
 
-        {/* Google AdSense - Replace ca-pub-XXXXXXXXXXXXXXXX with your publisher ID */}
+        {/* Google AdSense */}
         <script
           async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6475460515852013"
+          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.EXPO_PUBLIC_ADSENSE_PUBLISHER_ID}`}
           crossOrigin="anonymous"
         />
 

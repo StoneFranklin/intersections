@@ -1,25 +1,28 @@
 {
   "expo": {
-    "name": "word-game",
-    "slug": "word-game",
+    "name": "Intersections",
+    "slug": "intersections",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "scheme": "wordgame",
+    "icon": "./assets/images/intersections-logo.png",
+    "scheme": "intersections",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.stonefranklin.intersections",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "backgroundColor": "#0f0f1a",
+        "foregroundImage": "./assets/images/intersections-logo.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.stonefranklin.intersections"
     },
     "web": {
       "bundler": "metro",
@@ -45,6 +48,12 @@
       "typedRoutes": true,
       "reactCompiler": true,
       "baseUrl": "/intersections"
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "00385042-f12e-486f-a98f-e15cd61abba3"
+      }
     }
   }
 }
