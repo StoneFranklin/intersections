@@ -9,10 +9,18 @@
       "distribution": "internal"
     },
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "EXPO_IOS_BUNDLE_IDENTIFIER": "com.stonefranklin.intersections",
+        "EXPO_ANDROID_PACKAGE": "com.stonefranklin.intersections"
+      }
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "env": {
+        "EXPO_IOS_BUNDLE_IDENTIFIER": "com.stonefranklin.intersections",
+        "EXPO_ANDROID_PACKAGE": "com.stonefranklin.intersections"
+      }
     }
   },
   "submit": {

@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Intersections",
+    "name": "IntersectionsGame",
     "slug": "intersections",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -12,7 +12,8 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.stonefranklin.intersections",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "CFBundleDisplayName": "Intersections"
       }
     },
     "android": {
