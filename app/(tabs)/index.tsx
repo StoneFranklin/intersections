@@ -9,19 +9,19 @@ import * as Haptics from 'expo-haptics';
 import { Link } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Image,
-    Modal,
-    Platform,
-    SafeAreaView,
-    ScrollView,
-    Share,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  Image,
+  Modal,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  Share,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
 
 // Format seconds into MM:SS
@@ -431,6 +431,15 @@ export default function GameScreen() {
             />
             <Text style={styles.menuTitle}>Intersections</Text>
             <Text style={styles.menuSubtitle}>A Daily Word Puzzle</Text>
+            {!loading && (
+              <Text style={styles.dateText}>
+                {new Date().toLocaleDateString('en-US', { 
+                  weekday: 'long', 
+                  month: 'long', 
+                  day: 'numeric' 
+                })}
+              </Text>
+            )}
             
             <View style={styles.menuButtons}>
               <TouchableOpacity
@@ -494,16 +503,6 @@ export default function GameScreen() {
           >
             <Text style={styles.howToPlayText}>How to Play</Text>
           </TouchableOpacity>
-
-          {loading ? null : (
-            <Text style={styles.dateText}>
-              {new Date().toLocaleDateString('en-US', { 
-                weekday: 'long', 
-                month: 'long', 
-                day: 'numeric' 
-              })}
-            </Text>
-          )}
 
           {/* Footer Links */}
           <View style={styles.footerLinks}>
@@ -1304,7 +1303,7 @@ const styles = StyleSheet.create({
   menuSubtitle: {
     fontSize: 18,
     color: '#888',
-    marginBottom: 50,
+    marginBottom: 24,
   },
   menuButtons: {
     width: '100%',
@@ -1468,7 +1467,8 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   dateText: {
-    marginTop: 40,
+    marginTop: 0,
+    marginBottom: 20,
     fontSize: 16,
     color: '#666',
   },
