@@ -1,7 +1,9 @@
 import { AuthProvider } from '@/contexts/auth-context';
+import { requestNotificationPermissions, scheduleNotificationForToday } from '@/utils/notificationService';
 import { DarkTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import 'react-native-reanimated';
 
@@ -25,6 +27,20 @@ const customDarkTheme = {
 };
 
 export default function RootLayout() {
+  useEffect(() => {
+    // Initialize notifications on app start
+    const initNotifications = async () => {
+      if (Platform.OS !== 'web') {
+        const hasPermission = await requestNotificationPermissions();
+        if (hasPermission) {
+          await scheduleNotificationForToday();
+        }
+      }
+    };
+
+    initNotifications();
+  }, []);
+
   return (
     <AuthProvider>
       <View style={styles.container}>

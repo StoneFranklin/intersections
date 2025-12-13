@@ -4,6 +4,7 @@ import { generateDailyPuzzle } from '@/data/puzzle-generator';
 import { fetchTodaysPuzzle, getOrCreateProfile, getPercentile, getTodayLeaderboard, getUserStreak, getUserTodayScore, hasUserCompletedToday, LeaderboardEntry, submitScore, updateDisplayName, updateUserStreak } from '@/data/puzzleApi';
 import { useGameState } from '@/hooks/use-game-state';
 import { CellPosition, GameScore, Puzzle } from '@/types/game';
+import { scheduleDailyNotification } from '@/utils/notificationService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
 import { Link } from 'expo-router';
@@ -347,6 +348,9 @@ export default function GameScreen() {
       await AsyncStorage.setItem('streak', newStreak.toString());
       await AsyncStorage.setItem('lastStreakDate', todayKey);
       setStreak(newStreak);
+
+      // Schedule notification for tomorrow at 9 AM
+      await scheduleDailyNotification();
     } catch (e) {
       console.log('Error saving completion:', e);
     }

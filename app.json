@@ -14,6 +14,9 @@
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "CFBundleDisplayName": "Intersections"
+      },
+      "entitlements": {
+        "aps-environment": "development"
       }
     },
     "android": {
@@ -42,6 +45,14 @@
           "dark": {
             "backgroundColor": "#000000"
           }
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/intersections-logo.png",
+          "color": "#0f0f1a",
+          "sounds": []
         }
       ]
     ],
