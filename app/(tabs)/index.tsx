@@ -4,7 +4,7 @@ import { generateDailyPuzzle } from '@/data/puzzle-generator';
 import { fetchTodaysPuzzle, getOrCreateProfile, getPercentile, getTodayLeaderboard, getUserStreak, getUserTodayScore, hasUserCompletedToday, LeaderboardEntry, submitScore, updateDisplayName, updateUserStreak } from '@/data/puzzleApi';
 import { useGameState } from '@/hooks/use-game-state';
 import { CellPosition, GameScore, Puzzle } from '@/types/game';
-import { scheduleDailyNotification } from '@/utils/notificationService';
+import { areNotificationsEnabled, scheduleDailyNotification, setNotificationsEnabled } from '@/utils/notificationService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
 import { Link } from 'expo-router';
@@ -132,6 +132,9 @@ export default function GameScreen() {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [signInBannerDismissed, setSignInBannerDismissed] = useState(true); // Start hidden until we check
 
+  // Notification settings state
+  const [notificationsEnabled, setNotificationsEnabledState] = useState(true);
+
   // Check if sign-in banner was dismissed
   useEffect(() => {
     const checkBannerDismissed = async () => {
@@ -172,6 +175,23 @@ export default function GameScreen() {
       setDisplayName(null);
     }
   }, [user]);
+
+  // Load notification preference
+  useEffect(() => {
+    const loadNotificationPreference = async () => {
+      if (Platform.OS !== 'web') {
+        const enabled = await areNotificationsEnabled();
+        setNotificationsEnabledState(enabled);
+      }
+    };
+    loadNotificationPreference();
+  }, []);
+
+  const handleToggleNotifications = async () => {
+    const newValue = !notificationsEnabled;
+    setNotificationsEnabledState(newValue);
+    await setNotificationsEnabled(newValue);
+  };
 
   const handleSaveDisplayName = async () => {
     if (!user || !displayNameInput.trim()) return;
@@ -501,7 +521,7 @@ export default function GameScreen() {
             </TouchableOpacity>
           </View>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.howToPlayButton}
             onPress={() => setShowTutorial(true)}
           >
@@ -660,7 +680,7 @@ export default function GameScreen() {
               {/* Menu Options */}
               <View style={styles.profileMenuDivider} />
               
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.profileMenuItem}
                 onPress={() => {
                   setShowProfileMenu(false);
@@ -674,7 +694,31 @@ export default function GameScreen() {
 
               <View style={styles.profileMenuDivider} />
 
-              <TouchableOpacity 
+              {/* Notification Toggle */}
+              {Platform.OS !== 'web' && (
+                <>
+                  <TouchableOpacity
+                    style={styles.profileMenuItem}
+                    onPress={handleToggleNotifications}
+                  >
+                    <Text style={styles.profileMenuItemIcon}>🔔</Text>
+                    <Text style={styles.profileMenuItemText}>Daily Notifications</Text>
+                    <View style={[
+                      styles.toggle,
+                      notificationsEnabled && styles.toggleOn
+                    ]}>
+                      <View style={[
+                        styles.toggleThumb,
+                        notificationsEnabled && styles.toggleThumbOn
+                      ]} />
+                    </View>
+                  </TouchableOpacity>
+
+                  <View style={styles.profileMenuDivider} />
+                </>
+              )}
+
+              <TouchableOpacity
                 style={styles.profileMenuItem}
                 onPress={() => {
                   setShowProfileMenu(false);
@@ -1697,10 +1741,37 @@ const styles = StyleSheet.create({
   profileMenuItemText: {
     fontSize: 15,
     color: '#fff',
+    flex: 1,
   },
   profileMenuItemTextDanger: {
     fontSize: 15,
     color: '#ef4444',
+  },
+  // Toggle switch styles
+  toggle: {
+    width: 50,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#3a3a5e',
+    padding: 2,
+    justifyContent: 'center',
+  },
+  toggleOn: {
+    backgroundColor: '#4ade80',
+  },
+  toggleThumb: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 3,
+  },
+  toggleThumbOn: {
+    transform: [{ translateX: 22 }],
   },
   // Menu links row
   menuLinksRow: {

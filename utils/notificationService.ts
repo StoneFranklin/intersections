@@ -32,6 +32,9 @@ async function hasPuzzleBeenCompletedToday(): Promise<boolean> {
 // Unique identifier for the daily puzzle notification
 const DAILY_NOTIFICATION_ID = 'daily-puzzle-reminder';
 
+// Storage key for notification preference
+const NOTIFICATIONS_ENABLED_KEY = 'notifications-enabled';
+
 /**
  * Request notification permissions from the user
  * @returns true if permission granted, false otherwise
@@ -84,6 +87,7 @@ export async function scheduleDailyNotification(): Promise<void> {
           priority: Notifications.AndroidNotificationPriority.DEFAULT,
         },
         trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
           seconds: secondsUntilTomorrow9AM,
         },
       });
@@ -104,6 +108,13 @@ export async function scheduleNotificationForToday(): Promise<void> {
   }
 
   try {
+    // Check if notifications are enabled by user
+    const notificationsEnabled = await areNotificationsEnabled();
+    if (!notificationsEnabled) {
+      console.log('Notifications disabled by user, skipping');
+      return;
+    }
+
     const isCompleted = await hasPuzzleBeenCompletedToday();
     if (isCompleted) {
       // Don't schedule if already completed
@@ -131,6 +142,7 @@ export async function scheduleNotificationForToday(): Promise<void> {
           priority: Notifications.AndroidNotificationPriority.DEFAULT,
         },
         trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
           seconds: secondsUntil9AM,
         },
       });
@@ -194,5 +206,48 @@ export async function isDailyNotificationScheduled(): Promise<boolean> {
   } catch (error) {
     console.error('Error checking scheduled notifications:', error);
     return false;
+  }
+}
+
+/**
+ * Check if notifications are enabled by user preference
+ */
+export async function areNotificationsEnabled(): Promise<boolean> {
+  if (Platform.OS === 'web') {
+    return false;
+  }
+
+  try {
+    const enabled = await AsyncStorage.getItem(NOTIFICATIONS_ENABLED_KEY);
+    // Default to true if not set (opt-out model)
+    return enabled !== 'false';
+  } catch (error) {
+    console.error('Error checking notification preference:', error);
+    return true;
+  }
+}
+
+/**
+ * Enable or disable notifications
+ */
+export async function setNotificationsEnabled(enabled: boolean): Promise<void> {
+  if (Platform.OS === 'web') {
+    return;
+  }
+
+  try {
+    await AsyncStorage.setItem(NOTIFICATIONS_ENABLED_KEY, enabled.toString());
+
+    if (enabled) {
+      // Re-enable notifications - schedule for today
+      await scheduleNotificationForToday();
+    } else {
+      // Disable notifications - cancel all scheduled
+      await cancelDailyNotification();
+    }
+
+    console.log(`Notifications ${enabled ? 'enabled' : 'disabled'}`);
+  } catch (error) {
+    console.error('Error setting notification preference:', error);
   }
 }
