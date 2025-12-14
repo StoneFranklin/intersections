@@ -81,7 +81,7 @@ export async function scheduleDailyNotification(): Promise<void> {
       await Notifications.scheduleNotificationAsync({
         identifier: DAILY_NOTIFICATION_ID,
         content: {
-          title: "New Puzzle Ready! 🎯",
+          title: "New Puzzle Ready!",
           body: "Today's Intersections puzzle is waiting for you!",
           sound: true,
           priority: Notifications.AndroidNotificationPriority.DEFAULT,
@@ -136,7 +136,7 @@ export async function scheduleNotificationForToday(): Promise<void> {
       await Notifications.scheduleNotificationAsync({
         identifier: DAILY_NOTIFICATION_ID,
         content: {
-          title: "New Puzzle Ready! 🎯",
+          title: "New Puzzle Ready!",
           body: "Today's Intersections puzzle is waiting for you!",
           sound: true,
           priority: Notifications.AndroidNotificationPriority.DEFAULT,

@@ -1,11 +1,16 @@
 import { AuthProvider } from '@/contexts/auth-context';
 import { requestNotificationPermissions, scheduleNotificationForToday } from '@/utils/notificationService';
 import { DarkTheme, ThemeProvider } from '@react-navigation/native';
+import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import 'react-native-reanimated';
+
+// Prevent auto-hiding splash screen
+SplashScreen.preventAutoHideAsync();
 
 // Import global CSS for web
 if (Platform.OS === 'web') {
@@ -27,6 +32,20 @@ const customDarkTheme = {
 };
 
 export default function RootLayout() {
+  // Load icon fonts for all platforms including web
+  const [fontsLoaded] = useFonts({
+    'Ionicons': require('@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Ionicons.ttf'),
+    'MaterialCommunityIcons': require('@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/MaterialCommunityIcons.ttf'),
+    'AntDesign': require('@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/AntDesign.ttf'),
+    'MaterialIcons': require('@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/MaterialIcons.ttf'),
+  });
+
+  useEffect(() => {
+    if (fontsLoaded) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
+
   useEffect(() => {
     // Initialize notifications on app start
     const initNotifications = async () => {
@@ -40,6 +59,10 @@ export default function RootLayout() {
 
     initNotifications();
   }, []);
+
+  if (!fontsLoaded) {
+    return null;
+  }
 
   return (
     <AuthProvider>

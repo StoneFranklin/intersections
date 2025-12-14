@@ -31,7 +31,8 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "backgroundColor": "#0f0f1a"
+      "backgroundColor": "#0f0f1a",
+      "template": "./web/index.html"
     },
     "plugins": [
       "expo-router",

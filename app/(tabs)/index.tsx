@@ -5,6 +5,7 @@ import { fetchTodaysPuzzle, getOrCreateProfile, getPercentile, getTodayLeaderboa
 import { useGameState } from '@/hooks/use-game-state';
 import { CellPosition, GameScore, Puzzle } from '@/types/game';
 import { areNotificationsEnabled, scheduleDailyNotification, setNotificationsEnabled } from '@/utils/notificationService';
+import { Ionicons, MaterialCommunityIcons, AntDesign } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
 import { Link } from 'expo-router';
@@ -390,7 +391,7 @@ export default function GameScreen() {
           <View style={styles.homeHeaderLeft}>
             {streak > 0 && (
               <View style={styles.headerStreakBadge}>
-                <Text style={styles.headerStreakFlame}>🔥</Text>
+                <Ionicons name="flame" size={14} color="#f59e0b" style={styles.headerStreakFlame} />
                 <Text style={styles.headerStreakText}>{streak}</Text>
               </View>
             )}
@@ -478,9 +479,12 @@ export default function GameScreen() {
                 </View>
               ) : (
                 <>
-                  <Text style={styles.playButtonLabel}>
-                    {fetchingPuzzle ? 'Loading...' : dailyCompleted ? '✓ Completed' : "Today's Puzzle"}
-                  </Text>
+                  <View style={styles.playButtonLabelContainer}>
+                    {dailyCompleted && <Ionicons name="checkmark-circle" size={24} color="#4ade80" style={{ marginRight: 8 }} />}
+                    <Text style={styles.playButtonLabel}>
+                      {fetchingPuzzle ? 'Loading...' : dailyCompleted ? 'Completed' : "Today's Puzzle"}
+                    </Text>
+                  </View>
                   {dailyCompleted && savedScore ? (
                     <View style={styles.scoreSummary}>
                       <Text style={styles.scoreSummaryText}>
@@ -511,13 +515,13 @@ export default function GameScreen() {
               onPress={openLeaderboard}
             >
               <View style={styles.leaderboardCardLeft}>
-                <Text style={styles.leaderboardCardIcon}>🏆</Text>
+                <MaterialCommunityIcons name="trophy" size={28} color="#ffd700" style={styles.leaderboardCardIcon} />
                 <View>
                   <Text style={styles.leaderboardCardTitle}>Leaderboard</Text>
                   <Text style={styles.leaderboardCardDesc}>See how you rank today</Text>
                 </View>
               </View>
-              <Text style={styles.leaderboardCardArrow}>›</Text>
+              <Ionicons name="chevron-forward" size={24} color="#6a9fff" />
             </TouchableOpacity>
           </View>
 
@@ -634,9 +638,12 @@ export default function GameScreen() {
                 }}
                 disabled={signingIn}
               >
-                <Text style={styles.googleButtonText}>
-                  {signingIn ? 'Signing in...' : '🔵 Continue with Google'}
-                </Text>
+                <View style={styles.googleButtonContent}>
+                  <AntDesign name="google" size={20} color="#4285f4" style={{ marginRight: 8 }} />
+                  <Text style={styles.googleButtonText}>
+                    {signingIn ? 'Signing in...' : 'Continue with Google'}
+                  </Text>
+                </View>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -688,7 +695,7 @@ export default function GameScreen() {
                   setShowDisplayNameModal(true);
                 }}
               >
-                <Text style={styles.profileMenuItemIcon}>✏️</Text>
+                <Ionicons name="pencil" size={18} color="#6a9fff" style={styles.profileMenuItemIcon} />
                 <Text style={styles.profileMenuItemText}>Edit Display Name</Text>
               </TouchableOpacity>
 
@@ -701,7 +708,7 @@ export default function GameScreen() {
                     style={styles.profileMenuItem}
                     onPress={handleToggleNotifications}
                   >
-                    <Text style={styles.profileMenuItemIcon}>🔔</Text>
+                    <Ionicons name={notificationsEnabled ? "notifications" : "notifications-outline"} size={18} color="#6a9fff" style={styles.profileMenuItemIcon} />
                     <Text style={styles.profileMenuItemText}>Daily Notifications</Text>
                     <View style={[
                       styles.toggle,
@@ -725,7 +732,7 @@ export default function GameScreen() {
                   signOut();
                 }}
               >
-                <Text style={styles.profileMenuItemIcon}>🚪</Text>
+                <Ionicons name="exit-outline" size={18} color="#ef4444" style={styles.profileMenuItemIcon} />
                 <Text style={styles.profileMenuItemTextDanger}>Sign Out</Text>
               </TouchableOpacity>
             </View>
@@ -741,7 +748,10 @@ export default function GameScreen() {
         >
           <View style={styles.modalOverlay}>
             <View style={styles.leaderboardModal}>
-              <Text style={styles.leaderboardTitle}>🏆 Today's Leaderboard</Text>
+              <View style={styles.leaderboardTitleContainer}>
+                <MaterialCommunityIcons name="trophy" size={28} color="#ffd700" style={{ marginRight: 8 }} />
+                <Text style={styles.leaderboardTitle}>Today's Leaderboard</Text>
+              </View>
               
               {loadingLeaderboard ? (
                 <ActivityIndicator size="large" color="#6a9fff" style={{ marginVertical: 40 }} />
@@ -750,17 +760,25 @@ export default function GameScreen() {
               ) : (
                 <ScrollView style={styles.leaderboardList} showsVerticalScrollIndicator={true}>
                   {leaderboard.map((entry, index) => (
-                    <View 
-                      key={index} 
+                    <View
+                      key={index}
                       style={[
                         styles.leaderboardRow,
                         entry.isCurrentUser && styles.leaderboardRowCurrentUser,
                         entry.rank > 10 && styles.leaderboardRowSeparated,
                       ]}
                     >
-                      <Text style={styles.leaderboardRank}>
-                        {entry.rank === 1 ? '🥇' : entry.rank === 2 ? '🥈' : entry.rank === 3 ? '🥉' : `#${entry.rank}`}
-                      </Text>
+                      <View style={styles.leaderboardRank}>
+                        {entry.rank === 1 ? (
+                          <MaterialCommunityIcons name="medal" size={24} color="#ffd700" />
+                        ) : entry.rank === 2 ? (
+                          <MaterialCommunityIcons name="medal" size={24} color="#c0c0c0" />
+                        ) : entry.rank === 3 ? (
+                          <MaterialCommunityIcons name="medal" size={24} color="#cd7f32" />
+                        ) : (
+                          <Text style={styles.leaderboardRankText}>#{entry.rank}</Text>
+                        )}
+                      </View>
                       <View style={styles.leaderboardInfo}>
                         <Text style={[
                           styles.leaderboardName,
@@ -1049,7 +1067,7 @@ function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedSc
           contentContainerStyle={styles.resultScrollContent}
           showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.gameOverEmoji}>💔</Text>
+          <MaterialCommunityIcons name="heart-broken" size={80} color="#ff6b6b" style={{ marginBottom: 16, marginTop: 20 }} />
           <Text style={styles.gameOverText}>Game Over!</Text>
           
           <View style={styles.scoreCard}>
@@ -1107,7 +1125,7 @@ function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedSc
           contentContainerStyle={styles.resultScrollContent}
           showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.winEmoji}>🎉</Text>
+          <MaterialCommunityIcons name="party-popper" size={80} color="#4ade80" style={{ marginBottom: 16, marginTop: 20 }} />
           <Text style={styles.winOverlayTitle}>Puzzle Solved!</Text>
           
           <View style={styles.scoreCard}>
@@ -1292,7 +1310,6 @@ const styles = StyleSheet.create({
     borderColor: '#f59e0b',
   },
   headerStreakFlame: {
-    fontSize: 14,
     marginRight: 4,
   },
   headerStreakText: {
@@ -1366,6 +1383,11 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
   },
+  playButtonLabelContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
   completedButton: {
     backgroundColor: '#1a3d2d',
     borderWidth: 2,
@@ -1398,7 +1420,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   leaderboardCardIcon: {
-    fontSize: 28,
+    marginRight: 0,
   },
   leaderboardCardTitle: {
     fontSize: 18,
@@ -1409,11 +1431,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#888',
     marginTop: 2,
-  },
-  leaderboardCardArrow: {
-    fontSize: 24,
-    color: '#6a9fff',
-    fontWeight: '300',
   },
   // How to play button
   howToPlayButton: {
@@ -1673,6 +1690,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
+  googleButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   googleButtonText: {
     fontSize: 16,
     fontWeight: '600',
@@ -1738,7 +1759,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   profileMenuItemIcon: {
-    fontSize: 18,
+    marginRight: 0,
   },
   profileMenuItemText: {
     fontSize: 15,
@@ -1804,12 +1825,16 @@ const styles = StyleSheet.create({
     maxHeight: '80%',
     width: '100%',
   },
+  leaderboardTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+  },
   leaderboardTitle: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#fff',
-    textAlign: 'center',
-    marginBottom: 20,
   },
   leaderboardEmpty: {
     fontSize: 16,
@@ -1839,10 +1864,14 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
   },
   leaderboardRank: {
+    width: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  leaderboardRankText: {
     fontSize: 18,
     fontWeight: '600',
     color: '#888',
-    width: 40,
     textAlign: 'center',
   },
   leaderboardInfo: {
@@ -2039,11 +2068,6 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   // Game over styles
-  gameOverEmoji: {
-    fontSize: 80,
-    marginBottom: 16,
-    marginTop: 20,
-  },
   gameOverText: {
     fontSize: 36,
     fontWeight: 'bold',
@@ -2097,11 +2121,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
   // Win overlay styles
-  winEmoji: {
-    fontSize: 80,
-    marginBottom: 16,
-    marginTop: 20,
-  },
   winOverlayTitle: {
     fontSize: 36,
     fontWeight: 'bold',

@@ -23,7 +23,12 @@
       "Bash(powershell.exe -ExecutionPolicy Bypass -File \"c:\\Users\\saf1\\Documents\\react-native\\word-game\\run-build.ps1\")",
       "Bash(powershell.exe -Command \"$env:ANDROID_HOME=''C:\\Users\\saf1\\AppData\\Local\\Android\\Sdk''; & ''$env:ANDROID_HOME\\platform-tools\\adb.exe'' uninstall com.stonefranklin.intersections\")",
       "Bash(\"C:\\Users\\saf1\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe\" uninstall com.stonefranklin.intersections)",
-      "Bash(\"C:\\Users\\saf1\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe\" install \"C:\\Users\\saf1\\Documents\\react-native\\word-game\\android\\app\\build\\outputs\\apk\\release\\app-release.apk\")"
+      "Bash(\"C:\\Users\\saf1\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe\" install \"C:\\Users\\saf1\\Documents\\react-native\\word-game\\android\\app\\build\\outputs\\apk\\release\\app-release.apk\")",
+      "Bash(copy:*)",
+      "Bash(npx expo export:*)",
+      "Bash(ls:*)",
+      "Bash(npm run deploy:*)",
+      "Bash(find:*)"
     ]
   }
 }
