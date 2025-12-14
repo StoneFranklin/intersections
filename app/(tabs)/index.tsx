@@ -903,6 +903,8 @@ function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedSc
         .then((result) => {
           if (result) {
             setPercentile(result.percentile);
+            // Update finalScore with percentile before saving
+            finalScore.percentile = result.percentile;
           }
           // Save completion for both win and game over
           onComplete(finalScore);
