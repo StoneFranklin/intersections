@@ -6,6 +6,7 @@ import { useGameState } from '@/hooks/use-game-state';
 import { CellPosition, GameScore, Puzzle } from '@/types/game';
 import { areNotificationsEnabled, scheduleDailyNotification, setNotificationsEnabled } from '@/utils/notificationService';
 import { Ionicons, MaterialCommunityIcons, AntDesign } from '@expo/vector-icons';
+import * as AppleAuthentication from 'expo-apple-authentication';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
 import { Link } from 'expo-router';
@@ -110,7 +111,7 @@ function getYesterdayKey(): string {
 }
 
 export default function GameScreen() {
-  const { user, loading: authLoading, signInWithGoogle, signOut } = useAuth();
+  const { user, loading: authLoading, signInWithGoogle, signInWithApple, signOut } = useAuth();
   const [puzzle, setPuzzle] = useState<Puzzle | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isReviewMode, setIsReviewMode] = useState(false);
@@ -645,6 +646,26 @@ export default function GameScreen() {
                   </Text>
                 </View>
               </TouchableOpacity>
+
+              {Platform.OS === 'ios' && (
+                <AppleAuthentication.AppleAuthenticationButton
+                  buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
+                  buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+                  cornerRadius={8}
+                  style={styles.appleButton}
+                  onPress={async () => {
+                    setSigningIn(true);
+                    try {
+                      await signInWithApple();
+                      setShowSignIn(false);
+                    } catch (e) {
+                      console.error('Apple sign in error:', e);
+                    } finally {
+                      setSigningIn(false);
+                    }
+                  }}
+                />
+              )}
 
               <TouchableOpacity
                 style={styles.signInCancelButton}
@@ -1698,6 +1719,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#333',
+  },
+  appleButton: {
+    width: '100%',
+    height: 48,
+    marginBottom: 16,
   },
   signInCancelButton: {
     paddingVertical: 12,

@@ -34,6 +34,9 @@ yarn-error.*
 .env
 .env*.local
 
+# Apple Sign in with Apple secrets
+generate-apple-secret.js
+
 # typescript
 *.tsbuildinfo
 
