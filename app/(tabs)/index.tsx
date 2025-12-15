@@ -122,6 +122,7 @@ export default function GameScreen() {
   const [streak, setStreak] = useState(0);
   const [showSignIn, setShowSignIn] = useState(false);
   const [signingIn, setSigningIn] = useState(false);
+  const [signingInWithApple, setSigningInWithApple] = useState(false);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loadingLeaderboard, setLoadingLeaderboard] = useState(false);
@@ -648,23 +649,29 @@ export default function GameScreen() {
               </TouchableOpacity>
 
               {Platform.OS === 'ios' && (
-                <AppleAuthentication.AppleAuthenticationButton
-                  buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
-                  buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
-                  cornerRadius={8}
+                <TouchableOpacity
                   style={styles.appleButton}
                   onPress={async () => {
-                    setSigningIn(true);
+                    setSigningInWithApple(true);
                     try {
                       await signInWithApple();
                       setShowSignIn(false);
                     } catch (e) {
                       console.error('Apple sign in error:', e);
                     } finally {
-                      setSigningIn(false);
+                      setSigningInWithApple(false);
                     }
                   }}
-                />
+                  disabled={signingInWithApple}
+                  activeOpacity={0.8}
+                >
+                  <View style={styles.appleButtonContent}>
+                    <Ionicons name="logo-apple" size={20} color="#fff" style={{ marginRight: 8 }} />
+                    <Text style={styles.appleButtonText}>
+                      {signingInWithApple ? 'Signing in...' : 'Continue with Apple'}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
               )}
 
               <TouchableOpacity
@@ -1724,6 +1731,19 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 48,
     marginBottom: 16,
+    backgroundColor: '#000',
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  appleButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  appleButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
   },
   signInCancelButton: {
     paddingVertical: 12,
