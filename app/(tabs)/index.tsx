@@ -1,8 +1,10 @@
 import { GameGrid, WordTray } from '@/components/game';
+import { RewardedAdModal } from '@/components/ads/rewarded-ad-modal';
 import { useAuth } from '@/contexts/auth-context';
 import { generateDailyPuzzle } from '@/data/puzzle-generator';
 import { fetchTodaysPuzzle, getOrCreateProfile, getPercentile, getTodayLeaderboard, getTodayLeaderboardPage, getUserStreak, getUserTodayScore, hasUserCompletedToday, LeaderboardEntry, submitScore, updateDisplayName, updateUserStreak } from '@/data/puzzleApi';
 import { useGameState } from '@/hooks/use-game-state';
+import { useRewardedAd } from '@/hooks/use-rewarded-ad';
 import { CellPosition, GameScore, Puzzle } from '@/types/game';
 import { areNotificationsEnabled, scheduleDailyNotification, setNotificationsEnabled } from '@/utils/notificationService';
 import { Ionicons, MaterialCommunityIcons, AntDesign } from '@expo/vector-icons';
@@ -1368,6 +1370,7 @@ function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedSc
     placeWordAtCell,
     removeWordFromCell,
     isCellCorrect,
+    grantExtraLife,
     elapsedTime,
     mistakes,
     finalScore,
@@ -1376,14 +1379,57 @@ function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedSc
   const [resultRank, setResultRank] = useState<number | null>(null);
   const [submittingScore, setSubmittingScore] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
+  const [showRewardedAdModal, setShowRewardedAdModal] = useState(false);
+  const [hasShownAdOffer, setHasShownAdOffer] = useState(false);
+  const [adOfferDeclined, setAdOfferDeclined] = useState(false);
+
+  // Rewarded ad hook
+  const rewardedAd = useRewardedAd();
 
   const isGameOver = gameState.lives <= 0;
+  // Only show game over screen after user has declined the ad offer or already used it
+  const shouldShowGameOver = isGameOver && (adOfferDeclined || !showRewardedAdModal) && hasShownAdOffer;
+
+  // Show ad offer when lives reach 0 (only once per game)
+  useEffect(() => {
+    if (isGameOver && !hasShownAdOffer && !isReviewMode) {
+      setShowRewardedAdModal(true);
+      setHasShownAdOffer(true);
+    }
+  }, [isGameOver, hasShownAdOffer, isReviewMode]);
+
+  // Reset ad offer flags when puzzle changes
+  useEffect(() => {
+    setHasShownAdOffer(false);
+    setAdOfferDeclined(false);
+  }, [puzzle]);
+
+  const handleWatchAd = async () => {
+    const rewarded = await rewardedAd.show();
+    setShowRewardedAdModal(false);
+
+    if (rewarded) {
+      // User watched the ad, grant extra life
+      grantExtraLife();
+      setAdOfferDeclined(false);
+      haptics.notification(Haptics.NotificationFeedbackType.Success);
+      // Note: hasShownAdOffer stays true - only one ad offer per game
+    } else {
+      // User didn't complete the ad - treat as declined
+      setAdOfferDeclined(true);
+    }
+  };
+
+  const handleDeclineAd = () => {
+    setShowRewardedAdModal(false);
+    setAdOfferDeclined(true);
+  };
 
   // Submit score when puzzle is solved OR game over (only if not in review mode)
   useEffect(() => {
     if (isReviewMode) return;
 
-    const gameEnded = gameState.isSolved || isGameOver;
+    const gameEnded = gameState.isSolved || shouldShowGameOver;
     if (gameEnded && finalScore && !submittingScore && resultRank === null) {
       setSubmittingScore(true);
       submitScore(finalScore.score, finalScore.timeSeconds, finalScore.mistakes, finalScore.correctPlacements, userId)
@@ -1401,7 +1447,7 @@ function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedSc
         .catch(console.error)
         .finally(() => setSubmittingScore(false));
     }
-  }, [gameState.isSolved, isGameOver, finalScore, submittingScore, resultRank, onComplete]);
+  }, [gameState.isSolved, shouldShowGameOver, finalScore, submittingScore, resultRank, onComplete]);
 
   const handleCellPress = (position: CellPosition) => {
     if (isReviewMode || isGameOver || gameState.isSolved) return;
@@ -1523,7 +1569,7 @@ function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedSc
   }
 
   // Show results screen with embedded condensed leaderboard
-  if ((isGameOver || gameState.isSolved) && finalScore) {
+  if ((shouldShowGameOver || gameState.isSolved) && finalScore) {
     const isWin = gameState.isSolved;
     const displayRank = resultRank || userRank;
     return (
@@ -1782,6 +1828,16 @@ function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedSc
           </ScrollView>
         </SafeAreaView>
       </Modal>
+
+      {/* Rewarded Ad Modal */}
+      <RewardedAdModal
+        visible={showRewardedAdModal}
+        isLoading={rewardedAd.isLoading}
+        isShowing={rewardedAd.isShowing}
+        onWatchAd={handleWatchAd}
+        onDecline={handleDeclineAd}
+        error={rewardedAd.error}
+      />
     </SafeAreaView>
   );
 }

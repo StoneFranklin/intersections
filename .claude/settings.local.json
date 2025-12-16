@@ -44,7 +44,8 @@
       "Bash(open:*)",
       "Bash(xcodebuild:*)",
       "Bash(plutil:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(npm run web:*)"
     ]
   }
 }

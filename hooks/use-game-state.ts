@@ -31,6 +31,8 @@ export interface UseGameStateReturn {
   resetGame: () => void;
   /** Check if a specific cell has the correct word */
   isCellCorrect: (position: CellPosition) => boolean | null;
+  /** Grant an extra life (from rewarded ad) */
+  grantExtraLife: () => void;
   /** Current elapsed time in seconds */
   elapsedTime: number;
   /** Number of mistakes made */
@@ -233,6 +235,19 @@ export function useGameState(puzzle: Puzzle): UseGameStateReturn {
     [getWordAtCell, puzzle]
   );
 
+  const grantExtraLife = useCallback(() => {
+    setGameState(prev => ({
+      ...prev,
+      lives: prev.lives + 1,
+    }));
+    // Reset final score if it was set due to game over
+    if (finalScore && !gameState.isSolved) {
+      setFinalScore(null);
+      // Restart the timer
+      startTimeRef.current = Date.now() - (elapsedTime * 1000);
+    }
+  }, [finalScore, gameState.isSolved, elapsedTime]);
+
   return {
     gameState,
     shuffledWords,
@@ -243,6 +258,7 @@ export function useGameState(puzzle: Puzzle): UseGameStateReturn {
     removeWordFromCell,
     resetGame,
     isCellCorrect,
+    grantExtraLife,
     elapsedTime,
     mistakes,
     correctPlacements,
