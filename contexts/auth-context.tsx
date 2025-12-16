@@ -160,7 +160,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         provider: 'google',
         options: {
           redirectTo: typeof window !== 'undefined'
-            ? `${window.location.origin}/intersections/`
+            ? `${window.location.origin}/intersections/auth/callback`
             : undefined,
         },
       });

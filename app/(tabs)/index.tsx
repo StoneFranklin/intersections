@@ -1,7 +1,7 @@
 import { GameGrid, WordTray } from '@/components/game';
 import { useAuth } from '@/contexts/auth-context';
 import { generateDailyPuzzle } from '@/data/puzzle-generator';
-import { fetchTodaysPuzzle, getOrCreateProfile, getPercentile, getTodayLeaderboard, getUserStreak, getUserTodayScore, hasUserCompletedToday, LeaderboardEntry, submitScore, updateDisplayName, updateUserStreak } from '@/data/puzzleApi';
+import { fetchTodaysPuzzle, getOrCreateProfile, getPercentile, getTodayLeaderboard, getTodayLeaderboardPage, getUserStreak, getUserTodayScore, hasUserCompletedToday, LeaderboardEntry, submitScore, updateDisplayName, updateUserStreak } from '@/data/puzzleApi';
 import { useGameState } from '@/hooks/use-game-state';
 import { CellPosition, GameScore, Puzzle } from '@/types/game';
 import { areNotificationsEnabled, scheduleDailyNotification, setNotificationsEnabled } from '@/utils/notificationService';
@@ -13,6 +13,7 @@ import { Link } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  FlatList,
   Image,
   Modal,
   Platform,
@@ -129,6 +130,11 @@ export default function GameScreen() {
   const [loadingLeaderboard, setLoadingLeaderboard] = useState(false);
   const [userRank, setUserRank] = useState<number | null>(null);
   const [leaderboardLoaded, setLeaderboardLoaded] = useState(false);
+  const [fullLeaderboard, setFullLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [loadingFullLeaderboard, setLoadingFullLeaderboard] = useState(false);
+  const [fullLeaderboardLoaded, setFullLeaderboardLoaded] = useState(false);
+  const [fullLeaderboardFrom, setFullLeaderboardFrom] = useState(0);
+  const [fullLeaderboardHasMore, setFullLeaderboardHasMore] = useState(true);
   const [showAnswersModal, setShowAnswersModal] = useState(false);
   const [todaysPuzzle, setTodaysPuzzle] = useState<Puzzle | null>(null);
   
@@ -247,6 +253,25 @@ export default function GameScreen() {
     }
   };
 
+  const loadFullLeaderboard = async (opts?: { reset?: boolean }) => {
+    if (loadingFullLeaderboard) return;
+    if (!fullLeaderboardHasMore && !opts?.reset) return;
+
+    setLoadingFullLeaderboard(true);
+    try {
+      const from = opts?.reset ? 0 : fullLeaderboardFrom;
+      const page = await getTodayLeaderboardPage({ from, pageSize: 50, currentUserId: user?.id });
+      setFullLeaderboard(prev => (opts?.reset ? page.entries : [...prev, ...page.entries]));
+      setFullLeaderboardFrom(page.nextFrom);
+      setFullLeaderboardHasMore(page.hasMore);
+      setFullLeaderboardLoaded(true);
+    } catch (e) {
+      console.error('Error loading full leaderboard:', e);
+    } finally {
+      setLoadingFullLeaderboard(false);
+    }
+  };
+
   // Load leaderboard when puzzle is completed
   useEffect(() => {
     if (dailyCompleted && !leaderboardLoaded && !loadingLeaderboard) {
@@ -260,6 +285,10 @@ export default function GameScreen() {
       // Reset and reload to get fresh user identification
       setLeaderboardLoaded(false);
       setUserRank(null);
+      setFullLeaderboard([]);
+      setFullLeaderboardLoaded(false);
+      setFullLeaderboardFrom(0);
+      setFullLeaderboardHasMore(true);
     }
   }, [user?.id]);
 
@@ -267,6 +296,9 @@ export default function GameScreen() {
     setShowLeaderboardScreen(true);
     if (!leaderboardLoaded) {
       await loadLeaderboard();
+    }
+    if (!fullLeaderboardLoaded) {
+      await loadFullLeaderboard({ reset: true });
     }
   };
 
@@ -470,6 +502,119 @@ export default function GameScreen() {
           <View style={{ width: 40 }} />
         </View>
 
+        <FlatList
+          style={styles.leaderboardScreenContent}
+          contentContainerStyle={styles.leaderboardScreenContentContainer}
+          data={fullLeaderboard}
+          keyExtractor={(item, index) => `${item.rank}-${index}`}
+          onEndReached={() => {
+            if (fullLeaderboardHasMore && !loadingFullLeaderboard) {
+              loadFullLeaderboard();
+            }
+          }}
+          onEndReachedThreshold={0.5}
+          ListHeaderComponent={
+            <>
+              {userRank && (
+                <View style={styles.userRankBanner}>
+                  <Text style={styles.userRankBannerText}>You are ranked</Text>
+                  <Text style={styles.userRankBannerValue}>#{userRank} in the world</Text>
+                </View>
+              )}
+
+              <View style={styles.leaderboardScreenActions}>
+                <TouchableOpacity
+                  style={styles.leaderboardScreenActionButton}
+                  onPress={() => setShowAnswersModal(true)}
+                >
+                  <Ionicons name="grid-outline" size={20} color="#6a9fff" />
+                  <Text style={styles.leaderboardScreenActionText}>View Correct Answers</Text>
+                </TouchableOpacity>
+
+                {savedScore && (
+                  <TouchableOpacity
+                    style={styles.leaderboardScreenShareButton}
+                    onPress={() => shareScore(savedScore!, userRank)}
+                  >
+                    <Ionicons name="share-outline" size={20} color="#4ade80" />
+                    <Text style={styles.leaderboardScreenShareText}>Share Score</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            </>
+          }
+          ListEmptyComponent={
+            loadingFullLeaderboard && !fullLeaderboardLoaded ? (
+              <ActivityIndicator size="large" color="#6a9fff" style={{ marginVertical: 40 }} />
+            ) : (
+              <Text style={styles.leaderboardEmpty}>No scores yet today. Be the first!</Text>
+            )
+          }
+          renderItem={({ item: entry }) => (
+            <View
+              style={[
+                styles.leaderboardFullRow,
+                entry.isCurrentUser && styles.leaderboardFullRowCurrentUser,
+              ]}
+            >
+              <View style={styles.leaderboardFullRank}>
+                {entry.rank === 1 ? (
+                  <MaterialCommunityIcons name="medal" size={28} color="#ffd700" />
+                ) : entry.rank === 2 ? (
+                  <MaterialCommunityIcons name="medal" size={28} color="#c0c0c0" />
+                ) : entry.rank === 3 ? (
+                  <MaterialCommunityIcons name="medal" size={28} color="#cd7f32" />
+                ) : (
+                  <Text style={styles.leaderboardFullRankText}>#{entry.rank}</Text>
+                )}
+              </View>
+              <View style={styles.leaderboardFullInfo}>
+                <Text
+                  style={[
+                    styles.leaderboardFullName,
+                    entry.isCurrentUser && styles.leaderboardFullNameCurrentUser,
+                  ]}
+                  numberOfLines={1}
+                >
+                  {entry.displayName || 'Anonymous'}
+                  {entry.isCurrentUser && ' (you)'}
+                </Text>
+                <Text style={styles.leaderboardFullMeta}>
+                  {entry.correctPlacements}/16 correct - {formatTime(entry.timeSeconds)}
+                  {/*
+                  {entry.correctPlacements}/16 correct ƒ?› {formatTime(entry.timeSeconds)}
+                  */}
+                </Text>
+              </View>
+              <Text
+                style={[
+                  styles.leaderboardFullScore,
+                  entry.isCurrentUser && styles.leaderboardFullScoreCurrentUser,
+                ]}
+              >
+                {entry.score}
+              </Text>
+            </View>
+          )}
+          ListFooterComponent={
+            loadingFullLeaderboard && fullLeaderboardLoaded ? (
+              <ActivityIndicator size="small" color="#6a9fff" style={{ marginVertical: 16 }} />
+            ) : fullLeaderboardHasMore && fullLeaderboardLoaded ? (
+              <TouchableOpacity
+                style={styles.leaderboardCloseButton}
+                onPress={() => loadFullLeaderboard()}
+                disabled={loadingFullLeaderboard}
+              >
+                <Text style={styles.leaderboardCloseText}>Load more</Text>
+              </TouchableOpacity>
+            ) : (
+              <View style={{ height: 12 }} />
+            )
+          }
+        />
+
+        {/* Legacy ScrollView version (disabled) */}
+        {false && (
         <ScrollView style={styles.leaderboardScreenContent} contentContainerStyle={styles.leaderboardScreenContentContainer}>
           {/* User's rank banner */}
           {userRank && (
@@ -492,7 +637,6 @@ export default function GameScreen() {
                   style={[
                     styles.leaderboardFullRow,
                     entry.isCurrentUser && styles.leaderboardFullRowCurrentUser,
-                    entry.rank > 10 && styles.leaderboardFullRowSeparated,
                   ]}
                 >
                   <View style={styles.leaderboardFullRank}>
@@ -515,7 +659,10 @@ export default function GameScreen() {
                       {entry.isCurrentUser && ' (you)'}
                     </Text>
                     <Text style={styles.leaderboardFullMeta}>
+                      {entry.correctPlacements}/16 correct - {formatTime(entry.timeSeconds)}
+                      {/*
                       {entry.correctPlacements}/16 correct • {formatTime(entry.timeSeconds)}
+                      */}
                     </Text>
                   </View>
                   <Text style={[
@@ -542,7 +689,7 @@ export default function GameScreen() {
             {savedScore && (
               <TouchableOpacity
                 style={styles.leaderboardScreenShareButton}
-                onPress={() => shareScore(savedScore, userRank)}
+                onPress={() => shareScore(savedScore!, userRank)}
               >
                 <Ionicons name="share-outline" size={20} color="#4ade80" />
                 <Text style={styles.leaderboardScreenShareText}>Share Score</Text>
@@ -550,6 +697,7 @@ export default function GameScreen() {
             )}
           </View>
         </ScrollView>
+        )}
 
         {/* Correct Answers Modal */}
         <Modal
@@ -1989,14 +2137,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#1a2a3e',
     borderRadius: 12,
     padding: 12,
+    marginBottom: 8,
   },
   leaderboardFullRowCurrentUser: {
     backgroundColor: 'rgba(106, 159, 255, 0.15)',
     borderWidth: 1,
     borderColor: '#6a9fff',
-  },
-  leaderboardFullRowSeparated: {
-    marginTop: 16,
   },
   leaderboardFullRank: {
     width: 44,

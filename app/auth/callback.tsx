@@ -2,7 +2,7 @@ import { supabase } from '@/lib/supabase';
 import * as Linking from 'expo-linking';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Platform, StyleSheet, View } from 'react-native';
 
 export default function AuthCallback() {
   const router = useRouter();
@@ -11,34 +11,57 @@ export default function AuthCallback() {
   useEffect(() => {
     const handleCallback = async () => {
       try {
-        // Get the full URL to extract the tokens
-        const url = await Linking.getInitialURL();
-        
-        if (url) {
-          // Parse the URL to get fragments (tokens come after #)
-          const parsedUrl = Linking.parse(url);
-          
-          // Check for tokens in the hash fragment
-          if (parsedUrl.queryParams) {
-            const accessToken = parsedUrl.queryParams.access_token as string;
-            const refreshToken = parsedUrl.queryParams.refresh_token as string;
+        const getCallbackUrl = async (): Promise<string | null> => {
+          if (Platform.OS === 'web' && typeof window !== 'undefined') {
+            return window.location.href;
+          }
+          return Linking.getInitialURL();
+        };
 
-            if (accessToken && refreshToken) {
-              // Set the session with the tokens from the URL
-              const { error } = await supabase.auth.setSession({
-                access_token: accessToken,
-                refresh_token: refreshToken,
-              });
+        const urlString = await getCallbackUrl();
+        if (!urlString) return;
 
-              if (error) {
-                console.error('Error setting session:', error);
-              }
+        // Handle implicit-flow tokens in the URL hash: #access_token=...&refresh_token=...
+        const hashIndex = urlString.indexOf('#');
+        const hashPart = hashIndex !== -1 ? urlString.substring(hashIndex + 1) : '';
+        if (hashPart) {
+          const hashParams = new URLSearchParams(hashPart);
+          const accessToken = hashParams.get('access_token');
+          const refreshToken = hashParams.get('refresh_token');
+
+          if (accessToken) {
+            const { error } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken || '',
+            });
+
+            if (error) {
+              console.error('Error setting session:', error);
             }
           }
+        }
+
+        // Handle PKCE flow code in querystring: ?code=...
+        try {
+          const url = new URL(urlString);
+          const code = url.searchParams.get('code');
+          if (code) {
+            const { error } = await supabase.auth.exchangeCodeForSession(code);
+            if (error) {
+              console.error('Error exchanging code for session:', error);
+            }
+          }
+        } catch (e) {
+          console.error('Error parsing callback URL:', e);
         }
       } catch (error) {
         console.error('Error handling auth callback:', error);
       } finally {
+        // Clean up the URL on web so tokens/code aren't left in the address bar.
+        if (Platform.OS === 'web' && typeof window !== 'undefined') {
+          window.history.replaceState({}, document.title, '/intersections/');
+        }
+
         // Navigate back to the main app
         router.replace('/(tabs)');
       }

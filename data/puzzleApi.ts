@@ -415,6 +415,100 @@ export interface LeaderboardEntry {
   isCurrentUser: boolean;
 }
 
+async function fetchDisplayNames(userIds: string[]): Promise<Map<string, string>> {
+  const displayNames = new Map<string, string>();
+  const uniqueUserIds = Array.from(new Set(userIds)).filter(Boolean);
+
+  if (uniqueUserIds.length === 0) return displayNames;
+
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, display_name')
+      .in('id', uniqueUserIds);
+
+    if (!error && data) {
+      for (const profile of data) {
+        if (profile?.id && profile?.display_name) {
+          displayNames.set(profile.id, profile.display_name);
+        }
+      }
+      return displayNames;
+    }
+  } catch {
+    // Fall through to per-user queries below
+  }
+
+  // Fallback to per-user queries (keeps working even if RLS behaves unexpectedly on .in())
+  for (const userId of uniqueUserIds) {
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id, display_name')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (profile?.display_name) {
+        displayNames.set(profile.id, profile.display_name);
+      }
+    } catch {
+      // Ignore individual lookup failures
+    }
+  }
+
+  return displayNames;
+}
+
+export async function getTodayLeaderboardPage(params?: {
+  from?: number;
+  pageSize?: number;
+  currentUserId?: string;
+}): Promise<{ entries: LeaderboardEntry[]; hasMore: boolean; nextFrom: number }> {
+  const puzzleDate = getTodayDateString();
+  const from = params?.from ?? 0;
+  const pageSize = params?.pageSize ?? 50;
+  const currentUserId = params?.currentUserId;
+
+  try {
+    const { data, error } = await supabase
+      .from('puzzle_scores')
+      .select('score, time_seconds, correct_placements, user_id')
+      .eq('puzzle_date', puzzleDate)
+      .order('score', { ascending: false })
+      .order('time_seconds', { ascending: true })
+      .range(from, from + pageSize);
+
+    if (error) {
+      console.error('Error fetching leaderboard page:', error);
+      return { entries: [], hasMore: false, nextFrom: from };
+    }
+
+    const rows = data || [];
+    const hasMore = rows.length > pageSize;
+    const pageRows = rows.slice(0, pageSize);
+
+    const userIds = pageRows
+      .filter(r => r.user_id)
+      .map(r => r.user_id as string);
+
+    const displayNames = await fetchDisplayNames(userIds);
+
+    const entries: LeaderboardEntry[] = pageRows.map((row, index) => ({
+      rank: from + index + 1,
+      score: row.score,
+      timeSeconds: row.time_seconds,
+      correctPlacements: row.correct_placements || 0,
+      displayName: row.user_id ? displayNames.get(row.user_id) || null : null,
+      isCurrentUser: currentUserId ? row.user_id === currentUserId : false,
+    }));
+
+    return { entries, hasMore, nextFrom: from + pageRows.length };
+  } catch (e) {
+    console.error('Error in getTodayLeaderboardPage:', e);
+    return { entries: [], hasMore: false, nextFrom: from };
+  }
+}
+
 /**
  * Get today's leaderboard (top 10 + current user if not in top 10)
  */
@@ -505,17 +599,32 @@ export async function getTodayLeaderboard(currentUserId?: string): Promise<Leade
       const userInTop10 = leaderboard.some(e => e.isCurrentUser);
       
       if (!userInTop10) {
-        // Find user's score in original data
-        const userEntry = data.find(e => e.user_id === currentUserId);
+        // Fetch user's best score for today and compute rank via count query (does not depend on top-N fetch)
+        const { data: userEntry, error: userEntryError } = await supabase
+          .from('puzzle_scores')
+          .select('score, time_seconds, correct_placements, user_id')
+          .eq('puzzle_date', puzzleDate)
+          .eq('user_id', currentUserId)
+          .order('score', { ascending: false })
+          .order('time_seconds', { ascending: true })
+          .limit(1)
+          .maybeSingle();
+
+        if (userEntryError) {
+          console.error('Error fetching current user score:', userEntryError);
+        }
+
         if (userEntry) {
-          // Count how many scores are better
-          const betterScores = data.filter(e => 
-            e.score > userEntry.score || 
-            (e.score === userEntry.score && e.time_seconds < userEntry.time_seconds)
-          ).length;
-          
+          const rank = await getScoreRank(puzzleDate, userEntry.score, userEntry.time_seconds);
+          if (!displayNames.has(currentUserId)) {
+            const extraNames = await fetchDisplayNames([currentUserId]);
+            for (const [id, name] of extraNames.entries()) {
+              displayNames.set(id, name);
+            }
+          }
+
           leaderboard.push({
-            rank: betterScores + 1,
+            rank,
             score: userEntry.score,
             timeSeconds: userEntry.time_seconds,
             correctPlacements: userEntry.correct_placements || 0,
