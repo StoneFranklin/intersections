@@ -43,7 +43,8 @@
       "Bash(export LC_ALL=en_US.UTF-8:*)",
       "Bash(open:*)",
       "Bash(xcodebuild:*)",
-      "Bash(plutil:*)"
+      "Bash(plutil:*)",
+      "Bash(npx tsc:*)"
     ]
   }
 }

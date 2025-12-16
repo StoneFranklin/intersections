@@ -125,9 +125,9 @@ export async function submitScore(
   mistakes: number,
   correctPlacements: number,
   userId?: string
-): Promise<{ percentile: number } | null> {
+): Promise<{ percentile: number; rank: number } | null> {
   const puzzleDate = getTodayDateString();
-  
+
   try {
     // Insert the score (with optional user_id)
     const scoreData: {
@@ -144,11 +144,11 @@ export async function submitScore(
       mistakes,
       correct_placements: correctPlacements,
     };
-    
+
     if (userId) {
       scoreData.user_id = userId;
     }
-    
+
     const { error: insertError } = await supabase
       .from('puzzle_scores')
       .insert(scoreData);
@@ -158,9 +158,10 @@ export async function submitScore(
       return null;
     }
 
-    // Calculate percentile
+    // Calculate percentile and rank
     const percentile = await getScorePercentile(puzzleDate, score);
-    return { percentile };
+    const rank = await getScoreRank(puzzleDate, score, timeSeconds);
+    return { percentile, rank };
   } catch (e) {
     console.error('Error in submitScore:', e);
     return null;
@@ -205,6 +206,35 @@ export async function getScorePercentile(
   } catch (e) {
     console.error('Error calculating percentile:', e);
     return 50;
+  }
+}
+
+/**
+ * Get the rank for a score on a given date
+ * Returns the position (1 = first place)
+ */
+export async function getScoreRank(
+  puzzleDate: string,
+  score: number,
+  timeSeconds: number
+): Promise<number> {
+  try {
+    // Get count of scores better than this score (higher score, or same score with faster time)
+    const { count: betterCount, error } = await supabase
+      .from('puzzle_scores')
+      .select('*', { count: 'exact', head: true })
+      .eq('puzzle_date', puzzleDate)
+      .or(`score.gt.${score},and(score.eq.${score},time_seconds.lt.${timeSeconds})`);
+
+    if (error) {
+      console.error('Error getting rank:', error);
+      return 1;
+    }
+
+    return (betterCount || 0) + 1;
+  } catch (e) {
+    console.error('Error calculating rank:', e);
+    return 1;
   }
 }
 
@@ -380,6 +410,7 @@ export interface LeaderboardEntry {
   rank: number;
   score: number;
   timeSeconds: number;
+  correctPlacements: number;
   displayName: string | null;
   isCurrentUser: boolean;
 }
@@ -394,7 +425,7 @@ export async function getTodayLeaderboard(currentUserId?: string): Promise<Leade
     // Get top scores - don't join profiles, fetch separately
     const { data, error } = await supabase
       .from('puzzle_scores')
-      .select('score, time_seconds, user_id')
+      .select('score, time_seconds, correct_placements, user_id')
       .eq('puzzle_date', puzzleDate)
       .order('score', { ascending: false })
       .order('time_seconds', { ascending: true })
@@ -464,6 +495,7 @@ export async function getTodayLeaderboard(currentUserId?: string): Promise<Leade
       rank: index + 1,
       score: entry.score,
       timeSeconds: entry.time_seconds,
+      correctPlacements: entry.correct_placements || 0,
       displayName: entry.user_id ? displayNames.get(entry.user_id) || null : null,
       isCurrentUser: currentUserId ? entry.user_id === currentUserId : false,
     }));
@@ -486,6 +518,7 @@ export async function getTodayLeaderboard(currentUserId?: string): Promise<Leade
             rank: betterScores + 1,
             score: userEntry.score,
             timeSeconds: userEntry.time_seconds,
+            correctPlacements: userEntry.correct_placements || 0,
             displayName: displayNames.get(currentUserId) || null,
             isCurrentUser: true,
           });

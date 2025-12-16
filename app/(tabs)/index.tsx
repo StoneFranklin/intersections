@@ -35,24 +35,25 @@ function formatTime(seconds: number): string {
 }
 
 // Generate share text for score
-function generateShareText(score: GameScore, percentile: number | null): string {
+function generateShareText(score: GameScore, rank: number | null): string {
   const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  
+
   let text = `Intersections - ${today}\n\n`;
-  text += `My score today: ${score.score}\n\n`;
-  
-  if (percentile !== null) {
-    text += `Top ${100 - percentile}% of players`;
+  text += `My score today: ${score.score}\n`;
+  text += `${score.correctPlacements}/16 correct in ${formatTime(score.timeSeconds)}\n`;
+
+  if (rank !== null) {
+    text += `Ranked #${rank} today\n`;
   }
-  
-  text += `\n\nPlay at: stonefranklin.github.io/intersections`;
-  
+
+  text += `\nPlay at: stonefranklin.github.io/intersections`;
+
   return text;
 }
 
 // Share score function
-async function shareScore(score: GameScore, percentile: number | null) {
-  const text = generateShareText(score, percentile);
+async function shareScore(score: GameScore, rank: number | null) {
+  const text = generateShareText(score, rank);
   
   if (Platform.OS === 'web') {
     // Web share API or fallback to clipboard
@@ -123,9 +124,13 @@ export default function GameScreen() {
   const [showSignIn, setShowSignIn] = useState(false);
   const [signingIn, setSigningIn] = useState(false);
   const [signingInWithApple, setSigningInWithApple] = useState(false);
-  const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [showLeaderboardScreen, setShowLeaderboardScreen] = useState(false);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loadingLeaderboard, setLoadingLeaderboard] = useState(false);
+  const [userRank, setUserRank] = useState<number | null>(null);
+  const [leaderboardLoaded, setLeaderboardLoaded] = useState(false);
+  const [showAnswersModal, setShowAnswersModal] = useState(false);
+  const [todaysPuzzle, setTodaysPuzzle] = useState<Puzzle | null>(null);
   
   // Display name state
   const [displayName, setDisplayName] = useState<string | null>(null);
@@ -209,16 +214,59 @@ export default function GameScreen() {
     setSavingDisplayName(false);
   };
 
-  const openLeaderboard = async () => {
-    setShowLeaderboard(true);
+  // Load leaderboard data (for both preview and full modal)
+  const loadLeaderboard = async () => {
+    if (loadingLeaderboard) return;
     setLoadingLeaderboard(true);
     try {
+      console.log('Loading leaderboard for user:', user?.id);
       const data = await getTodayLeaderboard(user?.id);
+      console.log('Leaderboard data:', data);
       setLeaderboard(data);
+      // Find user's rank
+      const userEntry = data.find(e => e.isCurrentUser);
+      console.log('User entry found:', userEntry);
+      if (userEntry) {
+        setUserRank(userEntry.rank);
+      }
+      setLeaderboardLoaded(true);
+
+      // Also load the puzzle for showing correct answers
+      if (!todaysPuzzle) {
+        const puzzle = await fetchTodaysPuzzle();
+        if (puzzle) {
+          setTodaysPuzzle(puzzle);
+        } else {
+          setTodaysPuzzle(generateDailyPuzzle());
+        }
+      }
     } catch (e) {
       console.error('Error loading leaderboard:', e);
     } finally {
       setLoadingLeaderboard(false);
+    }
+  };
+
+  // Load leaderboard when puzzle is completed
+  useEffect(() => {
+    if (dailyCompleted && !leaderboardLoaded && !loadingLeaderboard) {
+      loadLeaderboard();
+    }
+  }, [dailyCompleted, leaderboardLoaded]);
+
+  // Reload leaderboard when user changes (e.g., after login) to get correct "isCurrentUser" marking
+  useEffect(() => {
+    if (user && dailyCompleted && leaderboardLoaded) {
+      // Reset and reload to get fresh user identification
+      setLeaderboardLoaded(false);
+      setUserRank(null);
+    }
+  }, [user?.id]);
+
+  const openLeaderboard = async () => {
+    setShowLeaderboardScreen(true);
+    if (!leaderboardLoaded) {
+      await loadLeaderboard();
     }
   };
 
@@ -231,7 +279,9 @@ export default function GameScreen() {
         
         // If logged in, check database first
         if (user) {
+          console.log('Checking completion for user:', user.id, user.email);
           const dbCompleted = await hasUserCompletedToday(user.id);
+          console.log('DB completed:', dbCompleted);
           if (dbCompleted) {
             setDailyCompleted(true);
             // Get score from database
@@ -247,8 +297,22 @@ export default function GameScreen() {
                 percentile: freshPercentile,
               });
             }
+          } else {
+            // Check local storage as fallback (in case completed on another device or as guest)
+            const localCompleted = await AsyncStorage.getItem(`completed-${todayKey}`);
+            if (localCompleted === 'true') {
+              setDailyCompleted(true);
+              // Try to load local score
+              const scoreData = await AsyncStorage.getItem(`score-${todayKey}`);
+              if (scoreData) {
+                const score = JSON.parse(scoreData) as GameScore;
+                const freshPercentile = await getPercentile(score.score);
+                score.percentile = freshPercentile;
+                setSavedScore(score);
+              }
+            }
           }
-          
+
           // Get streak from database
           const dbStreak = await getUserStreak(user.id);
           if (dbStreak) {
@@ -329,18 +393,21 @@ export default function GameScreen() {
     }
   };
 
-  const handleComplete = async (score: GameScore) => {
+  const handleComplete = async (score: GameScore, rank: number | null) => {
     try {
       const todayKey = getTodayKey();
       const yesterdayKey = getYesterdayKey();
       const todayDate = new Date().toISOString().split('T')[0];
       const yesterdayDate = new Date(Date.now() - 86400000).toISOString().split('T')[0];
-      
+
       // Always save to local storage
       await AsyncStorage.setItem(`completed-${todayKey}`, 'true');
       await AsyncStorage.setItem(`score-${todayKey}`, JSON.stringify(score));
       setDailyCompleted(true);
       setSavedScore(score);
+      if (rank) {
+        setUserRank(rank);
+      }
       
       // Calculate new streak
       let newStreak = 1;
@@ -374,6 +441,9 @@ export default function GameScreen() {
 
       // Schedule notification for tomorrow at 9 AM
       await scheduleDailyNotification();
+
+      // Load leaderboard data for the results screen
+      loadLeaderboard();
     } catch (e) {
       console.log('Error saving completion:', e);
     }
@@ -383,6 +453,140 @@ export default function GameScreen() {
     setIsPlaying(false);
     setIsReviewMode(false);
   };
+
+  // Show full-screen leaderboard
+  if (showLeaderboardScreen) {
+    return (
+      <SafeAreaView style={styles.container}>
+        {/* Header */}
+        <View style={styles.leaderboardScreenHeader}>
+          <TouchableOpacity onPress={() => setShowLeaderboardScreen(false)} style={styles.leaderboardScreenBackButton}>
+            <Ionicons name="arrow-back" size={24} color="#fff" />
+          </TouchableOpacity>
+          <View style={styles.leaderboardScreenTitleContainer}>
+            <MaterialCommunityIcons name="trophy" size={24} color="#ffd700" />
+            <Text style={styles.leaderboardScreenTitle}>Today's Leaderboard</Text>
+          </View>
+          <View style={{ width: 40 }} />
+        </View>
+
+        <ScrollView style={styles.leaderboardScreenContent} contentContainerStyle={styles.leaderboardScreenContentContainer}>
+          {/* User's rank banner */}
+          {userRank && (
+            <View style={styles.userRankBanner}>
+              <Text style={styles.userRankBannerText}>You are ranked</Text>
+              <Text style={styles.userRankBannerValue}>#{userRank} in the world</Text>
+            </View>
+          )}
+
+          {/* Full Leaderboard */}
+          {loadingLeaderboard && !leaderboardLoaded ? (
+            <ActivityIndicator size="large" color="#6a9fff" style={{ marginVertical: 40 }} />
+          ) : leaderboard.length === 0 ? (
+            <Text style={styles.leaderboardEmpty}>No scores yet today. Be the first!</Text>
+          ) : (
+            <View style={styles.leaderboardFullList}>
+              {leaderboard.map((entry, index) => (
+                <View
+                  key={index}
+                  style={[
+                    styles.leaderboardFullRow,
+                    entry.isCurrentUser && styles.leaderboardFullRowCurrentUser,
+                    entry.rank > 10 && styles.leaderboardFullRowSeparated,
+                  ]}
+                >
+                  <View style={styles.leaderboardFullRank}>
+                    {entry.rank === 1 ? (
+                      <MaterialCommunityIcons name="medal" size={28} color="#ffd700" />
+                    ) : entry.rank === 2 ? (
+                      <MaterialCommunityIcons name="medal" size={28} color="#c0c0c0" />
+                    ) : entry.rank === 3 ? (
+                      <MaterialCommunityIcons name="medal" size={28} color="#cd7f32" />
+                    ) : (
+                      <Text style={styles.leaderboardFullRankText}>#{entry.rank}</Text>
+                    )}
+                  </View>
+                  <View style={styles.leaderboardFullInfo}>
+                    <Text style={[
+                      styles.leaderboardFullName,
+                      entry.isCurrentUser && styles.leaderboardFullNameCurrentUser,
+                    ]} numberOfLines={1}>
+                      {entry.displayName || 'Anonymous'}
+                      {entry.isCurrentUser && ' (you)'}
+                    </Text>
+                    <Text style={styles.leaderboardFullMeta}>
+                      {entry.correctPlacements}/16 correct • {formatTime(entry.timeSeconds)}
+                    </Text>
+                  </View>
+                  <Text style={[
+                    styles.leaderboardFullScore,
+                    entry.isCurrentUser && styles.leaderboardFullScoreCurrentUser,
+                  ]}>
+                    {entry.score}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          )}
+
+          {/* Action buttons */}
+          <View style={styles.leaderboardScreenActions}>
+            <TouchableOpacity
+              style={styles.leaderboardScreenActionButton}
+              onPress={() => setShowAnswersModal(true)}
+            >
+              <Ionicons name="grid-outline" size={20} color="#6a9fff" />
+              <Text style={styles.leaderboardScreenActionText}>View Correct Answers</Text>
+            </TouchableOpacity>
+
+            {savedScore && (
+              <TouchableOpacity
+                style={styles.leaderboardScreenShareButton}
+                onPress={() => shareScore(savedScore, userRank)}
+              >
+                <Ionicons name="share-outline" size={20} color="#4ade80" />
+                <Text style={styles.leaderboardScreenShareText}>Share Score</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </ScrollView>
+
+        {/* Correct Answers Modal */}
+        <Modal
+          visible={showAnswersModal}
+          animationType="slide"
+          transparent={false}
+          onRequestClose={() => setShowAnswersModal(false)}
+        >
+          <SafeAreaView style={styles.answersModalContainer}>
+            <View style={styles.answersModalHeader}>
+              <View style={{ width: 40 }} />
+              <Text style={styles.answersModalTitle}>Correct Answers</Text>
+              <TouchableOpacity onPress={() => setShowAnswersModal(false)} style={styles.answersModalCloseButton}>
+                <Ionicons name="close" size={28} color="#fff" />
+              </TouchableOpacity>
+            </View>
+            <ScrollView contentContainerStyle={styles.answersModalContent}>
+              {todaysPuzzle && (
+                <GameGrid
+                  puzzle={todaysPuzzle}
+                  getWordAtCell={(pos) => {
+                    const rowCat = todaysPuzzle.rowCategories[pos.rowIndex];
+                    const colCat = todaysPuzzle.colCategories[pos.colIndex];
+                    return todaysPuzzle.words.find(w => w.correctRowId === rowCat.id && w.correctColId === colCat.id) || null;
+                  }}
+                  isCellCorrect={() => true}
+                  selectedWordId={null}
+                  onCellPress={() => {}}
+                  onCellLongPress={() => {}}
+                />
+              )}
+            </ScrollView>
+          </SafeAreaView>
+        </Modal>
+      </SafeAreaView>
+    );
+  }
 
   // Show main menu
   if (!isPlaying || !puzzle) {
@@ -459,72 +663,142 @@ export default function GameScreen() {
             <Text style={styles.menuTitle}>Intersections</Text>
             <Text style={styles.menuSubtitle}>A Daily Word Puzzle</Text>
             {!loading && (
-              <Text style={styles.dateText}>
-                {new Date().toLocaleDateString('en-US', { 
-                  weekday: 'long', 
-                  month: 'long', 
-                  day: 'numeric' 
-                })}
-              </Text>
-            )}
-            
-            <View style={styles.menuButtons}>
-              <TouchableOpacity
-                style={[styles.playButton, dailyCompleted && styles.completedButton]}
-                onPress={handlePlayDaily}
-                disabled={fetchingPuzzle || loading}
-            >
-              {loading ? (
-                <View style={styles.playButtonLoading}>
-                  <ActivityIndicator size="small" color="#fff" />
-                  <Text style={styles.playButtonLoadingText}>Loading...</Text>
-                </View>
-              ) : (
-                <>
-                  <View style={styles.playButtonLabelContainer}>
-                    {dailyCompleted && <Ionicons name="checkmark-circle" size={24} color="#4ade80" style={{ marginRight: 8 }} />}
-                    <Text style={styles.playButtonLabel}>
-                      {fetchingPuzzle ? 'Loading...' : dailyCompleted ? 'Completed' : "Today's Puzzle"}
-                    </Text>
+              <View style={styles.dateRow}>
+                <Text style={styles.dateText}>
+                  {new Date().toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    month: 'long',
+                    day: 'numeric'
+                  })}
+                </Text>
+                {dailyCompleted && (
+                  <View style={styles.completedBadge}>
+                    <Ionicons name="checkmark-circle" size={16} color="#4ade80" />
+                    <Text style={styles.completedBadgeText}>Completed</Text>
                   </View>
-                  {dailyCompleted && savedScore ? (
-                    <View style={styles.scoreSummary}>
-                      <Text style={styles.scoreSummaryText}>
-                        {savedScore.score} pts • {savedScore.correctPlacements}/16 • {formatTime(savedScore.timeSeconds)}
-                      </Text>
-                      {savedScore.percentile !== undefined && (
-                        <Text style={styles.percentileText}>Top {100 - savedScore.percentile}% of players</Text>
-                      )}
-                      <Text style={styles.playButtonDesc}>Tap to review</Text>
-                    </View>
-                  ) : dailyCompleted && !savedScore ? (
-                    <View style={styles.scoreSummaryLoading}>
-                      <ActivityIndicator size="small" color="#4ade80" />
-                      <Text style={styles.playButtonDesc}>Loading score...</Text>
+                )}
+              </View>
+            )}
+
+            <View style={styles.menuButtons}>
+              {/* Show Play button only if not completed */}
+              {!dailyCompleted ? (
+                <TouchableOpacity
+                  style={styles.playButton}
+                  onPress={handlePlayDaily}
+                  disabled={fetchingPuzzle || loading}
+                >
+                  {loading ? (
+                    <View style={styles.playButtonLoading}>
+                      <ActivityIndicator size="small" color="#fff" />
+                      <Text style={styles.playButtonLoadingText}>Loading...</Text>
                     </View>
                   ) : (
-                    <Text style={styles.playButtonDesc}>
-                      {fetchingPuzzle ? 'Fetching puzzle' : 'New puzzle every day'}
-                    </Text>
+                    <>
+                      <Text style={styles.playButtonLabel}>
+                        {fetchingPuzzle ? 'Loading...' : "Today's Puzzle"}
+                      </Text>
+                      <Text style={styles.playButtonDesc}>
+                        {fetchingPuzzle ? 'Fetching puzzle' : 'New puzzle every day'}
+                      </Text>
+                    </>
                   )}
-                </>
-              )}
-            </TouchableOpacity>
+                </TouchableOpacity>
+              ) : (
+                /* Completed state - show condensed leaderboard */
+                <TouchableOpacity
+                  style={styles.completedContainer}
+                  onPress={openLeaderboard}
+                  activeOpacity={0.8}
+                >
+                  {/* Header */}
+                  <View style={styles.completedHeader}>
+                    <View style={styles.completedHeaderLeft}>
+                      <MaterialCommunityIcons name="trophy" size={20} color="#ffd700" />
+                      <Text style={styles.completedTitle}>Today's Leaderboard</Text>
+                    </View>
+                    {userRank && (
+                      <Text style={styles.completedRankText}>#{userRank} in the world</Text>
+                    )}
+                  </View>
 
-            {/* Leaderboard Card */}
-            <TouchableOpacity
-              style={styles.leaderboardCard}
-              onPress={openLeaderboard}
-            >
-              <View style={styles.leaderboardCardLeft}>
-                <MaterialCommunityIcons name="trophy" size={28} color="#ffd700" style={styles.leaderboardCardIcon} />
-                <View>
-                  <Text style={styles.leaderboardCardTitle}>Leaderboard</Text>
-                  <Text style={styles.leaderboardCardDesc}>See how you rank today</Text>
-                </View>
-              </View>
-              <Ionicons name="chevron-forward" size={24} color="#6a9fff" />
-            </TouchableOpacity>
+                  {/* Condensed Leaderboard */}
+                  {loadingLeaderboard && !leaderboardLoaded ? (
+                    <ActivityIndicator size="small" color="#6a9fff" style={{ marginVertical: 16 }} />
+                  ) : leaderboard.length === 0 ? (
+                    <Text style={styles.leaderboardEmptyText}>No scores yet</Text>
+                  ) : (
+                    <View style={styles.leaderboardCompact}>
+                      {/* Top 3 */}
+                      {leaderboard.slice(0, 3).map((entry, index) => (
+                        <View
+                          key={index}
+                          style={[
+                            styles.leaderboardCompactRow,
+                            entry.isCurrentUser && styles.leaderboardCompactRowCurrentUser,
+                          ]}
+                        >
+                          <View style={styles.leaderboardCompactRank}>
+                            {entry.rank === 1 ? (
+                              <MaterialCommunityIcons name="medal" size={20} color="#ffd700" />
+                            ) : entry.rank === 2 ? (
+                              <MaterialCommunityIcons name="medal" size={20} color="#c0c0c0" />
+                            ) : (
+                              <MaterialCommunityIcons name="medal" size={20} color="#cd7f32" />
+                            )}
+                          </View>
+                          <Text style={[
+                            styles.leaderboardCompactName,
+                            entry.isCurrentUser && styles.leaderboardCompactNameCurrentUser,
+                          ]} numberOfLines={1}>
+                            {entry.displayName || 'Anonymous'}
+                            {entry.isCurrentUser && ' (you)'}
+                          </Text>
+                          <Text style={styles.leaderboardCompactCorrect}>{entry.correctPlacements}/16</Text>
+                          <Text style={[
+                            styles.leaderboardCompactScore,
+                            entry.isCurrentUser && styles.leaderboardCompactScoreCurrentUser,
+                          ]}>
+                            {entry.score}
+                          </Text>
+                        </View>
+                      ))}
+
+                      {/* Show user's rank if not in top 3 */}
+                      {userRank && userRank > 3 && (
+                        <>
+                          <View style={styles.leaderboardDivider}>
+                            <Text style={styles.leaderboardDividerText}>•••</Text>
+                          </View>
+                          {leaderboard.filter(e => e.isCurrentUser).map((entry, index) => (
+                            <View
+                              key={`user-${index}`}
+                              style={[styles.leaderboardCompactRow, styles.leaderboardCompactRowCurrentUser]}
+                            >
+                              <View style={styles.leaderboardCompactRank}>
+                                <Text style={styles.leaderboardCompactRankText}>#{entry.rank}</Text>
+                              </View>
+                              <Text style={[styles.leaderboardCompactName, styles.leaderboardCompactNameCurrentUser]} numberOfLines={1}>
+                                {entry.displayName || 'Anonymous'} (you)
+                              </Text>
+                              <Text style={styles.leaderboardCompactCorrect}>{entry.correctPlacements}/16</Text>
+                              <Text style={[styles.leaderboardCompactScore, styles.leaderboardCompactScoreCurrentUser]}>
+                                {entry.score}
+                              </Text>
+                            </View>
+                          ))}
+                        </>
+                      )}
+                    </View>
+                  )}
+
+                  {/* Tap for details hint */}
+                  <View style={styles.tapForDetailsHint}>
+                    <Text style={styles.tapForDetailsText}>Tap for details</Text>
+                    <Ionicons name="chevron-forward" size={14} color="#666" />
+                  </View>
+                </TouchableOpacity>
+              )}
           </View>
 
           <TouchableOpacity
@@ -767,77 +1041,38 @@ export default function GameScreen() {
           </TouchableOpacity>
         </Modal>
 
-        {/* Leaderboard Modal */}
+        {/* Correct Answers Modal */}
         <Modal
-          visible={showLeaderboard}
-          animationType="fade"
-          transparent={true}
-          onRequestClose={() => setShowLeaderboard(false)}
+          visible={showAnswersModal}
+          animationType="slide"
+          transparent={false}
+          onRequestClose={() => setShowAnswersModal(false)}
         >
-          <View style={styles.modalOverlay}>
-            <View style={styles.leaderboardModal}>
-              <View style={styles.leaderboardTitleContainer}>
-                <MaterialCommunityIcons name="trophy" size={28} color="#ffd700" style={{ marginRight: 8 }} />
-                <Text style={styles.leaderboardTitle}>Today's Leaderboard</Text>
-              </View>
-              
-              {loadingLeaderboard ? (
-                <ActivityIndicator size="large" color="#6a9fff" style={{ marginVertical: 40 }} />
-              ) : leaderboard.length === 0 ? (
-                <Text style={styles.leaderboardEmpty}>No scores yet today. Be the first!</Text>
-              ) : (
-                <ScrollView style={styles.leaderboardList} showsVerticalScrollIndicator={true}>
-                  {leaderboard.map((entry, index) => (
-                    <View
-                      key={index}
-                      style={[
-                        styles.leaderboardRow,
-                        entry.isCurrentUser && styles.leaderboardRowCurrentUser,
-                        entry.rank > 10 && styles.leaderboardRowSeparated,
-                      ]}
-                    >
-                      <View style={styles.leaderboardRank}>
-                        {entry.rank === 1 ? (
-                          <MaterialCommunityIcons name="medal" size={24} color="#ffd700" />
-                        ) : entry.rank === 2 ? (
-                          <MaterialCommunityIcons name="medal" size={24} color="#c0c0c0" />
-                        ) : entry.rank === 3 ? (
-                          <MaterialCommunityIcons name="medal" size={24} color="#cd7f32" />
-                        ) : (
-                          <Text style={styles.leaderboardRankText}>#{entry.rank}</Text>
-                        )}
-                      </View>
-                      <View style={styles.leaderboardInfo}>
-                        <Text style={[
-                          styles.leaderboardName,
-                          entry.isCurrentUser && styles.leaderboardNameCurrentUser,
-                        ]}>
-                          {entry.displayName || 'Anonymous'}
-                          {entry.isCurrentUser && ' (you)'}
-                        </Text>
-                        <Text style={styles.leaderboardTime}>
-                          {formatTime(entry.timeSeconds)}
-                        </Text>
-                      </View>
-                      <Text style={[
-                        styles.leaderboardScore,
-                        entry.isCurrentUser && styles.leaderboardScoreCurrentUser,
-                      ]}>
-                        {entry.score}
-                      </Text>
-                    </View>
-                  ))}
-                </ScrollView>
-              )}
-
-              <TouchableOpacity
-                style={styles.leaderboardCloseButton}
-                onPress={() => setShowLeaderboard(false)}
-              >
-                <Text style={styles.leaderboardCloseText}>Close</Text>
+          <SafeAreaView style={styles.answersModalContainer}>
+            <View style={styles.answersModalHeader}>
+              <View style={{ width: 40 }} />
+              <Text style={styles.answersModalTitle}>Correct Answers</Text>
+              <TouchableOpacity onPress={() => setShowAnswersModal(false)} style={styles.answersModalCloseButton}>
+                <Ionicons name="close" size={28} color="#fff" />
               </TouchableOpacity>
             </View>
-          </View>
+            <ScrollView contentContainerStyle={styles.answersModalContent}>
+              {todaysPuzzle && (
+                <GameGrid
+                  puzzle={todaysPuzzle}
+                  getWordAtCell={(pos) => {
+                    const rowCat = todaysPuzzle.rowCategories[pos.rowIndex];
+                    const colCat = todaysPuzzle.colCategories[pos.colIndex];
+                    return todaysPuzzle.words.find(w => w.correctRowId === rowCat.id && w.correctColId === colCat.id) || null;
+                  }}
+                  isCellCorrect={() => true}
+                  selectedWordId={null}
+                  onCellPress={() => {}}
+                  onCellLongPress={() => {}}
+                />
+              )}
+            </ScrollView>
+          </SafeAreaView>
         </Modal>
 
         {/* Display Name Modal */}
@@ -898,27 +1133,75 @@ export default function GameScreen() {
   }
 
   return (
-    <GameContent 
-      puzzle={puzzle} 
-      onBack={handleBack}
-      onComplete={handleComplete}
-      isReviewMode={isReviewMode}
-      savedScore={savedScore}
-      userId={user?.id}
-    />
+    <>
+      <GameContent
+        puzzle={puzzle}
+        onBack={handleBack}
+        onComplete={handleComplete}
+        isReviewMode={isReviewMode}
+        savedScore={savedScore}
+        userId={user?.id}
+        userRank={userRank}
+        leaderboard={leaderboard}
+        leaderboardLoaded={leaderboardLoaded}
+        loadingLeaderboard={loadingLeaderboard}
+        onShowAnswersModal={() => setShowAnswersModal(true)}
+        onOpenLeaderboard={openLeaderboard}
+      />
+
+      {/* Correct Answers Modal - available for game complete screen */}
+      <Modal
+        visible={showAnswersModal}
+        animationType="slide"
+        transparent={false}
+        onRequestClose={() => setShowAnswersModal(false)}
+      >
+        <SafeAreaView style={styles.answersModalContainer}>
+          <View style={styles.answersModalHeader}>
+            <View style={{ width: 40 }} />
+            <Text style={styles.answersModalTitle}>Correct Answers</Text>
+            <TouchableOpacity onPress={() => setShowAnswersModal(false)} style={styles.answersModalCloseButton}>
+              <Ionicons name="close" size={28} color="#fff" />
+            </TouchableOpacity>
+          </View>
+          <ScrollView contentContainerStyle={styles.answersModalContent}>
+            {todaysPuzzle && (
+              <GameGrid
+                puzzle={todaysPuzzle}
+                getWordAtCell={(pos) => {
+                  const rowCat = todaysPuzzle.rowCategories[pos.rowIndex];
+                  const colCat = todaysPuzzle.colCategories[pos.colIndex];
+                  return todaysPuzzle.words.find(w => w.correctRowId === rowCat.id && w.correctColId === colCat.id) || null;
+                }}
+                isCellCorrect={() => true}
+                selectedWordId={null}
+                onCellPress={() => {}}
+                onCellLongPress={() => {}}
+              />
+            )}
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
+    </>
   );
 }
 
 interface GameContentProps {
   puzzle: Puzzle;
   onBack: () => void;
-  onComplete: (score: GameScore) => void;
+  onComplete: (score: GameScore, rank: number | null) => void;
   isReviewMode?: boolean;
   savedScore?: GameScore | null;
   userId?: string;
+  userRank?: number | null;
+  leaderboard: LeaderboardEntry[];
+  leaderboardLoaded: boolean;
+  loadingLeaderboard: boolean;
+  onShowAnswersModal: () => void;
+  onOpenLeaderboard: () => void;
 }
 
-function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedScore, userId }: GameContentProps) {
+function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedScore, userId, userRank, leaderboard, leaderboardLoaded, loadingLeaderboard, onShowAnswersModal, onOpenLeaderboard }: GameContentProps) {
   const {
     gameState,
     unplacedWords,
@@ -932,7 +1215,7 @@ function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedSc
     finalScore,
   } = useGameState(puzzle);
 
-  const [percentile, setPercentile] = useState<number | null>(null);
+  const [resultRank, setResultRank] = useState<number | null>(null);
   const [submittingScore, setSubmittingScore] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
 
@@ -941,24 +1224,26 @@ function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedSc
   // Submit score when puzzle is solved OR game over (only if not in review mode)
   useEffect(() => {
     if (isReviewMode) return;
-    
+
     const gameEnded = gameState.isSolved || isGameOver;
-    if (gameEnded && finalScore && !submittingScore && percentile === null) {
+    if (gameEnded && finalScore && !submittingScore && resultRank === null) {
       setSubmittingScore(true);
       submitScore(finalScore.score, finalScore.timeSeconds, finalScore.mistakes, finalScore.correctPlacements, userId)
         .then((result) => {
+          let rank: number | null = null;
           if (result) {
-            setPercentile(result.percentile);
-            // Update finalScore with percentile before saving
+            rank = result.rank;
+            setResultRank(result.rank);
+            // Update finalScore with percentile before saving (keep for backwards compat)
             finalScore.percentile = result.percentile;
           }
-          // Save completion for both win and game over
-          onComplete(finalScore);
+          // Save completion and navigate to leaderboard
+          onComplete(finalScore, rank);
         })
         .catch(console.error)
         .finally(() => setSubmittingScore(false));
     }
-  }, [gameState.isSolved, isGameOver, finalScore, submittingScore, percentile, onComplete]);
+  }, [gameState.isSolved, isGameOver, finalScore, submittingScore, resultRank, onComplete]);
 
   const handleCellPress = (position: CellPosition) => {
     if (isReviewMode || isGameOver || gameState.isSolved) return;
@@ -1035,9 +1320,9 @@ function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedSc
                   <Text style={styles.scoreLabel}>Time</Text>
                 </View>
               </View>
-              {savedScore.percentile !== undefined && (
+              {userRank && (
                 <View style={styles.reviewPercentileRow}>
-                  <Text style={styles.reviewPercentileText}>Top {100 - savedScore.percentile}% of players</Text>
+                  <Text style={styles.reviewPercentileText}>Ranked #{userRank} today</Text>
                 </View>
               )}
             </View>
@@ -1049,9 +1334,9 @@ function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedSc
           )}
 
           {savedScore && (
-            <TouchableOpacity 
-              style={styles.reviewShareButton} 
-              onPress={() => shareScore(savedScore, savedScore.percentile ?? null)}
+            <TouchableOpacity
+              style={styles.reviewShareButton}
+              onPress={() => shareScore(savedScore, userRank ?? null)}
             >
               <Text style={styles.reviewShareButtonText}>Share</Text>
             </TouchableOpacity>
@@ -1079,116 +1364,159 @@ function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedSc
     );
   }
 
-  // Full screen game over overlay with score
-  if (isGameOver && finalScore) {
+  // Show results screen with embedded condensed leaderboard
+  if ((isGameOver || gameState.isSolved) && finalScore) {
+    const isWin = gameState.isSolved;
+    const displayRank = resultRank || userRank;
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: '#1a0a0a' }]}>
-        {/* Header with back arrow */}
-        <View style={styles.resultHeader}>
-          <TouchableOpacity onPress={onBack} style={styles.headerBackButton}>
-            <Text style={styles.headerBackIcon}>‹</Text>
-          </TouchableOpacity>
-        </View>
+      <SafeAreaView style={[styles.container, { backgroundColor: isWin ? '#0a1a0f' : '#1a0a0a' }]}>
+        <ScrollView contentContainerStyle={styles.gameCompleteScrollContent}>
+          {/* Result Header */}
+          <View style={styles.gameCompleteHeader}>
+            {isWin ? (
+              <MaterialCommunityIcons name="party-popper" size={64} color="#4ade80" style={{ marginBottom: 12 }} />
+            ) : (
+              <MaterialCommunityIcons name="heart-broken" size={64} color="#ff6b6b" style={{ marginBottom: 12 }} />
+            )}
+            <Text style={[styles.gameCompleteTitle, { color: isWin ? '#4ade80' : '#ff6b6b' }]}>
+              {isWin ? 'Puzzle Solved!' : 'Game Over'}
+            </Text>
+            {displayRank && (
+              <Text style={styles.gameCompleteRankText}>#{displayRank} in the world</Text>
+            )}
+          </View>
 
-        <ScrollView 
-          style={{ flex: 1 }}
-          contentContainerStyle={styles.resultScrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          <MaterialCommunityIcons name="heart-broken" size={80} color="#ff6b6b" style={{ marginBottom: 16, marginTop: 20 }} />
-          <Text style={styles.gameOverText}>Game Over!</Text>
-          
-          <View style={styles.scoreCard}>
-            <View style={styles.scoreRow}>
-              <View style={styles.scoreItem}>
-                <Text style={styles.scoreValue}>{finalScore.score}</Text>
-                <Text style={styles.scoreLabel}>Score</Text>
+          {/* Score Summary */}
+          <View style={styles.gameCompleteScoreCard}>
+            <View style={styles.gameCompleteScoreRow}>
+              <View style={styles.gameCompleteScoreItem}>
+                <Text style={styles.gameCompleteScoreValue}>{finalScore.score}</Text>
+                <Text style={styles.gameCompleteScoreLabel}>Score</Text>
               </View>
-              <View style={styles.scoreItem}>
-                <Text style={styles.scoreValue}>{finalScore.correctPlacements}/16</Text>
-                <Text style={styles.scoreLabel}>Correct</Text>
+              <View style={styles.gameCompleteScoreItem}>
+                <Text style={styles.gameCompleteScoreValue}>{finalScore.correctPlacements}/16</Text>
+                <Text style={styles.gameCompleteScoreLabel}>Correct</Text>
               </View>
-              <View style={styles.scoreItem}>
-                <Text style={styles.scoreValue}>{formatTime(finalScore.timeSeconds)}</Text>
-                <Text style={styles.scoreLabel}>Time</Text>
+              <View style={styles.gameCompleteScoreItem}>
+                <Text style={styles.gameCompleteScoreValue}>{formatTime(finalScore.timeSeconds)}</Text>
+                <Text style={styles.gameCompleteScoreLabel}>Time</Text>
               </View>
             </View>
           </View>
 
-          {submittingScore && (
-            <Text style={styles.calculatingText}>Calculating rank...</Text>
-          )}
-          
-          {percentile !== null && (
-            <View style={styles.percentileCardGameOver}>
-              <Text style={styles.percentileValueGameOver}>Top {100 - percentile}%</Text>
-              <Text style={styles.percentileLabelGameOver}>of players today</Text>
-            </View>
-          )}
-
-          <TouchableOpacity 
-            style={styles.shareButton} 
-            onPress={() => shareScore(finalScore, percentile)}
+          {/* Condensed Leaderboard */}
+          <TouchableOpacity
+            style={styles.gameCompleteLeaderboardCard}
+            onPress={onOpenLeaderboard}
+            activeOpacity={0.8}
           >
-            <Text style={styles.shareButtonText}>Share</Text>
-          </TouchableOpacity>
-        </ScrollView>
-      </SafeAreaView>
-    );
-  }
-
-  // Full screen win overlay
-  if (gameState.isSolved && finalScore) {
-    return (
-      <SafeAreaView style={[styles.container, { backgroundColor: '#0a1a0f' }]}>
-        {/* Header with back arrow */}
-        <View style={styles.resultHeader}>
-          <TouchableOpacity onPress={onBack} style={styles.headerBackButton}>
-            <Text style={styles.headerBackIcon}>‹</Text>
-          </TouchableOpacity>
-        </View>
-
-        <ScrollView 
-          style={{ flex: 1 }}
-          contentContainerStyle={styles.resultScrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          <MaterialCommunityIcons name="party-popper" size={80} color="#4ade80" style={{ marginBottom: 16, marginTop: 20 }} />
-          <Text style={styles.winOverlayTitle}>Puzzle Solved!</Text>
-          
-          <View style={styles.scoreCard}>
-            <View style={styles.scoreRow}>
-              <View style={styles.scoreItem}>
-                <Text style={styles.scoreValue}>{finalScore.score}</Text>
-                <Text style={styles.scoreLabel}>Score</Text>
-              </View>
-              <View style={styles.scoreItem}>
-                <Text style={styles.scoreValue}>{formatTime(finalScore.timeSeconds)}</Text>
-                <Text style={styles.scoreLabel}>Time</Text>
-              </View>
-              <View style={styles.scoreItem}>
-                <Text style={styles.scoreValue}>{finalScore.mistakes}</Text>
-                <Text style={styles.scoreLabel}>Mistakes</Text>
+            <View style={styles.gameCompleteLeaderboardHeader}>
+              <View style={styles.gameCompleteLeaderboardHeaderLeft}>
+                <MaterialCommunityIcons name="trophy" size={20} color="#ffd700" />
+                <Text style={styles.gameCompleteLeaderboardTitle}>Today's Leaderboard</Text>
               </View>
             </View>
+
+            {loadingLeaderboard && !leaderboardLoaded ? (
+              <ActivityIndicator size="small" color="#6a9fff" style={{ marginVertical: 16 }} />
+            ) : leaderboard.length === 0 ? (
+              <Text style={styles.leaderboardEmptyText}>No scores yet</Text>
+            ) : (
+              <View style={styles.leaderboardCompact}>
+                {/* Top 3 */}
+                {leaderboard.slice(0, 3).map((entry, index) => (
+                  <View
+                    key={index}
+                    style={[
+                      styles.leaderboardCompactRow,
+                      entry.isCurrentUser && styles.leaderboardCompactRowCurrentUser,
+                    ]}
+                  >
+                    <View style={styles.leaderboardCompactRank}>
+                      {entry.rank === 1 ? (
+                        <MaterialCommunityIcons name="medal" size={20} color="#ffd700" />
+                      ) : entry.rank === 2 ? (
+                        <MaterialCommunityIcons name="medal" size={20} color="#c0c0c0" />
+                      ) : (
+                        <MaterialCommunityIcons name="medal" size={20} color="#cd7f32" />
+                      )}
+                    </View>
+                    <Text style={[
+                      styles.leaderboardCompactName,
+                      entry.isCurrentUser && styles.leaderboardCompactNameCurrentUser,
+                    ]} numberOfLines={1}>
+                      {entry.displayName || 'Anonymous'}
+                      {entry.isCurrentUser && ' (you)'}
+                    </Text>
+                    <Text style={styles.leaderboardCompactCorrect}>{entry.correctPlacements}/16</Text>
+                    <Text style={[
+                      styles.leaderboardCompactScore,
+                      entry.isCurrentUser && styles.leaderboardCompactScoreCurrentUser,
+                    ]}>
+                      {entry.score}
+                    </Text>
+                  </View>
+                ))}
+
+                {/* Show user's rank if not in top 3 */}
+                {displayRank && displayRank > 3 && (
+                  <>
+                    <View style={styles.leaderboardDivider}>
+                      <Text style={styles.leaderboardDividerText}>•••</Text>
+                    </View>
+                    {leaderboard.filter(e => e.isCurrentUser).map((entry, index) => (
+                      <View
+                        key={`user-${index}`}
+                        style={[styles.leaderboardCompactRow, styles.leaderboardCompactRowCurrentUser]}
+                      >
+                        <View style={styles.leaderboardCompactRank}>
+                          <Text style={styles.leaderboardCompactRankText}>#{entry.rank}</Text>
+                        </View>
+                        <Text style={[styles.leaderboardCompactName, styles.leaderboardCompactNameCurrentUser]} numberOfLines={1}>
+                          {entry.displayName || 'Anonymous'} (you)
+                        </Text>
+                        <Text style={styles.leaderboardCompactCorrect}>{entry.correctPlacements}/16</Text>
+                        <Text style={[styles.leaderboardCompactScore, styles.leaderboardCompactScoreCurrentUser]}>
+                          {entry.score}
+                        </Text>
+                      </View>
+                    ))}
+                  </>
+                )}
+              </View>
+            )}
+
+            <View style={styles.tapForDetailsHint}>
+              <Text style={styles.tapForDetailsText}>Tap for full leaderboard</Text>
+              <Ionicons name="chevron-forward" size={14} color="#666" />
+            </View>
+          </TouchableOpacity>
+
+          {/* Action Buttons */}
+          <View style={styles.gameCompleteActions}>
+            <TouchableOpacity
+              style={styles.gameCompleteActionButton}
+              onPress={onShowAnswersModal}
+            >
+              <Ionicons name="grid-outline" size={20} color="#6a9fff" />
+              <Text style={styles.gameCompleteActionButtonText}>View Correct Answers</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.gameCompleteShareButton}
+              onPress={() => shareScore(finalScore, displayRank ?? null)}
+            >
+              <Ionicons name="share-outline" size={20} color="#4ade80" />
+              <Text style={styles.gameCompleteShareButtonText}>Share Score</Text>
+            </TouchableOpacity>
           </View>
 
-          {submittingScore && (
-            <Text style={styles.calculatingText}>Calculating rank...</Text>
-          )}
-          
-          {percentile !== null && (
-            <View style={styles.percentileCard}>
-              <Text style={styles.percentileValue}>Top {100 - percentile}%</Text>
-              <Text style={styles.percentileLabel}>of players today</Text>
-            </View>
-          )}
-
-          <TouchableOpacity 
-            style={styles.shareButtonWin} 
-            onPress={() => shareScore(finalScore, percentile)}
+          {/* Back to Home */}
+          <TouchableOpacity
+            style={styles.gameCompleteBackButton}
+            onPress={onBack}
           >
-            <Text style={styles.shareButtonWinText}>Share</Text>
+            <Text style={styles.gameCompleteBackButtonText}>Back to Home</Text>
           </TouchableOpacity>
         </ScrollView>
       </SafeAreaView>
@@ -1431,6 +1759,334 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#aaa',
   },
+  // Completed container styles (condensed leaderboard)
+  completedContainer: {
+    backgroundColor: '#1a2a3e',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#2a4a6e',
+  },
+  completedHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  completedHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  completedTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  completedRankText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#ffd700',
+  },
+  tapForDetailsHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 12,
+    gap: 4,
+  },
+  tapForDetailsText: {
+    fontSize: 12,
+    color: '#666',
+  },
+  leaderboardSectionTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#888',
+    textTransform: 'uppercase',
+  },
+  leaderboardEmptyText: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    paddingVertical: 12,
+  },
+  leaderboardCompact: {
+    gap: 4,
+  },
+  leaderboardCompactRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+  },
+  leaderboardCompactRowCurrentUser: {
+    backgroundColor: 'rgba(106, 159, 255, 0.15)',
+  },
+  leaderboardCompactRank: {
+    width: 32,
+    alignItems: 'center',
+  },
+  leaderboardCompactRankText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#888',
+  },
+  leaderboardCompactName: {
+    flex: 1,
+    fontSize: 14,
+    color: '#ccc',
+    marginLeft: 8,
+  },
+  leaderboardCompactNameCurrentUser: {
+    color: '#6a9fff',
+    fontWeight: '600',
+  },
+  leaderboardCompactCorrect: {
+    fontSize: 12,
+    color: '#888',
+    marginRight: 8,
+  },
+  leaderboardCompactScore: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#4ade80',
+  },
+  leaderboardCompactScoreCurrentUser: {
+    color: '#6a9fff',
+  },
+  leaderboardDivider: {
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  leaderboardDividerText: {
+    fontSize: 12,
+    color: '#444',
+  },
+  viewFullLeaderboardButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    marginTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#1a2a3a',
+  },
+  viewFullLeaderboardText: {
+    fontSize: 13,
+    color: '#6a9fff',
+    marginRight: 4,
+  },
+  // Answers toggle and container
+  answersToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#0f1a2a',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 12,
+  },
+  answersToggleLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  answersToggleText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#6a9fff',
+  },
+  answersContainer: {
+    alignItems: 'center',
+    marginBottom: 12,
+    paddingTop: 8,
+  },
+  // Answers Modal styles
+  answersModalContainer: {
+    flex: 1,
+    backgroundColor: '#0f0f1a',
+  },
+  answersModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#2a2a4e',
+  },
+  answersModalBackButton: {
+    padding: 8,
+  },
+  answersModalCloseButton: {
+    padding: 8,
+  },
+  answersModalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  answersModalContent: {
+    alignItems: 'center',
+    padding: 20,
+  },
+  // Full-screen leaderboard styles
+  leaderboardScreenHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#2a2a4e',
+  },
+  leaderboardScreenBackButton: {
+    padding: 8,
+  },
+  leaderboardScreenTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  leaderboardScreenTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  leaderboardScreenContent: {
+    flex: 1,
+  },
+  leaderboardScreenContentContainer: {
+    padding: 16,
+  },
+  userRankBanner: {
+    backgroundColor: '#1a3d2d',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#2a5a3d',
+  },
+  userRankBannerText: {
+    fontSize: 14,
+    color: '#a0d0b0',
+  },
+  userRankBannerValue: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#ffd700',
+    marginTop: 4,
+  },
+  leaderboardFullList: {
+    gap: 8,
+  },
+  leaderboardFullRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1a2a3e',
+    borderRadius: 12,
+    padding: 12,
+  },
+  leaderboardFullRowCurrentUser: {
+    backgroundColor: 'rgba(106, 159, 255, 0.15)',
+    borderWidth: 1,
+    borderColor: '#6a9fff',
+  },
+  leaderboardFullRowSeparated: {
+    marginTop: 16,
+  },
+  leaderboardFullRank: {
+    width: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  leaderboardFullRankText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#888',
+  },
+  leaderboardFullInfo: {
+    flex: 1,
+    marginLeft: 8,
+  },
+  leaderboardFullName: {
+    fontSize: 16,
+    color: '#fff',
+    fontWeight: '500',
+  },
+  leaderboardFullNameCurrentUser: {
+    color: '#6a9fff',
+  },
+  leaderboardFullMeta: {
+    fontSize: 13,
+    color: '#888',
+    marginTop: 2,
+  },
+  leaderboardFullScore: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#4ade80',
+    marginLeft: 12,
+  },
+  leaderboardFullScoreCurrentUser: {
+    color: '#6a9fff',
+  },
+  leaderboardScreenActions: {
+    marginTop: 24,
+    gap: 12,
+  },
+  leaderboardScreenActionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#6a9fff',
+    borderRadius: 12,
+    paddingVertical: 14,
+    gap: 8,
+  },
+  leaderboardScreenActionText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#6a9fff',
+  },
+  leaderboardScreenShareButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#4ade80',
+    borderRadius: 12,
+    paddingVertical: 14,
+    gap: 8,
+  },
+  leaderboardScreenShareText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#4ade80',
+  },
+  // Share score button
+  shareScoreButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#4ade80',
+    borderRadius: 8,
+    paddingVertical: 12,
+    gap: 8,
+  },
+  shareScoreButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#4ade80',
+  },
   // Leaderboard card styles
   leaderboardCard: {
     backgroundColor: '#1a2a3e',
@@ -1459,6 +2115,25 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#888',
     marginTop: 2,
+  },
+  // Leaderboard preview styles (on card)
+  leaderboardPreview: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  leaderboardPreviewItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  leaderboardPreviewScore: {
+    fontSize: 12,
+    color: '#888',
+    fontWeight: '600',
+  },
+  leaderboardPreviewScoreCurrentUser: {
+    color: '#6a9fff',
   },
   // How to play button
   howToPlayButton: {
@@ -1561,11 +2236,30 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginBottom: 4,
   },
-  dateText: {
-    marginTop: 0,
+  dateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
     marginBottom: 20,
+  },
+  dateText: {
     fontSize: 16,
     color: '#666',
+  },
+  completedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#1a3d2d',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  completedBadgeText: {
+    fontSize: 13,
+    color: '#4ade80',
+    fontWeight: '600',
   },
   footerLinks: {
     flexDirection: 'row',
@@ -1889,7 +2583,7 @@ const styles = StyleSheet.create({
     marginVertical: 40,
   },
   leaderboardList: {
-    maxHeight: 400,
+    // Removed maxHeight since it's now inside a ScrollView
   },
   leaderboardRow: {
     flexDirection: 'row',
@@ -1947,7 +2641,7 @@ const styles = StyleSheet.create({
     color: '#6a9fff',
   },
   leaderboardCloseButton: {
-    marginTop: 20,
+    marginTop: 16,
     paddingVertical: 14,
     backgroundColor: '#2a3a5a',
     borderRadius: 8,
@@ -1957,6 +2651,97 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#fff',
+  },
+  // Enhanced leaderboard modal styles
+  leaderboardScrollView: {
+    maxHeight: '100%',
+  },
+  leaderboardUserScore: {
+    backgroundColor: '#1a2e1f',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#2a4a3a',
+  },
+  leaderboardUserScoreHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  leaderboardUserScoreTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#4ade80',
+  },
+  leaderboardUserRankBadge: {
+    backgroundColor: '#2a4a3a',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  leaderboardUserRankText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#4ade80',
+  },
+  leaderboardUserScoreRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  leaderboardUserScoreItem: {
+    alignItems: 'center',
+  },
+  leaderboardUserScoreValue: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  leaderboardUserScoreLabel: {
+    fontSize: 11,
+    color: '#888',
+    marginTop: 2,
+    textTransform: 'uppercase',
+  },
+  leaderboardUserPercentile: {
+    fontSize: 14,
+    color: '#f59e0b',
+    fontWeight: '500',
+    textAlign: 'center',
+    marginTop: 12,
+  },
+  leaderboardShareButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#4ade80',
+    borderRadius: 8,
+    paddingVertical: 10,
+    marginTop: 16,
+  },
+  leaderboardShareButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#4ade80',
+  },
+  leaderboardViewAnswersButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#6a9fff',
+    borderRadius: 8,
+    paddingVertical: 12,
+    marginTop: 20,
+  },
+  leaderboardViewAnswersText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#6a9fff',
   },
   // Tutorial modal styles
   modalOverlay: {
@@ -2216,6 +3001,23 @@ const styles = StyleSheet.create({
     color: '#888',
     marginBottom: 16,
   },
+  // Loading result screen styles
+  loadingResultContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  loadingResultTitle: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  loadingResultText: {
+    fontSize: 16,
+    color: '#888',
+    marginTop: 16,
+  },
   percentileCard: {
     backgroundColor: '#2d5a3d',
     borderRadius: 12,
@@ -2232,6 +3034,44 @@ const styles = StyleSheet.create({
   percentileLabel: {
     fontSize: 14,
     color: '#a0d0b0',
+    marginTop: 4,
+  },
+  // Rank card styles (win screen)
+  rankCardWin: {
+    backgroundColor: '#2d5a3d',
+    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  rankValueWin: {
+    fontSize: 36,
+    fontWeight: 'bold',
+    color: '#ffd700',
+  },
+  rankLabelWin: {
+    fontSize: 14,
+    color: '#a0d0b0',
+    marginTop: 4,
+  },
+  // Rank card styles (game over screen)
+  rankCard: {
+    backgroundColor: '#3d2d2d',
+    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  rankValue: {
+    fontSize: 36,
+    fontWeight: 'bold',
+    color: '#ffd700',
+  },
+  rankLabel: {
+    fontSize: 14,
+    color: '#d0a0a0',
     marginTop: 4,
   },
   shareButtonWin: {
@@ -2312,5 +3152,130 @@ const styles = StyleSheet.create({
   gridContainer: {
     alignItems: 'center',
     paddingTop: 8,
+  },
+  // Game complete result screen styles (embedded leaderboard)
+  gameCompleteScrollContent: {
+    flexGrow: 1,
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 40,
+    paddingBottom: 40,
+  },
+  gameCompleteHeader: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  gameCompleteTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  gameCompleteRankText: {
+    fontSize: 18,
+    color: '#ffd700',
+    fontWeight: '600',
+    marginTop: 8,
+  },
+  gameCompleteScoreCard: {
+    backgroundColor: '#1a2a3e',
+    borderRadius: 12,
+    padding: 16,
+    width: '100%',
+    maxWidth: 400,
+    marginBottom: 16,
+  },
+  gameCompleteScoreRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  gameCompleteScoreItem: {
+    alignItems: 'center',
+  },
+  gameCompleteScoreValue: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  gameCompleteScoreLabel: {
+    fontSize: 12,
+    color: '#888',
+    marginTop: 4,
+  },
+  gameCompleteLeaderboardCard: {
+    backgroundColor: '#1a2a3e',
+    borderRadius: 12,
+    padding: 16,
+    width: '100%',
+    maxWidth: 400,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#2a4a6e',
+  },
+  gameCompleteLeaderboardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  gameCompleteLeaderboardHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  gameCompleteLeaderboardTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  gameCompleteActions: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 16,
+    width: '100%',
+    maxWidth: 400,
+  },
+  gameCompleteActionButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#1a2a3e',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#2a4a6e',
+  },
+  gameCompleteActionButtonText: {
+    color: '#6a9fff',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  gameCompleteShareButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#1a3d2d',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#2d5a3d',
+  },
+  gameCompleteShareButtonText: {
+    color: '#4ade80',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  gameCompleteBackButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+  },
+  gameCompleteBackButtonText: {
+    color: '#888',
+    fontSize: 14,
   },
 });
