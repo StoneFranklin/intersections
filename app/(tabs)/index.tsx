@@ -17,16 +17,15 @@ import {
   Image,
   Modal,
   Platform,
-  SafeAreaView,
   ScrollView,
   Share,
-  StatusBar,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 // Format seconds into MM:SS
 function formatTime(seconds: number): string {
@@ -518,7 +517,14 @@ export default function GameScreen() {
               {userRank && (
                 <View style={styles.userRankBanner}>
                   <Text style={styles.userRankBannerText}>You are ranked</Text>
-                  <Text style={styles.userRankBannerValue}>#{userRank} in the world</Text>
+                  <Text
+                    style={styles.userRankBannerValue}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.8}
+                  >
+                    #{userRank} in the world
+                  </Text>
                 </View>
               )}
 
@@ -557,7 +563,9 @@ export default function GameScreen() {
                 ) : entry.rank === 3 ? (
                   <MaterialCommunityIcons name="medal" size={28} color="#cd7f32" />
                 ) : (
-                  <Text style={styles.leaderboardFullRankText}>#{entry.rank}</Text>
+                  <Text style={styles.leaderboardFullRankText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
+                    #{entry.rank}
+                  </Text>
                 )}
               </View>
               <View style={styles.leaderboardFullInfo}>
@@ -612,7 +620,14 @@ export default function GameScreen() {
           {userRank && (
             <View style={styles.userRankBanner}>
               <Text style={styles.userRankBannerText}>You are ranked</Text>
-              <Text style={styles.userRankBannerValue}>#{userRank} in the world</Text>
+              <Text
+                style={styles.userRankBannerValue}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.8}
+              >
+                #{userRank} in the world
+              </Text>
             </View>
           )}
 
@@ -639,7 +654,9 @@ export default function GameScreen() {
                     ) : entry.rank === 3 ? (
                       <MaterialCommunityIcons name="medal" size={28} color="#cd7f32" />
                     ) : (
-                      <Text style={styles.leaderboardFullRankText}>#{entry.rank}</Text>
+                      <Text style={styles.leaderboardFullRankText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
+                        #{entry.rank}
+                      </Text>
                     )}
                   </View>
                   <View style={styles.leaderboardFullInfo}>
@@ -909,7 +926,9 @@ export default function GameScreen() {
                               style={[styles.leaderboardCompactRow, styles.leaderboardCompactRowCurrentUser]}
                             >
                               <View style={styles.leaderboardCompactRank}>
-                                <Text style={styles.leaderboardCompactRankText}>#{entry.rank}</Text>
+                                <Text style={styles.leaderboardCompactRankText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
+                                  #{entry.rank}
+                                </Text>
                               </View>
                               <Text style={[styles.leaderboardCompactName, styles.leaderboardCompactNameCurrentUser]} numberOfLines={1}>
                                 {entry.displayName || 'Anonymous'} (you)
@@ -1609,7 +1628,9 @@ function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedSc
                         style={[styles.leaderboardCompactRow, styles.leaderboardCompactRowCurrentUser]}
                       >
                         <View style={styles.leaderboardCompactRank}>
-                          <Text style={styles.leaderboardCompactRankText}>#{entry.rank}</Text>
+                          <Text style={styles.leaderboardCompactRankText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
+                            #{entry.rank}
+                          </Text>
                         </View>
                         <Text style={[styles.leaderboardCompactName, styles.leaderboardCompactNameCurrentUser]} numberOfLines={1}>
                           {entry.displayName || 'Anonymous'} (you)
@@ -1720,13 +1741,13 @@ function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedSc
         onRequestClose={() => setShowTutorial(false)}
       >
         <SafeAreaView style={styles.answersModalContainer}>
-          <View style={styles.answersModalHeader}>
-            <TouchableOpacity onPress={() => setShowTutorial(false)} style={styles.answersModalBackButton}>
-              <Ionicons name="arrow-back" size={24} color="#fff" />
-            </TouchableOpacity>
-            <Text style={styles.answersModalTitle}>How to Play</Text>
-            <View style={{ width: 40 }} />
-          </View>
+            <View style={styles.answersModalHeader}>
+              <TouchableOpacity onPress={() => setShowTutorial(false)} style={styles.answersModalBackButton}>
+                <Ionicons name="arrow-back" size={24} color="#fff" />
+              </TouchableOpacity>
+              <Text style={styles.answersModalTitle}>How to Play</Text>
+              <View style={{ width: 40 }} />
+            </View>
           <ScrollView contentContainerStyle={styles.tutorialScreenContent} showsVerticalScrollIndicator={true}>
             <Text style={styles.tutorialHeading}>Goal</Text>
             <Text style={styles.tutorialText}>
@@ -1777,7 +1798,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 24) + 12 : 12,
     borderBottomWidth: 1,
     borderBottomColor: '#2a2a4e',
   },
@@ -2965,7 +2985,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 12,
     paddingHorizontal: 16,
-    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 24) + 12 : 12,
     backgroundColor: '#1a1a2e',
     borderBottomWidth: 1,
     borderBottomColor: '#2a2a4e',

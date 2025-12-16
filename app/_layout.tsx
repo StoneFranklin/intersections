@@ -8,6 +8,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import 'react-native-reanimated';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 // Prevent auto-hiding splash screen
 SplashScreen.preventAutoHideAsync();
@@ -66,19 +67,21 @@ export default function RootLayout() {
 
   return (
     <AuthProvider>
-      <View style={styles.container}>
-        <ThemeProvider value={customDarkTheme}>
-          <Stack screenOptions={{ contentStyle: { backgroundColor: '#0f0f1a' } }}>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-            <Stack.Screen name="about" options={{ headerShown: false, title: 'About Intersections' }} />
-            <Stack.Screen name="how-to-play" options={{ headerShown: false, title: 'How to Play' }} />
-            <Stack.Screen name="privacy" options={{ headerShown: false, title: 'Privacy Policy' }} />
-            <Stack.Screen name="terms" options={{ headerShown: false, title: 'Terms of Service' }} />
-          </Stack>
-          <StatusBar style="light" />
-        </ThemeProvider>
-      </View>
+      <SafeAreaProvider>
+        <View style={styles.container}>
+          <ThemeProvider value={customDarkTheme}>
+            <Stack screenOptions={{ contentStyle: { backgroundColor: '#0f0f1a' } }}>
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+              <Stack.Screen name="about" options={{ headerShown: false, title: 'About Intersections' }} />
+              <Stack.Screen name="how-to-play" options={{ headerShown: false, title: 'How to Play' }} />
+              <Stack.Screen name="privacy" options={{ headerShown: false, title: 'Privacy Policy' }} />
+              <Stack.Screen name="terms" options={{ headerShown: false, title: 'Terms of Service' }} />
+            </Stack>
+            <StatusBar style="light" />
+          </ThemeProvider>
+        </View>
+      </SafeAreaProvider>
     </AuthProvider>
   );
 }
