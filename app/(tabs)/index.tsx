@@ -692,11 +692,11 @@ export default function GameScreen() {
         >
           <SafeAreaView style={styles.answersModalContainer}>
             <View style={styles.answersModalHeader}>
-              <View style={{ width: 40 }} />
-              <Text style={styles.answersModalTitle}>Correct Answers</Text>
-              <TouchableOpacity onPress={() => setShowAnswersModal(false)} style={styles.answersModalCloseButton}>
-                <Ionicons name="close" size={28} color="#fff" />
+              <TouchableOpacity onPress={() => setShowAnswersModal(false)} style={styles.answersModalBackButton}>
+                <Ionicons name="arrow-back" size={24} color="#fff" />
               </TouchableOpacity>
+              <Text style={styles.answersModalTitle}>Correct Answers</Text>
+              <View style={{ width: 40 }} />
             </View>
             <ScrollView contentContainerStyle={styles.answersModalContent}>
               {todaysPuzzle && (
@@ -947,6 +947,7 @@ export default function GameScreen() {
             style={styles.howToPlayButton}
             onPress={() => setShowTutorial(true)}
           >
+            <Ionicons name="help-circle-outline" size={20} color="#6a9fff" />
             <Text style={styles.howToPlayText}>How to Play</Text>
           </TouchableOpacity>
 
@@ -976,55 +977,51 @@ export default function GameScreen() {
         {/* Tutorial Modal */}
         <Modal
           visible={showTutorial}
-          animationType="fade"
-          transparent={true}
+          animationType="slide"
+          transparent={false}
           onRequestClose={() => setShowTutorial(false)}
         >
-          <View style={styles.modalOverlay}>
-            <View style={styles.tutorialModal}>
-              <ScrollView showsVerticalScrollIndicator={true}>
-                <Text style={styles.tutorialTitle}>How to Play</Text>
-                
-                <Text style={styles.tutorialHeading}>Goal</Text>
-                <Text style={styles.tutorialText}>
-                  Place each word in the grid where its two categories intersect.
-                </Text>
-
-                <Text style={styles.tutorialHeading}>Example</Text>
-                <Text style={styles.tutorialText}>
-                  If the row is "Fruits" and the column is "Red Things", the correct word might be "Apple" — it belongs to both categories!
-                </Text>
-
-                <Text style={styles.tutorialHeading}>How to Play</Text>
-                <Text style={styles.tutorialText}>
-                  1. Tap a word from the tray below the grid{"\n"}
-                  2. Tap a cell in the grid to place it{"\n"}
-                  3. Tap a placed word to remove it{"\n"}
-                  4. Fill all 16 cells correctly to win!
-                </Text>
-
-                <Text style={styles.tutorialHeading}>Lives</Text>
-                <Text style={styles.tutorialText}>
-                  You have 3 lives. Each incorrect placement costs one life. Lose all lives and the game ends.
-                </Text>
-
-                <Text style={styles.tutorialHeading}>Scoring</Text>
-                <Text style={styles.tutorialText}>
-                  • Complete the puzzle: up to 1000 points{"\n"}
-                  • Faster = higher score{"\n"}
-                  • Fewer mistakes = higher score{"\n"}
-                  • Compare your score with other players!
-                </Text>
-              </ScrollView>
-
-              <TouchableOpacity 
-                style={styles.tutorialCloseButton}
-                onPress={() => setShowTutorial(false)}
-              >
-                <Text style={styles.tutorialCloseText}>Got it!</Text>
+          <SafeAreaView style={styles.answersModalContainer}>
+            <View style={styles.answersModalHeader}>
+              <TouchableOpacity onPress={() => setShowTutorial(false)} style={styles.answersModalBackButton}>
+                <Ionicons name="arrow-back" size={24} color="#fff" />
               </TouchableOpacity>
+              <Text style={styles.answersModalTitle}>How to Play</Text>
+              <View style={{ width: 40 }} />
             </View>
-          </View>
+            <ScrollView contentContainerStyle={styles.tutorialScreenContent} showsVerticalScrollIndicator={true}>
+              <Text style={styles.tutorialHeading}>Goal</Text>
+              <Text style={styles.tutorialText}>
+                Place each word in the grid where its two categories intersect.
+              </Text>
+
+              <Text style={styles.tutorialHeading}>Example</Text>
+              <Text style={styles.tutorialText}>
+                If the row is &quot;Fruits&quot; and the column is &quot;Red Things&quot;, the correct word might be &quot;Apple&quot; – it belongs to both categories!
+              </Text>
+
+              <Text style={styles.tutorialHeading}>How to Play</Text>
+              <Text style={styles.tutorialText}>
+                1. Tap a word from the tray below the grid{"\n"}
+                2. Tap a cell in the grid to place it{"\n"}
+                3. Tap a placed word to remove it{"\n"}
+                4. Fill all 16 cells correctly to win!
+              </Text>
+
+              <Text style={styles.tutorialHeading}>Lives</Text>
+              <Text style={styles.tutorialText}>
+                You have 3 lives. Each incorrect placement costs one life. Lose all lives and the game ends.
+              </Text>
+
+              <Text style={styles.tutorialHeading}>Scoring</Text>
+              <Text style={styles.tutorialText}>
+                • Complete the puzzle: up to 1000 points{"\n"}
+                • Faster = higher score{"\n"}
+                • Fewer mistakes = higher score{"\n"}
+                • Compare your score with other players!
+              </Text>
+            </ScrollView>
+          </SafeAreaView>
         </Modal>
 
         {/* Sign In Modal */}
@@ -1192,11 +1189,11 @@ export default function GameScreen() {
         >
           <SafeAreaView style={styles.answersModalContainer}>
             <View style={styles.answersModalHeader}>
-              <View style={{ width: 40 }} />
-              <Text style={styles.answersModalTitle}>Correct Answers</Text>
-              <TouchableOpacity onPress={() => setShowAnswersModal(false)} style={styles.answersModalCloseButton}>
-                <Ionicons name="close" size={28} color="#fff" />
+              <TouchableOpacity onPress={() => setShowAnswersModal(false)} style={styles.answersModalBackButton}>
+                <Ionicons name="arrow-back" size={24} color="#fff" />
               </TouchableOpacity>
+              <Text style={styles.answersModalTitle}>Correct Answers</Text>
+              <View style={{ width: 40 }} />
             </View>
             <ScrollView contentContainerStyle={styles.answersModalContent}>
               {todaysPuzzle && (
@@ -1300,11 +1297,11 @@ export default function GameScreen() {
       >
         <SafeAreaView style={styles.answersModalContainer}>
           <View style={styles.answersModalHeader}>
-            <View style={{ width: 40 }} />
-            <Text style={styles.answersModalTitle}>Correct Answers</Text>
-            <TouchableOpacity onPress={() => setShowAnswersModal(false)} style={styles.answersModalCloseButton}>
-              <Ionicons name="close" size={28} color="#fff" />
+            <TouchableOpacity onPress={() => setShowAnswersModal(false)} style={styles.answersModalBackButton}>
+              <Ionicons name="arrow-back" size={24} color="#fff" />
             </TouchableOpacity>
+            <Text style={styles.answersModalTitle}>Correct Answers</Text>
+            <View style={{ width: 40 }} />
           </View>
           <ScrollView contentContainerStyle={styles.answersModalContent}>
             {todaysPuzzle && (
@@ -1718,55 +1715,51 @@ function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedSc
       {/* Tutorial Modal */}
       <Modal
         visible={showTutorial}
-        animationType="fade"
-        transparent={true}
+        animationType="slide"
+        transparent={false}
         onRequestClose={() => setShowTutorial(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.tutorialModal}>
-            <ScrollView showsVerticalScrollIndicator={true}>
-              <Text style={styles.tutorialTitle}>How to Play</Text>
-              
-              <Text style={styles.tutorialHeading}>Goal</Text>
-              <Text style={styles.tutorialText}>
-                Place each word in the grid where its two categories intersect.
-              </Text>
-
-              <Text style={styles.tutorialHeading}>Example</Text>
-              <Text style={styles.tutorialText}>
-                If the row is "Fruits" and the column is "Red Things", the correct word might be "Apple" — it belongs to both categories!
-              </Text>
-
-              <Text style={styles.tutorialHeading}>How to Play</Text>
-              <Text style={styles.tutorialText}>
-                1. Tap a word from the tray below the grid{"\n"}
-                2. Tap a cell in the grid to place it{"\n"}
-                3. Tap a placed word to remove it{"\n"}
-                4. Fill all 16 cells correctly to win!
-              </Text>
-
-              <Text style={styles.tutorialHeading}>Lives</Text>
-              <Text style={styles.tutorialText}>
-                You have 3 lives. Each incorrect placement costs one life. Lose all lives and the game ends.
-              </Text>
-
-              <Text style={styles.tutorialHeading}>Scoring</Text>
-              <Text style={styles.tutorialText}>
-                • Complete the puzzle: up to 1000 points{"\n"}
-                • Faster = higher score{"\n"}
-                • Fewer mistakes = higher score{"\n"}
-                • Compare your score with other players!
-              </Text>
-            </ScrollView>
-
-            <TouchableOpacity 
-              style={styles.tutorialCloseButton}
-              onPress={() => setShowTutorial(false)}
-            >
-              <Text style={styles.tutorialCloseText}>Got it!</Text>
+        <SafeAreaView style={styles.answersModalContainer}>
+          <View style={styles.answersModalHeader}>
+            <TouchableOpacity onPress={() => setShowTutorial(false)} style={styles.answersModalBackButton}>
+              <Ionicons name="arrow-back" size={24} color="#fff" />
             </TouchableOpacity>
+            <Text style={styles.answersModalTitle}>How to Play</Text>
+            <View style={{ width: 40 }} />
           </View>
-        </View>
+          <ScrollView contentContainerStyle={styles.tutorialScreenContent} showsVerticalScrollIndicator={true}>
+            <Text style={styles.tutorialHeading}>Goal</Text>
+            <Text style={styles.tutorialText}>
+              Place each word in the grid where its two categories intersect.
+            </Text>
+
+            <Text style={styles.tutorialHeading}>Example</Text>
+            <Text style={styles.tutorialText}>
+              If the row is &quot;Fruits&quot; and the column is &quot;Red Things&quot;, the correct word might be &quot;Apple&quot; – it belongs to both categories!
+            </Text>
+
+            <Text style={styles.tutorialHeading}>How to Play</Text>
+            <Text style={styles.tutorialText}>
+              1. Tap a word from the tray below the grid{"\n"}
+              2. Tap a cell in the grid to place it{"\n"}
+              3. Tap a placed word to remove it{"\n"}
+              4. Fill all 16 cells correctly to win!
+            </Text>
+
+            <Text style={styles.tutorialHeading}>Lives</Text>
+            <Text style={styles.tutorialText}>
+              You have 3 lives. Each incorrect placement costs one life. Lose all lives and the game ends.
+            </Text>
+
+            <Text style={styles.tutorialHeading}>Scoring</Text>
+            <Text style={styles.tutorialText}>
+              • Complete the puzzle: up to 1000 points{"\n"}
+              • Faster = higher score{"\n"}
+              • Fewer mistakes = higher score{"\n"}
+              • Compare your score with other players!
+            </Text>
+          </ScrollView>
+        </SafeAreaView>
       </Modal>
     </SafeAreaView>
   );
@@ -2090,6 +2083,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
   },
+  tutorialScreenContent: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 28,
+  },
   // Full-screen leaderboard styles
   leaderboardScreenHeader: {
     flexDirection: 'row',
@@ -2219,6 +2217,7 @@ const styles = StyleSheet.create({
     borderColor: '#4ade80',
     borderRadius: 12,
     paddingVertical: 14,
+    marginBottom: 16,
     gap: 8,
   },
   leaderboardScreenShareText: {
@@ -2294,12 +2293,22 @@ const styles = StyleSheet.create({
   // How to play button
   howToPlayButton: {
     marginTop: 16,
-    paddingVertical: 8,
+    width: '100%',
+    maxWidth: 400,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#2a4a6e',
+    backgroundColor: '#0f1a2a',
+    paddingVertical: 14,
+    gap: 8,
   },
   howToPlayText: {
     fontSize: 15,
-    color: '#888',
-    textDecorationLine: 'underline',
+    fontWeight: '600',
+    color: '#6a9fff',
   },
   // Sign in banner styles
   signInBanner: {
