@@ -522,16 +522,8 @@ export default function GameScreen() {
                 </View>
               )}
 
-              <View style={styles.leaderboardScreenActions}>
-                <TouchableOpacity
-                  style={styles.leaderboardScreenActionButton}
-                  onPress={() => setShowAnswersModal(true)}
-                >
-                  <Ionicons name="grid-outline" size={20} color="#6a9fff" />
-                  <Text style={styles.leaderboardScreenActionText}>View Correct Answers</Text>
-                </TouchableOpacity>
-
-                {savedScore && (
+              {savedScore && (
+                <View style={styles.leaderboardScreenActions}>
                   <TouchableOpacity
                     style={styles.leaderboardScreenShareButton}
                     onPress={() => shareScore(savedScore!, userRank)}
@@ -539,8 +531,8 @@ export default function GameScreen() {
                     <Ionicons name="share-outline" size={20} color="#4ade80" />
                     <Text style={styles.leaderboardScreenShareText}>Share Score</Text>
                   </TouchableOpacity>
-                )}
-              </View>
+                </View>
+              )}
             </>
           }
           ListEmptyComponent={
@@ -677,16 +669,8 @@ export default function GameScreen() {
           )}
 
           {/* Action buttons */}
-          <View style={styles.leaderboardScreenActions}>
-            <TouchableOpacity
-              style={styles.leaderboardScreenActionButton}
-              onPress={() => setShowAnswersModal(true)}
-            >
-              <Ionicons name="grid-outline" size={20} color="#6a9fff" />
-              <Text style={styles.leaderboardScreenActionText}>View Correct Answers</Text>
-            </TouchableOpacity>
-
-            {savedScore && (
+          {savedScore && (
+            <View style={styles.leaderboardScreenActions}>
               <TouchableOpacity
                 style={styles.leaderboardScreenShareButton}
                 onPress={() => shareScore(savedScore!, userRank)}
@@ -694,8 +678,8 @@ export default function GameScreen() {
                 <Ionicons name="share-outline" size={20} color="#4ade80" />
                 <Text style={styles.leaderboardScreenShareText}>Share Score</Text>
               </TouchableOpacity>
-            )}
-          </View>
+            </View>
+          )}
         </ScrollView>
         )}
 
@@ -854,6 +838,7 @@ export default function GameScreen() {
                 </TouchableOpacity>
               ) : (
                 /* Completed state - show condensed leaderboard */
+                <>
                 <TouchableOpacity
                   style={styles.completedContainer}
                   onPress={openLeaderboard}
@@ -946,6 +931,15 @@ export default function GameScreen() {
                     <Ionicons name="chevron-forward" size={14} color="#666" />
                   </View>
                 </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.viewAnswersMainButton}
+                  onPress={() => setShowAnswersModal(true)}
+                  activeOpacity={0.85}
+                >
+                  <Ionicons name="grid-outline" size={20} color="#6a9fff" />
+                  <Text style={styles.viewAnswersMainText}>View Correct Answers</Text>
+                </TouchableOpacity>
+                </>
               )}
           </View>
 
@@ -2025,6 +2019,22 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#6a9fff',
     marginRight: 4,
+  },
+  viewAnswersMainButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#2a4a6e',
+    backgroundColor: '#0f1a2a',
+    paddingVertical: 14,
+    gap: 8,
+  },
+  viewAnswersMainText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#6a9fff',
   },
   // Answers toggle and container
   answersToggle: {
