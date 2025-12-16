@@ -96,29 +96,29 @@ export function useRewardedAd(): UseRewardedAdReturn {
 
     return new Promise((resolve) => {
       setIsShowing(true);
+      let earnedReward = false;
 
       const unsubscribeEarned = rewardedAd.addAdEventListener(
         RewardedAdEventType.EARNED_REWARD,
         (reward) => {
           console.log('User earned reward:', reward);
-          setIsShowing(false);
-          setIsReady(false);
-          unsubscribeEarned();
-          // Preload next ad
-          loadAd();
-          resolve(true);
+          earnedReward = true;
+          // Don't resolve here - wait for CLOSED event to ensure ad is fully dismissed
         }
       );
 
       const unsubscribeDismissed = rewardedAd.addAdEventListener(
         AdEventType.CLOSED,
         () => {
+          // Clean up both listeners
+          unsubscribeEarned();
+          unsubscribeDismissed();
           setIsShowing(false);
           setIsReady(false);
-          unsubscribeDismissed();
           // Preload next ad
           loadAd();
-          resolve(false);
+          // Resolve with whether the user earned a reward
+          resolve(earnedReward);
         }
       );
 
@@ -126,6 +126,8 @@ export function useRewardedAd(): UseRewardedAdReturn {
         rewardedAd.show();
       } catch (err) {
         console.error('Failed to show ad:', err);
+        unsubscribeEarned();
+        unsubscribeDismissed();
         setIsShowing(false);
         setError('Failed to show ad');
         resolve(false);
