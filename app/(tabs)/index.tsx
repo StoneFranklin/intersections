@@ -1406,6 +1406,11 @@ function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedSc
 
   const handleWatchAd = async () => {
     const rewarded = await rewardedAd.show();
+
+    // Wait a bit for the ad to fully dismiss on iOS before closing modal
+    // This prevents touch blocking issues
+    await new Promise(resolve => setTimeout(resolve, Platform.OS === 'ios' ? 500 : 100));
+
     setShowRewardedAdModal(false);
 
     if (rewarded) {

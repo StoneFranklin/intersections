@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface RewardedAdModalProps {
   /** Whether the modal is visible */
@@ -43,7 +44,7 @@ export function RewardedAdModal({
       visible={visible}
       onRequestClose={onDecline}
     >
-      <View style={styles.overlay}>
+      <SafeAreaView style={styles.overlay} edges={['top', 'bottom']}>
         <View style={styles.container}>
           {/* Heart Icon */}
           <View style={styles.iconContainer}>
@@ -109,7 +110,7 @@ export function RewardedAdModal({
             </View>
           )}
         </View>
-      </View>
+      </SafeAreaView>
     </Modal>
   );
 }
