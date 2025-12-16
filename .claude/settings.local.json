@@ -45,7 +45,8 @@
       "Bash(xcodebuild:*)",
       "Bash(plutil:*)",
       "Bash(npx tsc:*)",
-      "Bash(npm run web:*)"
+      "Bash(npm run web:*)",
+      "Bash(powershell -Command \"Get-Content ''C:\\Users\\saf1\\Documents\\react-native\\word-game\\app\\(tabs)\\index.tsx'' | Select-Object -Last 50\")"
     ]
   }
 }
