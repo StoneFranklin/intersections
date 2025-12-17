@@ -129,6 +129,18 @@ export async function submitScore(
   const puzzleDate = getTodayDateString();
 
   try {
+    // If user is logged in, check if they already have a score (prevents duplicates)
+    if (userId) {
+      const existingScore = await getUserTodayScore(userId);
+      if (existingScore) {
+        // User already has a score - return their existing rank/percentile
+        console.log('User already has a score for today, skipping submission');
+        const percentile = await getScorePercentile(puzzleDate, existingScore.score);
+        const rank = await getScoreRank(puzzleDate, existingScore.score, existingScore.timeSeconds);
+        return { percentile, rank };
+      }
+    }
+
     // Insert the score (with optional user_id)
     const scoreData: {
       puzzle_date: string;
@@ -700,5 +712,145 @@ export async function updateDisplayName(userId: string, displayName: string): Pr
   } catch (e) {
     console.error('Error in updateDisplayName:', e);
     return false;
+  }
+}
+
+/**
+ * Reconciliation result when a user signs in
+ */
+export interface ReconciliationResult {
+  action: 'claimed_anonymous' | 'loaded_existing' | 'no_change' | 'blocked_device_used';
+  score?: {
+    score: number;
+    timeSeconds: number;
+    mistakes: number;
+    correctPlacements: number;
+  };
+  rank?: number;
+  percentile?: number;
+}
+
+/**
+ * Claim an anonymous score by creating a new record with the user's ID
+ * This effectively "transfers" the anonymous play to the signed-in user
+ */
+export async function claimAnonymousScore(
+  userId: string,
+  score: number,
+  timeSeconds: number,
+  mistakes: number,
+  correctPlacements: number
+): Promise<{ rank: number; percentile: number } | null> {
+  const puzzleDate = getTodayDateString();
+
+  try {
+    // Insert a new record with user_id (the anonymous one stays orphaned)
+    const { error: insertError } = await supabase
+      .from('puzzle_scores')
+      .insert({
+        puzzle_date: puzzleDate,
+        score,
+        time_seconds: timeSeconds,
+        mistakes,
+        correct_placements: correctPlacements,
+        user_id: userId,
+      });
+
+    if (insertError) {
+      console.error('Error claiming anonymous score:', insertError);
+      return null;
+    }
+
+    // Calculate rank and percentile for the claimed score
+    const percentile = await getScorePercentile(puzzleDate, score);
+    const rank = await getScoreRank(puzzleDate, score, timeSeconds);
+
+    return { rank, percentile };
+  } catch (e) {
+    console.error('Error in claimAnonymousScore:', e);
+    return null;
+  }
+}
+
+/**
+ * Reconcile score state when a user signs in
+ *
+ * This handles the following scenarios:
+ * 1. User already has a DB score (played on another device) → Load existing
+ * 2. Device played anonymously and has local score → Claim that score
+ * 3. Device played but no local score (cleared storage?) → Block
+ * 4. Fresh device, no prior play → Allow new play
+ */
+export async function reconcileScoreOnSignIn(
+  userId: string,
+  deviceHasStarted: boolean,
+  localScore: {
+    score: number;
+    timeSeconds: number;
+    mistakes: number;
+    correctPlacements: number;
+  } | null
+): Promise<ReconciliationResult> {
+  const puzzleDate = getTodayDateString();
+
+  try {
+    // First, check if user already has a score in the database
+    const existingScore = await getUserTodayScore(userId);
+
+    if (existingScore) {
+      // User already played (on another device or earlier)
+      // Load their existing score, ignore any local anonymous play
+      const rank = await getScoreRank(puzzleDate, existingScore.score, existingScore.timeSeconds);
+      const percentile = await getScorePercentile(puzzleDate, existingScore.score);
+
+      return {
+        action: 'loaded_existing',
+        score: existingScore,
+        rank,
+        percentile,
+      };
+    }
+
+    // User has no DB score - check device state
+    if (deviceHasStarted) {
+      if (localScore) {
+        // Device played anonymously, user hasn't played elsewhere
+        // Claim the anonymous score for this user
+        const result = await claimAnonymousScore(
+          userId,
+          localScore.score,
+          localScore.timeSeconds,
+          localScore.mistakes,
+          localScore.correctPlacements
+        );
+
+        if (result) {
+          return {
+            action: 'claimed_anonymous',
+            score: localScore,
+            rank: result.rank,
+            percentile: result.percentile,
+          };
+        }
+        // If claim failed, fall through to blocked
+      }
+
+      // Device started puzzle but no local score to claim
+      // This could be: mid-game sign-in, cleared storage, or different user's score
+      // Block to prevent cheating
+      return {
+        action: 'blocked_device_used',
+      };
+    }
+
+    // Device hasn't started today's puzzle, user hasn't played elsewhere
+    // Fresh state - allow play
+    return {
+      action: 'no_change',
+    };
+  } catch (e) {
+    console.error('Error in reconcileScoreOnSignIn:', e);
+    // On error, default to no_change to avoid blocking legitimate users
+    return { action: 'no_change' };
   }
 }

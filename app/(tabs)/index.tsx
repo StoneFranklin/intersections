@@ -2,7 +2,7 @@ import { GameGrid, WordTray } from '@/components/game';
 import { RewardedAdModal } from '@/components/ads/rewarded-ad-modal';
 import { useAuth } from '@/contexts/auth-context';
 import { generateDailyPuzzle } from '@/data/puzzle-generator';
-import { fetchTodaysPuzzle, getOrCreateProfile, getPercentile, getTodayLeaderboard, getTodayLeaderboardPage, getUserStreak, getUserTodayScore, hasUserCompletedToday, LeaderboardEntry, submitScore, updateDisplayName, updateUserStreak } from '@/data/puzzleApi';
+import { fetchTodaysPuzzle, getOrCreateProfile, getPercentile, getTodayLeaderboard, getTodayLeaderboardPage, getUserStreak, getUserTodayScore, hasUserCompletedToday, LeaderboardEntry, reconcileScoreOnSignIn, ReconciliationResult, submitScore, updateDisplayName, updateUserStreak } from '@/data/puzzleApi';
 import { useGameState } from '@/hooks/use-game-state';
 import { useRewardedAd } from '@/hooks/use-rewarded-ad';
 import { CellPosition, GameScore, Puzzle } from '@/types/game';
@@ -12,7 +12,7 @@ import * as AppleAuthentication from 'expo-apple-authentication';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
 import { Link } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -215,6 +215,96 @@ export default function GameScreen() {
     };
     loadNotificationPreference();
   }, []);
+
+  // Track previous user to detect sign-in events
+  const prevUserRef = useRef<string | null>(null);
+
+  // Reconcile score state when user signs in
+  // This handles: anonymous→signed-in transfers, blocking cheating, loading existing scores
+  useEffect(() => {
+    const runReconciliation = async () => {
+      // Only run when user transitions from null to signed-in
+      if (!user || prevUserRef.current === user.id) {
+        prevUserRef.current = user?.id ?? null;
+        return;
+      }
+
+      // User just signed in - run reconciliation
+      const todayKey = getTodayKey();
+
+      try {
+        // Check if device has started today's puzzle
+        const deviceStarted = await AsyncStorage.getItem(`device-started-${todayKey}`);
+        const deviceHasStarted = deviceStarted === 'true';
+
+        // Get local score if any
+        let localScore: { score: number; timeSeconds: number; mistakes: number; correctPlacements: number } | null = null;
+        const scoreData = await AsyncStorage.getItem(`score-${todayKey}`);
+        if (scoreData) {
+          try {
+            const parsed = JSON.parse(scoreData);
+            localScore = {
+              score: parsed.score,
+              timeSeconds: parsed.timeSeconds,
+              mistakes: parsed.mistakes,
+              correctPlacements: parsed.correctPlacements,
+            };
+          } catch (e) {
+            console.error('Error parsing local score:', e);
+          }
+        }
+
+        // Run reconciliation
+        const result = await reconcileScoreOnSignIn(user.id, deviceHasStarted, localScore);
+
+        console.log('Reconciliation result:', result);
+
+        switch (result.action) {
+          case 'loaded_existing':
+            // User already played on another device - load their score
+            if (result.score) {
+              setSavedScore({
+                score: result.score.score,
+                timeSeconds: result.score.timeSeconds,
+                mistakes: result.score.mistakes,
+                correctPlacements: result.score.correctPlacements,
+                completed: result.score.correctPlacements === 16,
+              });
+              setDailyCompleted(true);
+              if (result.rank) setUserRank(result.rank);
+              // Save to local storage for consistency
+              await AsyncStorage.setItem(`completed-${todayKey}`, 'true');
+              await AsyncStorage.setItem(`score-${todayKey}`, JSON.stringify(result.score));
+              await AsyncStorage.setItem(`device-started-${todayKey}`, 'true');
+            }
+            break;
+
+          case 'claimed_anonymous':
+            // Anonymous score was claimed for this user - update rank/percentile
+            if (result.rank) setUserRank(result.rank);
+            // Score already saved locally, just ensure consistency
+            break;
+
+          case 'blocked_device_used':
+            // Device already played but can't claim the score (different user's score or mid-game)
+            // Mark as completed to block further play
+            setDailyCompleted(true);
+            await AsyncStorage.setItem(`completed-${todayKey}`, 'true');
+            break;
+
+          case 'no_change':
+            // Fresh state - nothing to do
+            break;
+        }
+      } catch (e) {
+        console.error('Error during sign-in reconciliation:', e);
+      }
+
+      prevUserRef.current = user.id;
+    };
+
+    runReconciliation();
+  }, [user]);
 
   const handleToggleNotifications = async () => {
     const newValue = !notificationsEnabled;
@@ -476,6 +566,14 @@ export default function GameScreen() {
         console.log('No puzzle in DB, using static fallback');
         setPuzzle(generateDailyPuzzle());
       }
+
+      // Mark that this device has started today's puzzle (for cheat prevention)
+      // This flag persists regardless of auth state changes
+      if (!dailyCompleted) {
+        const todayKey = getTodayKey();
+        await AsyncStorage.setItem(`device-started-${todayKey}`, 'true');
+      }
+
       // If already completed, open in review mode
       setIsReviewMode(dailyCompleted);
       setIsPlaying(true);
