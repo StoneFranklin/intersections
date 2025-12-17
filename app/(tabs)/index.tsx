@@ -921,30 +921,30 @@ export default function GameScreen() {
                 >
                   {/* Header with refresh button */}
                   <View style={styles.completedHeader}>
-                    <View style={styles.completedHeaderLeft}>
-                      <MaterialCommunityIcons name="trophy" size={20} color="#ffd700" />
-                      <Text style={styles.completedTitle}>Today's Leaderboard</Text>
-                    </View>
-                    <View style={styles.completedHeaderRight}>
+                    <View style={styles.completedHeaderContent}>
+                      <View style={styles.completedHeaderTitleRow}>
+                        <MaterialCommunityIcons name="trophy" size={20} color="#ffd700" />
+                        <Text style={styles.completedTitle}>Today's Leaderboard</Text>
+                      </View>
                       {userRank && (
                         <Text style={styles.completedRankText}>#{userRank} in the world</Text>
                       )}
-                      <TouchableOpacity
-                        style={styles.refreshButton}
-                        onPress={(e) => {
-                          e.stopPropagation();
-                          refreshLeaderboard();
-                        }}
-                        disabled={isRefreshing || loadingLeaderboard}
-                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                      >
-                        <Ionicons
-                          name="refresh"
-                          size={18}
-                          color={isRefreshing ? '#666' : '#6a9fff'}
-                        />
-                      </TouchableOpacity>
                     </View>
+                    <TouchableOpacity
+                      style={styles.refreshButton}
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        refreshLeaderboard();
+                      }}
+                      disabled={isRefreshing || loadingLeaderboard}
+                      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    >
+                      <Ionicons
+                        name="refresh"
+                        size={18}
+                        color={isRefreshing ? '#666' : '#6a9fff'}
+                      />
+                    </TouchableOpacity>
                   </View>
 
                   {/* Condensed Leaderboard - show loading until ALL data is ready */}
@@ -2064,22 +2064,23 @@ const styles = StyleSheet.create({
   },
   completedHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
     marginBottom: 12,
   },
-  completedHeaderLeft: {
+  completedHeaderContent: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 6,
+  },
+  completedHeaderTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
-  completedHeaderRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
   refreshButton: {
     padding: 4,
+    marginLeft: 8,
   },
   refreshingOverlay: {
     position: 'absolute',
