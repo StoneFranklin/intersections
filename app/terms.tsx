@@ -3,7 +3,7 @@ import React from 'react';
 import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function TermsOfServicePage() {
-  const lastUpdated = "December 11, 2025";
+  const lastUpdated = "December 17, 2025";
 
   return (
     <SafeAreaView style={styles.container}>
@@ -30,8 +30,8 @@ export default function TermsOfServicePage() {
         {/* Introduction */}
         <View style={styles.section}>
           <Text style={styles.paragraph}>
-            Welcome to Intersections! These Terms of Service ("Terms") govern your access 
-            to and use of the Intersections word puzzle game ("Service"). By accessing or 
+            Welcome to Intersections! These Terms of Service (“Terms”) govern your access 
+            to and use of the Intersections word puzzle game (“Service”). By accessing or 
             using our Service, you agree to be bound by these Terms.
           </Text>
         </View>
@@ -56,7 +56,7 @@ export default function TermsOfServicePage() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>2. Description of Service</Text>
           <Text style={styles.paragraph}>
-            Intersections is a free-to-play daily word puzzle game where players place 
+            Intersections is a free-to-play daily word puzzle game where players place
             words into a grid based on category intersections. The Service includes:
           </Text>
           <View style={styles.bulletList}>
@@ -64,7 +64,13 @@ export default function TermsOfServicePage() {
             <Text style={styles.bulletItem}>• Score tracking and leaderboards</Text>
             <Text style={styles.bulletItem}>• Optional user accounts for progress syncing</Text>
             <Text style={styles.bulletItem}>• Streak tracking for consecutive daily play</Text>
+            <Text style={styles.bulletItem}>• Advertisement-supported gameplay</Text>
           </View>
+          <Text style={styles.paragraph}>
+            The Service is free to use and is supported by advertisements (for example, Google AdMob on iOS/Android and,
+            where enabled, Google AdSense on web). Some features may offer an optional rewarded ad (for example, to earn
+            an in-game benefit) which you can choose to watch or decline.
+          </Text>
         </View>
 
         {/* User Accounts */}
@@ -97,8 +103,10 @@ export default function TermsOfServicePage() {
             <Text style={styles.bulletItem}>• Attempt to manipulate scores or leaderboards</Text>
             <Text style={styles.bulletItem}>• Use offensive or inappropriate display names</Text>
             <Text style={styles.bulletItem}>• Interfere with or disrupt the Service</Text>
-            <Text style={styles.bulletItem}>• Attempt to access other users' accounts</Text>
+            <Text style={styles.bulletItem}>• Attempt to access other users’ accounts</Text>
             <Text style={styles.bulletItem}>• Reverse engineer or decompile the game</Text>
+            <Text style={styles.bulletItem}>• Block, interfere with, or manipulate advertisements</Text>
+            <Text style={styles.bulletItem}>• Use ad-blocking software or techniques to avoid viewing ads</Text>
           </View>
           <Text style={styles.paragraph}>
             We reserve the right to suspend or terminate accounts that violate these rules.
@@ -119,11 +127,46 @@ export default function TermsOfServicePage() {
           </Text>
         </View>
 
+        {/* Third-Party Services */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>6. Third-Party Services and Advertising</Text>
+          <Text style={styles.paragraph}>
+            The Service may display third-party advertisements through Google advertising services (such as Google AdMob
+            and, where enabled, Google AdSense). Ads are provided by third-party advertisers and ad networks.
+          </Text>
+          <Text style={styles.paragraph}>
+            We do not encourage or request users to click on advertisements. Any optional rewarded ad is presented as a
+            choice, and you can continue using the Service even if you decline.
+          </Text>
+          <Text style={styles.paragraph}>
+            By using the Service, you acknowledge that:
+          </Text>
+          <View style={styles.bulletList}>
+            <Text style={styles.bulletItem}>
+              • We do not control the content of third-party advertisements
+            </Text>
+            <Text style={styles.bulletItem}>
+              • We are not responsible for the content, accuracy, or practices of advertisers
+            </Text>
+            <Text style={styles.bulletItem}>
+              • Third-party advertisers may collect data as described in their own privacy policies
+            </Text>
+            <Text style={styles.bulletItem}>
+              • Your interaction with advertisements is governed by the advertiser’s terms
+            </Text>
+          </View>
+          <Text style={styles.paragraph}>
+            We encourage you to review Google’s Privacy Policy and related terms to understand how data may be used for
+            advertising purposes:{' '}
+            <Text style={styles.link}>https://policies.google.com/privacy</Text>.
+          </Text>
+        </View>
+
         {/* Disclaimers */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>6. Disclaimers</Text>
+          <Text style={styles.sectionTitle}>7. Disclaimers</Text>
           <Text style={styles.paragraph}>
-            THE SERVICE IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY 
+            THE SERVICE IS PROVIDED “AS IS” AND “AS AVAILABLE” WITHOUT WARRANTIES OF ANY 
             KIND, EITHER EXPRESS OR IMPLIED. WE DO NOT GUARANTEE THAT:
           </Text>
           <View style={styles.bulletList}>
@@ -135,7 +178,7 @@ export default function TermsOfServicePage() {
 
         {/* Limitation of Liability */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>7. Limitation of Liability</Text>
+          <Text style={styles.sectionTitle}>8. Limitation of Liability</Text>
           <Text style={styles.paragraph}>
             TO THE MAXIMUM EXTENT PERMITTED BY LAW, WE SHALL NOT BE LIABLE FOR ANY 
             INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, OR ANY 
@@ -146,7 +189,7 @@ export default function TermsOfServicePage() {
 
         {/* Modifications */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>8. Modifications to Service</Text>
+          <Text style={styles.sectionTitle}>9. Modifications to Service</Text>
           <Text style={styles.paragraph}>
             We reserve the right to modify, suspend, or discontinue the Service (or any 
             part thereof) at any time, with or without notice. We shall not be liable to 
@@ -157,7 +200,7 @@ export default function TermsOfServicePage() {
 
         {/* Changes to Terms */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>9. Changes to Terms</Text>
+          <Text style={styles.sectionTitle}>10. Changes to Terms</Text>
           <Text style={styles.paragraph}>
             We may revise these Terms from time to time. The most current version will 
             always be available on this page. By continuing to use the Service after 
@@ -167,7 +210,7 @@ export default function TermsOfServicePage() {
 
         {/* Governing Law */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>10. Governing Law</Text>
+          <Text style={styles.sectionTitle}>11. Governing Law</Text>
           <Text style={styles.paragraph}>
             These Terms shall be governed by and construed in accordance with the laws 
             of the jurisdiction in which we operate, without regard to its conflict of 
@@ -177,7 +220,7 @@ export default function TermsOfServicePage() {
 
         {/* Contact */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>11. Contact Information</Text>
+          <Text style={styles.sectionTitle}>12. Contact Information</Text>
           <Text style={styles.paragraph}>
             If you have any questions about these Terms, please contact us at:
           </Text>
@@ -188,12 +231,6 @@ export default function TermsOfServicePage() {
 
         {/* Footer */}
         <View style={styles.footer}>
-          <Link href={"/about" as any} asChild>
-            <TouchableOpacity>
-              <Text style={styles.footerLink}>About</Text>
-            </TouchableOpacity>
-          </Link>
-          <Text style={styles.footerDivider}>•</Text>
           <Link href={"/privacy" as any} asChild>
             <TouchableOpacity>
               <Text style={styles.footerLink}>Privacy Policy</Text>
@@ -264,6 +301,10 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     color: '#aaa',
     marginBottom: 12,
+  },
+  link: {
+    color: '#6a9fff',
+    textDecorationLine: 'underline',
   },
   bulletList: {
     gap: 6,

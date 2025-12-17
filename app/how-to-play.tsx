@@ -223,15 +223,15 @@ export default function HowToPlayPage() {
 
         {/* Footer */}
         <View style={styles.footer}>
-          <Link href={"/about" as any} asChild>
-            <TouchableOpacity>
-              <Text style={styles.footerLink}>About Intersections</Text>
-            </TouchableOpacity>
-          </Link>
-          <Text style={styles.footerDivider}>•</Text>
           <Link href={"/privacy" as any} asChild>
             <TouchableOpacity>
               <Text style={styles.footerLink}>Privacy Policy</Text>
+            </TouchableOpacity>
+          </Link>
+          <Text style={styles.footerDivider}>•</Text>
+          <Link href={"/terms" as any} asChild>
+            <TouchableOpacity>
+              <Text style={styles.footerLink}>Terms of Service</Text>
             </TouchableOpacity>
           </Link>
         </View>

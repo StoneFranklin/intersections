@@ -3,7 +3,7 @@ import React from 'react';
 import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function PrivacyPolicyPage() {
-  const lastUpdated = "December 11, 2025";
+  const lastUpdated = "December 17, 2025";
 
   return (
     <SafeAreaView style={styles.container}>
@@ -30,10 +30,9 @@ export default function PrivacyPolicyPage() {
         {/* Introduction */}
         <View style={styles.section}>
           <Text style={styles.paragraph}>
-            Welcome to Intersections ("we," "our," or "us"). We are committed to protecting 
-            your privacy and ensuring you have a positive experience while using our daily 
-            word puzzle game. This Privacy Policy explains how we collect, use, and safeguard 
-            your information.
+            Welcome to Intersections (“we,” “our,” or “us”). This Privacy Policy explains how we
+            collect, use, and share information when you use Intersections (the “Service”),
+            including our iOS/Android apps and our web version.
           </Text>
         </View>
 
@@ -50,6 +49,11 @@ export default function PrivacyPolicyPage() {
             <Text style={styles.bulletItem}>• Your Google account ID (for authentication)</Text>
             <Text style={styles.bulletItem}>• Display name (if you choose to set one)</Text>
           </View>
+
+          <Text style={styles.paragraph}>
+            If you use Apple Sign In (where available), we receive a similar account identifier and may receive your
+            name and email depending on your Apple settings.
+          </Text>
 
           <Text style={styles.subheading}>Game Data</Text>
           <Text style={styles.paragraph}>
@@ -70,6 +74,33 @@ export default function PrivacyPolicyPage() {
             <Text style={styles.bulletItem}>• General location (country/region)</Text>
             <Text style={styles.bulletItem}>• Usage patterns and preferences</Text>
           </View>
+
+          <Text style={styles.subheading}>Advertising and Analytics</Text>
+          <Text style={styles.paragraph}>
+            We use Google advertising services to display ads and measure their performance (Google AdMob on iOS/Android
+            and, where enabled, Google AdSense on web). These services may collect and use information about your device,
+            browser, and app usage to provide ads (which may be personalized depending on your settings, your region, and
+            applicable law). This may include:
+          </Text>
+          <View style={styles.bulletList}>
+            <Text style={styles.bulletItem}>• Advertising ID (a unique identifier for advertising purposes)</Text>
+            <Text style={styles.bulletItem}>• Device information (model, OS version)</Text>
+            <Text style={styles.bulletItem}>• App usage data and interactions with ads</Text>
+            <Text style={styles.bulletItem}>• IP address and general location information</Text>
+          </View>
+          <Text style={styles.paragraph}>
+            Google AdMob is operated by Google LLC and is subject to Google’s Privacy Policy.
+            You can learn more about how Google uses data at{' '}
+            <Text style={styles.link}>https://policies.google.com/privacy</Text>. You can usually opt out of personalized
+            advertising by visiting your device’s ad settings. On iOS, the advertising identifier (IDFA) is only
+            available to apps if you allow tracking in your device settings.
+          </Text>
+
+          <Text style={styles.subheading}>Notifications</Text>
+          <Text style={styles.paragraph}>
+            If you enable reminders, we request permission to send notifications and schedule local notifications on your
+            device. We store your reminder preference on your device.
+          </Text>
         </View>
 
         {/* How We Use Information */}
@@ -84,6 +115,8 @@ export default function PrivacyPolicyPage() {
             <Text style={styles.bulletItem}>• Display leaderboards and rankings</Text>
             <Text style={styles.bulletItem}>• Track your daily streak</Text>
             <Text style={styles.bulletItem}>• Improve the game experience</Text>
+            <Text style={styles.bulletItem}>• Display relevant advertisements through Google AdMob</Text>
+            <Text style={styles.bulletItem}>• Analyze app usage and performance</Text>
             <Text style={styles.bulletItem}>• Communicate important updates</Text>
           </View>
         </View>
@@ -99,7 +132,7 @@ export default function PrivacyPolicyPage() {
           </Text>
           <Text style={styles.paragraph}>
             If you play without signing in, your game data is stored locally on your device 
-            and is not synced to our servers.
+            (or in your browser on web) and is not synced to our servers.
           </Text>
         </View>
 
@@ -112,15 +145,20 @@ export default function PrivacyPolicyPage() {
           </Text>
           <View style={styles.bulletList}>
             <Text style={styles.bulletItem}>
-              • <Text style={styles.bold}>Leaderboards:</Text> Your display name (if set) and 
+              • <Text style={styles.bold}>Leaderboards:</Text> Your display name (if set) and
               scores are visible to other players on the leaderboard
             </Text>
             <Text style={styles.bulletItem}>
-              • <Text style={styles.bold}>Service Providers:</Text> We use third-party services 
-              (Supabase, Google Authentication) that process data on our behalf
+              • <Text style={styles.bold}>Advertising Partners:</Text> We share information with
+              Google AdMob to display advertisements. AdMob may share data with advertising
+              partners as described in Google’s privacy policy
             </Text>
             <Text style={styles.bulletItem}>
-              • <Text style={styles.bold}>Legal Requirements:</Text> We may disclose information 
+              • <Text style={styles.bold}>Service Providers:</Text> We use third-party services
+              (Supabase, Google Authentication, Google AdMob) that process data on our behalf
+            </Text>
+            <Text style={styles.bulletItem}>
+              • <Text style={styles.bold}>Legal Requirements:</Text> We may disclose information
               if required by law
             </Text>
           </View>
@@ -138,8 +176,17 @@ export default function PrivacyPolicyPage() {
             <Text style={styles.bulletItem}>• Remember your preferences</Text>
           </View>
           <Text style={styles.paragraph}>
-            You can clear this data by clearing your browser's storage, though this will 
-            reset any local game progress.
+            You can clear this data by clearing the app’s storage or your browser’s storage, though this may reset local
+            game progress.
+          </Text>
+        </View>
+
+        {/* Advertising Choices */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Advertising Choices</Text>
+          <Text style={styles.paragraph}>
+            Depending on your device and region, you may be able to control personalized advertising through your device
+            settings (for example, resetting or limiting your advertising ID) and/or your Google account settings.
           </Text>
         </View>
 
@@ -162,7 +209,7 @@ export default function PrivacyPolicyPage() {
 
         {/* Children */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Children's Privacy</Text>
+          <Text style={styles.sectionTitle}>Children’s Privacy</Text>
           <Text style={styles.paragraph}>
             Intersections is not directed at children under 13 years of age. We do not 
             knowingly collect personal information from children under 13. If you believe 
@@ -177,7 +224,7 @@ export default function PrivacyPolicyPage() {
           <Text style={styles.paragraph}>
             We may update this Privacy Policy from time to time. We will notify you of 
             any significant changes by posting the new policy on this page and updating 
-            the "Last updated" date.
+            the Last updated date.
           </Text>
         </View>
 
@@ -195,12 +242,6 @@ export default function PrivacyPolicyPage() {
 
         {/* Footer */}
         <View style={styles.footer}>
-          <Link href={"/about" as any} asChild>
-            <TouchableOpacity>
-              <Text style={styles.footerLink}>About</Text>
-            </TouchableOpacity>
-          </Link>
-          <Text style={styles.footerDivider}>•</Text>
           <Link href={"/terms" as any} asChild>
             <TouchableOpacity>
               <Text style={styles.footerLink}>Terms of Service</Text>
@@ -292,6 +333,10 @@ const styles = StyleSheet.create({
   bold: {
     fontWeight: '600',
     color: '#ccc',
+  },
+  link: {
+    color: '#6a9fff',
+    textDecorationLine: 'underline',
   },
   contactBox: {
     backgroundColor: '#1a1a2e',

@@ -1240,12 +1240,6 @@ export default function GameScreen() {
 
           {/* Footer Links */}
           <View style={styles.footerLinks}>
-            <Link href={"/about" as any} asChild>
-              <TouchableOpacity>
-                <Text style={styles.footerLinkText}>About</Text>
-              </TouchableOpacity>
-            </Link>
-            <Text style={styles.footerLinkDivider}>•</Text>
             <Link href={"/privacy" as any} asChild>
               <TouchableOpacity>
                 <Text style={styles.footerLinkText}>Privacy</Text>
