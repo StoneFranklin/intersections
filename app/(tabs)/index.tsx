@@ -140,6 +140,7 @@ export default function GameScreen() {
   const [todaysPuzzle, setTodaysPuzzle] = useState<Puzzle | null>(null);
   const [lastLeaderboardRefresh, setLastLeaderboardRefresh] = useState<number>(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [currentGameEnded, setCurrentGameEnded] = useState(false);
   
   // Display name state
   const [displayName, setDisplayName] = useState<string | null>(null);
@@ -448,6 +449,7 @@ export default function GameScreen() {
 
   const handlePlayDaily = async () => {
     setFetchingPuzzle(true);
+    setCurrentGameEnded(false);
     try {
       // Try to fetch from database first
       const dbPuzzle = await fetchTodaysPuzzle();
@@ -484,6 +486,7 @@ export default function GameScreen() {
       await AsyncStorage.setItem(`score-${todayKey}`, JSON.stringify(score));
       setDailyCompleted(true);
       setSavedScore(score);
+      setCurrentGameEnded(true);
       if (rank) {
         setUserRank(rank);
       }
@@ -1354,6 +1357,7 @@ export default function GameScreen() {
         loadingLeaderboard={loadingLeaderboard}
         onShowAnswersModal={() => setShowAnswersScreen(true)}
         onOpenLeaderboard={openLeaderboard}
+        gameEnded={currentGameEnded}
       />
     </>
   );
@@ -1372,9 +1376,10 @@ interface GameContentProps {
   loadingLeaderboard: boolean;
   onShowAnswersModal: () => void;
   onOpenLeaderboard: () => void;
+  gameEnded: boolean;
 }
 
-function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedScore, userId, userRank, leaderboard, leaderboardLoaded, loadingLeaderboard, onShowAnswersModal, onOpenLeaderboard }: GameContentProps) {
+function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedScore, userId, userRank, leaderboard, leaderboardLoaded, loadingLeaderboard, onShowAnswersModal, onOpenLeaderboard, gameEnded }: GameContentProps) {
   const {
     gameState,
     unplacedWords,
@@ -1395,7 +1400,6 @@ function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedSc
   const [showRewardedAdModal, setShowRewardedAdModal] = useState(false);
   const [hasShownAdOffer, setHasShownAdOffer] = useState(false);
   const [adOfferDeclined, setAdOfferDeclined] = useState(false);
-  const [gameHasEnded, setGameHasEnded] = useState(false);
 
   // Rewarded ad hook
   const rewardedAd = useRewardedAd();
@@ -1416,15 +1420,7 @@ function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedSc
   useEffect(() => {
     setHasShownAdOffer(false);
     setAdOfferDeclined(false);
-    setGameHasEnded(false);
   }, [puzzle]);
-
-  // Track when game ends (either solved or game over with final score)
-  useEffect(() => {
-    if ((shouldShowGameOver || gameState.isSolved) && finalScore && !gameHasEnded) {
-      setGameHasEnded(true);
-    }
-  }, [shouldShowGameOver, gameState.isSolved, finalScore, gameHasEnded]);
 
   const handleWatchAd = async () => {
     const rewarded = await rewardedAd.show();
@@ -1592,9 +1588,11 @@ function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedSc
   }
 
   // Show results screen with embedded condensed leaderboard
-  // Use gameHasEnded to ensure we stay on this screen even after navigating away and back
-  if (gameHasEnded && finalScore) {
-    const isWin = gameState.isSolved;
+  // Use gameEnded from parent to ensure we stay on this screen even after navigating away and back
+  // Use savedScore from parent if finalScore is null (component remounted after navigating away)
+  if (gameEnded) {
+    const displayScore = finalScore || savedScore;
+    const isWin = finalScore ? gameState.isSolved : (savedScore?.completed ?? false);
     const displayRank = resultRank || userRank;
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: isWin ? '#0a1a0f' : '#1a0a0a' }]}>
@@ -1618,15 +1616,15 @@ function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedSc
           <View style={styles.gameCompleteScoreCard}>
             <View style={styles.gameCompleteScoreRow}>
               <View style={styles.gameCompleteScoreItem}>
-                <Text style={styles.gameCompleteScoreValue}>{finalScore.score}</Text>
+                <Text style={styles.gameCompleteScoreValue}>{displayScore?.score ?? 0}</Text>
                 <Text style={styles.gameCompleteScoreLabel}>Score</Text>
               </View>
               <View style={styles.gameCompleteScoreItem}>
-                <Text style={styles.gameCompleteScoreValue}>{finalScore.correctPlacements}/16</Text>
+                <Text style={styles.gameCompleteScoreValue}>{displayScore?.correctPlacements ?? 0}/16</Text>
                 <Text style={styles.gameCompleteScoreLabel}>Correct</Text>
               </View>
               <View style={styles.gameCompleteScoreItem}>
-                <Text style={styles.gameCompleteScoreValue}>{formatTime(finalScore.timeSeconds)}</Text>
+                <Text style={styles.gameCompleteScoreValue}>{formatTime(displayScore?.timeSeconds ?? 0)}</Text>
                 <Text style={styles.gameCompleteScoreLabel}>Time</Text>
               </View>
             </View>
@@ -1732,13 +1730,15 @@ function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedSc
               <Text style={styles.gameCompleteActionButtonText}>View Correct Answers</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.gameCompleteShareButton}
-              onPress={() => shareScore(finalScore, displayRank ?? null)}
-            >
-              <Ionicons name="share-outline" size={20} color="#4ade80" />
-              <Text style={styles.gameCompleteShareButtonText}>Share Score</Text>
-            </TouchableOpacity>
+            {displayScore && (
+              <TouchableOpacity
+                style={styles.gameCompleteShareButton}
+                onPress={() => shareScore(displayScore, displayRank ?? null)}
+              >
+                <Ionicons name="share-outline" size={20} color="#4ade80" />
+                <Text style={styles.gameCompleteShareButtonText}>Share Score</Text>
+              </TouchableOpacity>
+            )}
           </View>
 
           {/* Back to Home */}
