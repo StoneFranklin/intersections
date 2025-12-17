@@ -2063,13 +2063,11 @@ const styles = StyleSheet.create({
     borderColor: '#2a4a6e',
   },
   completedHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
+    position: 'relative',
+    alignItems: 'center',
     marginBottom: 12,
   },
   completedHeaderContent: {
-    flex: 1,
     alignItems: 'center',
     gap: 6,
   },
@@ -2079,8 +2077,10 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   refreshButton: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
     padding: 4,
-    marginLeft: 8,
   },
   refreshingOverlay: {
     position: 'absolute',
