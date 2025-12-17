@@ -799,7 +799,7 @@ export default function GameScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.leaderboardScreenHeader}>
-          <TouchableOpacity onPress={() => setShowTutorialScreen(false)} style={styles.leaderboardScreenBackButton}>
+          <TouchableOpacity onPress={() => setShowTutorial(false)} style={styles.leaderboardScreenBackButton}>
             <Ionicons name="arrow-back" size={24} color="#fff" />
           </TouchableOpacity>
           <View style={styles.leaderboardScreenTitleContainer}>
@@ -1085,7 +1085,7 @@ export default function GameScreen() {
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.viewAnswersMainButton}
-                  onPress={() => setShowAnswersModal(true)}
+                  onPress={() => setShowAnswersScreen(true)}
                   activeOpacity={0.85}
                 >
                   <Ionicons name="grid-outline" size={20} color="#6a9fff" />
