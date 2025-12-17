@@ -1,6 +1,7 @@
 import { GameGrid, WordTray } from '@/components/game';
 import { RewardedAdModal } from '@/components/ads/rewarded-ad-modal';
 import { useAuth } from '@/contexts/auth-context';
+import { Fonts } from '@/constants/theme';
 import { generateDailyPuzzle } from '@/data/puzzle-generator';
 import { fetchTodaysPuzzle, getOrCreateProfile, getPercentile, getTodayLeaderboard, getTodayLeaderboardPage, getUserStreak, getUserTodayScore, hasUserCompletedToday, LeaderboardEntry, reconcileScoreOnSignIn, ReconciliationResult, submitScore, updateDisplayName, updateUserStreak } from '@/data/puzzleApi';
 import { useGameState } from '@/hooks/use-game-state';
@@ -679,18 +680,34 @@ export default function GameScreen() {
           </TouchableOpacity>
         </View>
 
-        <FlatList
-          style={styles.leaderboardScreenContent}
-          contentContainerStyle={styles.leaderboardScreenContentContainer}
-          data={fullLeaderboard}
-          keyExtractor={(item, index) => `${item.rank}-${index}`}
-          onEndReached={() => {
-            if (fullLeaderboardHasMore && !loadingFullLeaderboard) {
-              loadFullLeaderboard();
-            }
-          }}
-          onEndReachedThreshold={0.5}
-          ListHeaderComponent={
+        {/* Loading indicator for initial load */}
+        {loadingFullLeaderboard && !fullLeaderboardLoaded && fullLeaderboard.length === 0 && (
+          <View style={styles.leaderboardScreenLoadingOverlay}>
+            <ActivityIndicator size="large" color="#6a9fff" />
+            <Text style={styles.leaderboardScreenLoadingText}>Loading rankings...</Text>
+          </View>
+        )}
+
+        <View style={{ flex: 1 }}>
+          {/* Refreshing overlay - shown when data exists but is being refreshed */}
+          {isRefreshing && fullLeaderboard.length > 0 && (
+            <View style={styles.leaderboardScreenRefreshingOverlay}>
+              <ActivityIndicator size="small" color="#6a9fff" />
+            </View>
+          )}
+
+          <FlatList
+            style={styles.leaderboardScreenContent}
+            contentContainerStyle={styles.leaderboardScreenContentContainer}
+            data={fullLeaderboard}
+            keyExtractor={(item, index) => `${item.rank}-${index}`}
+            onEndReached={() => {
+              if (fullLeaderboardHasMore && !loadingFullLeaderboard) {
+                loadFullLeaderboard();
+              }
+            }}
+            onEndReachedThreshold={0.5}
+            ListHeaderComponent={
             <>
               {userRank && (
                 <View style={styles.userRankBanner}>
@@ -720,7 +737,7 @@ export default function GameScreen() {
             </>
           }
           ListEmptyComponent={
-            loadingFullLeaderboard && !fullLeaderboardLoaded ? (
+            loadingFullLeaderboard ? (
               <ActivityIndicator size="large" color="#6a9fff" style={{ marginVertical: 40 }} />
             ) : (
               <Text style={styles.leaderboardEmpty}>No scores yet today. Be the first!</Text>
@@ -789,7 +806,8 @@ export default function GameScreen() {
               <View style={{ height: 12 }} />
             )
           }
-        />
+          />
+        </View>
 
         {/* Legacy ScrollView version (disabled) */}
         {false && (
@@ -2325,6 +2343,28 @@ const styles = StyleSheet.create({
   },
   leaderboardScreenContentContainer: {
     padding: 16,
+  },
+  leaderboardScreenLoadingOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 12,
+  },
+  leaderboardScreenLoadingText: {
+    fontSize: 16,
+    color: '#a0a0d0',
+    fontFamily: Fonts.rounded,
+  },
+  leaderboardScreenRefreshingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(26, 42, 58, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1,
   },
   userRankBanner: {
     backgroundColor: '#1a3d2d',

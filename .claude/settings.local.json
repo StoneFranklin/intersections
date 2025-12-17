@@ -46,7 +46,10 @@
       "Bash(plutil:*)",
       "Bash(npx tsc:*)",
       "Bash(npm run web:*)",
-      "Bash(powershell -Command \"Get-Content ''C:\\Users\\saf1\\Documents\\react-native\\word-game\\app\\(tabs)\\index.tsx'' | Select-Object -Last 50\")"
+      "Bash(powershell -Command \"Get-Content ''C:\\Users\\saf1\\Documents\\react-native\\word-game\\app\\(tabs)\\index.tsx'' | Select-Object -Last 50\")",
+      "Bash(powershell -Command \"Get-Content ''C:\\Users\\saf1\\Documents\\react-native\\word-game\\app\\(tabs)\\index.tsx'' | Select-Object -Skip 650 -First 100\")",
+      "Bash(powershell -Command \"Get-Content ''C:\\Users\\saf1\\Documents\\react-native\\word-game\\app\\(tabs)\\index.tsx'' | Select-Object -Skip 715 -First 80\")",
+      "Bash(powershell:*)"
     ]
   }
 }
