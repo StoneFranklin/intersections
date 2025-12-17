@@ -5,8 +5,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function HowToPlayPage() {
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView 
+    <SafeAreaView style={styles.container} edges={['top', 'bottom', 'left', 'right']}>
+      <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}

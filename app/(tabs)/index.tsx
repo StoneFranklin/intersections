@@ -765,7 +765,7 @@ export default function GameScreen() {
           transparent={false}
           onRequestClose={() => setShowAnswersModal(false)}
         >
-          <SafeAreaView style={styles.answersModalContainer}>
+          <SafeAreaView style={styles.answersModalContainer} edges={['top', 'bottom', 'left', 'right']}>
             <View style={styles.answersModalHeader}>
               <TouchableOpacity onPress={() => setShowAnswersModal(false)} style={styles.answersModalBackButton}>
                 <Ionicons name="arrow-back" size={24} color="#fff" />
@@ -1085,7 +1085,7 @@ export default function GameScreen() {
           transparent={false}
           onRequestClose={() => setShowTutorial(false)}
         >
-          <SafeAreaView style={styles.answersModalContainer}>
+          <SafeAreaView style={styles.answersModalContainer} edges={['top', 'bottom', 'left', 'right']}>
             <View style={styles.answersModalHeader}>
               <TouchableOpacity onPress={() => setShowTutorial(false)} style={styles.answersModalBackButton}>
                 <Ionicons name="arrow-back" size={24} color="#fff" />
@@ -1291,7 +1291,7 @@ export default function GameScreen() {
           transparent={false}
           onRequestClose={() => setShowAnswersModal(false)}
         >
-          <SafeAreaView style={styles.answersModalContainer}>
+          <SafeAreaView style={styles.answersModalContainer} edges={['top', 'bottom', 'left', 'right']}>
             <View style={styles.answersModalHeader}>
               <TouchableOpacity onPress={() => setShowAnswersModal(false)} style={styles.answersModalBackButton}>
                 <Ionicons name="arrow-back" size={24} color="#fff" />
@@ -1399,7 +1399,7 @@ export default function GameScreen() {
         transparent={false}
         onRequestClose={() => setShowAnswersModal(false)}
       >
-        <SafeAreaView style={styles.answersModalContainer}>
+        <SafeAreaView style={styles.answersModalContainer} edges={['top', 'bottom', 'left', 'right']}>
           <View style={styles.answersModalHeader}>
             <TouchableOpacity onPress={() => setShowAnswersModal(false)} style={styles.answersModalBackButton}>
               <Ionicons name="arrow-back" size={24} color="#fff" />
@@ -1870,7 +1870,7 @@ function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedSc
         transparent={false}
         onRequestClose={() => setShowTutorial(false)}
       >
-        <SafeAreaView style={styles.answersModalContainer}>
+        <SafeAreaView style={styles.answersModalContainer} edges={['top', 'bottom', 'left', 'right']}>
             <View style={styles.answersModalHeader}>
               <TouchableOpacity onPress={() => setShowTutorial(false)} style={styles.answersModalBackButton}>
                 <Ionicons name="arrow-back" size={24} color="#fff" />
