@@ -1395,6 +1395,7 @@ function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedSc
   const [showRewardedAdModal, setShowRewardedAdModal] = useState(false);
   const [hasShownAdOffer, setHasShownAdOffer] = useState(false);
   const [adOfferDeclined, setAdOfferDeclined] = useState(false);
+  const [gameHasEnded, setGameHasEnded] = useState(false);
 
   // Rewarded ad hook
   const rewardedAd = useRewardedAd();
@@ -1415,7 +1416,15 @@ function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedSc
   useEffect(() => {
     setHasShownAdOffer(false);
     setAdOfferDeclined(false);
+    setGameHasEnded(false);
   }, [puzzle]);
+
+  // Track when game ends (either solved or game over with final score)
+  useEffect(() => {
+    if ((shouldShowGameOver || gameState.isSolved) && finalScore && !gameHasEnded) {
+      setGameHasEnded(true);
+    }
+  }, [shouldShowGameOver, gameState.isSolved, finalScore, gameHasEnded]);
 
   const handleWatchAd = async () => {
     const rewarded = await rewardedAd.show();
@@ -1583,7 +1592,8 @@ function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedSc
   }
 
   // Show results screen with embedded condensed leaderboard
-  if ((shouldShowGameOver || gameState.isSolved) && finalScore) {
+  // Use gameHasEnded to ensure we stay on this screen even after navigating away and back
+  if (gameHasEnded && finalScore) {
     const isWin = gameState.isSolved;
     const displayRank = resultRank || userRank;
     return (
