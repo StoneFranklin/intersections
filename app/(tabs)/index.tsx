@@ -141,7 +141,18 @@ export default function GameScreen() {
   const [lastLeaderboardRefresh, setLastLeaderboardRefresh] = useState<number>(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [currentGameEnded, setCurrentGameEnded] = useState(false);
-  
+
+  // Helper to determine if a leaderboard entry is the current user
+  // For logged-in users, this uses isCurrentUser from the API
+  // For anonymous users, we match by rank (which was returned when they submitted their score)
+  const isCurrentUserEntry = (entry: LeaderboardEntry): boolean => {
+    if (entry.isCurrentUser) return true;
+    if (!user && userRank) {
+      return entry.rank === userRank;
+    }
+    return false;
+  };
+
   // Display name state
   const [displayName, setDisplayName] = useState<string | null>(null);
   const [showDisplayNameModal, setShowDisplayNameModal] = useState(false);
@@ -410,7 +421,7 @@ export default function GameScreen() {
           const completed = await AsyncStorage.getItem(`completed-${todayKey}`);
           setDailyCompleted(completed === 'true');
           
-          // Load saved score if completed
+          // Load saved score and rank if completed
           if (completed === 'true') {
             const scoreData = await AsyncStorage.getItem(`score-${todayKey}`);
             if (scoreData) {
@@ -419,6 +430,11 @@ export default function GameScreen() {
               const freshPercentile = await getPercentile(score.score);
               score.percentile = freshPercentile;
               setSavedScore(score);
+            }
+            // Load saved rank for anonymous users
+            const savedRank = await AsyncStorage.getItem(`rank-${todayKey}`);
+            if (savedRank) {
+              setUserRank(parseInt(savedRank, 10));
             }
           }
           
@@ -484,6 +500,9 @@ export default function GameScreen() {
       // Always save to local storage
       await AsyncStorage.setItem(`completed-${todayKey}`, 'true');
       await AsyncStorage.setItem(`score-${todayKey}`, JSON.stringify(score));
+      if (rank) {
+        await AsyncStorage.setItem(`rank-${todayKey}`, rank.toString());
+      }
       setDailyCompleted(true);
       setSavedScore(score);
       setCurrentGameEnded(true);
@@ -613,7 +632,7 @@ export default function GameScreen() {
             <View
               style={[
                 styles.leaderboardFullRow,
-                entry.isCurrentUser && styles.leaderboardFullRowCurrentUser,
+                isCurrentUserEntry(entry) && styles.leaderboardFullRowCurrentUser,
               ]}
             >
               <View style={styles.leaderboardFullRank}>
@@ -633,12 +652,12 @@ export default function GameScreen() {
                 <Text
                   style={[
                     styles.leaderboardFullName,
-                    entry.isCurrentUser && styles.leaderboardFullNameCurrentUser,
+                    isCurrentUserEntry(entry) && styles.leaderboardFullNameCurrentUser,
                   ]}
                   numberOfLines={1}
                 >
                   {entry.displayName || 'Anonymous'}
-                  {entry.isCurrentUser && ' (you)'}
+                  {isCurrentUserEntry(entry) && ' (you)'}
                 </Text>
                 <Text style={styles.leaderboardFullMeta}>
                   {entry.correctPlacements}/16 correct - {formatTime(entry.timeSeconds)}
@@ -650,7 +669,7 @@ export default function GameScreen() {
               <Text
                 style={[
                   styles.leaderboardFullScore,
-                  entry.isCurrentUser && styles.leaderboardFullScoreCurrentUser,
+                  isCurrentUserEntry(entry) && styles.leaderboardFullScoreCurrentUser,
                 ]}
               >
                 {entry.score}
@@ -704,7 +723,7 @@ export default function GameScreen() {
                   key={index}
                   style={[
                     styles.leaderboardFullRow,
-                    entry.isCurrentUser && styles.leaderboardFullRowCurrentUser,
+                    isCurrentUserEntry(entry) && styles.leaderboardFullRowCurrentUser,
                   ]}
                 >
                   <View style={styles.leaderboardFullRank}>
@@ -723,10 +742,10 @@ export default function GameScreen() {
                   <View style={styles.leaderboardFullInfo}>
                     <Text style={[
                       styles.leaderboardFullName,
-                      entry.isCurrentUser && styles.leaderboardFullNameCurrentUser,
+                      isCurrentUserEntry(entry) && styles.leaderboardFullNameCurrentUser,
                     ]} numberOfLines={1}>
                       {entry.displayName || 'Anonymous'}
-                      {entry.isCurrentUser && ' (you)'}
+                      {isCurrentUserEntry(entry) && ' (you)'}
                     </Text>
                     <Text style={styles.leaderboardFullMeta}>
                       {entry.correctPlacements}/16 correct - {formatTime(entry.timeSeconds)}
@@ -737,7 +756,7 @@ export default function GameScreen() {
                   </View>
                   <Text style={[
                     styles.leaderboardFullScore,
-                    entry.isCurrentUser && styles.leaderboardFullScoreCurrentUser,
+                    isCurrentUserEntry(entry) && styles.leaderboardFullScoreCurrentUser,
                   ]}>
                     {entry.score}
                   </Text>
@@ -1021,7 +1040,7 @@ export default function GameScreen() {
                           key={index}
                           style={[
                             styles.leaderboardCompactRow,
-                            entry.isCurrentUser && styles.leaderboardCompactRowCurrentUser,
+                            isCurrentUserEntry(entry) && styles.leaderboardCompactRowCurrentUser,
                           ]}
                         >
                           <View style={styles.leaderboardCompactRank}>
@@ -1035,15 +1054,15 @@ export default function GameScreen() {
                           </View>
                           <Text style={[
                             styles.leaderboardCompactName,
-                            entry.isCurrentUser && styles.leaderboardCompactNameCurrentUser,
+                            isCurrentUserEntry(entry) && styles.leaderboardCompactNameCurrentUser,
                           ]} numberOfLines={1}>
                             {entry.displayName || 'Anonymous'}
-                            {entry.isCurrentUser && ' (you)'}
+                            {isCurrentUserEntry(entry) && ' (you)'}
                           </Text>
                           <Text style={styles.leaderboardCompactCorrect}>{entry.correctPlacements}/16</Text>
                           <Text style={[
                             styles.leaderboardCompactScore,
-                            entry.isCurrentUser && styles.leaderboardCompactScoreCurrentUser,
+                            isCurrentUserEntry(entry) && styles.leaderboardCompactScoreCurrentUser,
                           ]}>
                             {entry.score}
                           </Text>
@@ -1051,30 +1070,27 @@ export default function GameScreen() {
                       ))}
 
                       {/* Show user's rank if not in top 3 */}
-                      {userRank && userRank > 3 && (
+                      {userRank && userRank > 3 && savedScore && (
                         <>
                           <View style={styles.leaderboardDivider}>
                             <Text style={styles.leaderboardDividerText}>•••</Text>
                           </View>
-                          {leaderboard.filter(e => e.isCurrentUser).map((entry, index) => (
-                            <View
-                              key={`user-${index}`}
-                              style={[styles.leaderboardCompactRow, styles.leaderboardCompactRowCurrentUser]}
-                            >
-                              <View style={styles.leaderboardCompactRank}>
-                                <Text style={styles.leaderboardCompactRankText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
-                                  #{entry.rank}
-                                </Text>
-                              </View>
-                              <Text style={[styles.leaderboardCompactName, styles.leaderboardCompactNameCurrentUser]} numberOfLines={1}>
-                                {entry.displayName || 'Anonymous'} (you)
-                              </Text>
-                              <Text style={styles.leaderboardCompactCorrect}>{entry.correctPlacements}/16</Text>
-                              <Text style={[styles.leaderboardCompactScore, styles.leaderboardCompactScoreCurrentUser]}>
-                                {entry.score}
+                          <View
+                            style={[styles.leaderboardCompactRow, styles.leaderboardCompactRowCurrentUser]}
+                          >
+                            <View style={styles.leaderboardCompactRank}>
+                              <Text style={styles.leaderboardCompactRankText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
+                                #{userRank}
                               </Text>
                             </View>
-                          ))}
+                            <Text style={[styles.leaderboardCompactName, styles.leaderboardCompactNameCurrentUser]} numberOfLines={1}>
+                              {displayName || 'Anonymous'} (you)
+                            </Text>
+                            <Text style={styles.leaderboardCompactCorrect}>{savedScore.correctPlacements}/16</Text>
+                            <Text style={[styles.leaderboardCompactScore, styles.leaderboardCompactScoreCurrentUser]}>
+                              {savedScore.score}
+                            </Text>
+                          </View>
                         </>
                       )}
                     </View>
@@ -1394,6 +1410,17 @@ function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedSc
     finalScore,
   } = useGameState(puzzle);
 
+  // Helper to determine if a leaderboard entry is the current user
+  // For logged-in users, this uses isCurrentUser from the API
+  // For anonymous users, we match by rank (which was returned when they submitted their score)
+  const isCurrentUserEntry = (entry: LeaderboardEntry): boolean => {
+    if (entry.isCurrentUser) return true;
+    if (!userId && userRank) {
+      return entry.rank === userRank;
+    }
+    return false;
+  };
+
   const [resultRank, setResultRank] = useState<number | null>(null);
   const [submittingScore, setSubmittingScore] = useState(false);
   const [showTutorialScreen, setShowTutorial] = useState(false);
@@ -1655,7 +1682,7 @@ function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedSc
                     key={index}
                     style={[
                       styles.leaderboardCompactRow,
-                      entry.isCurrentUser && styles.leaderboardCompactRowCurrentUser,
+                      isCurrentUserEntry(entry) && styles.leaderboardCompactRowCurrentUser,
                     ]}
                   >
                     <View style={styles.leaderboardCompactRank}>
@@ -1669,15 +1696,15 @@ function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedSc
                     </View>
                     <Text style={[
                       styles.leaderboardCompactName,
-                      entry.isCurrentUser && styles.leaderboardCompactNameCurrentUser,
+                      isCurrentUserEntry(entry) && styles.leaderboardCompactNameCurrentUser,
                     ]} numberOfLines={1}>
                       {entry.displayName || 'Anonymous'}
-                      {entry.isCurrentUser && ' (you)'}
+                      {isCurrentUserEntry(entry) && ' (you)'}
                     </Text>
                     <Text style={styles.leaderboardCompactCorrect}>{entry.correctPlacements}/16</Text>
                     <Text style={[
                       styles.leaderboardCompactScore,
-                      entry.isCurrentUser && styles.leaderboardCompactScoreCurrentUser,
+                      isCurrentUserEntry(entry) && styles.leaderboardCompactScoreCurrentUser,
                     ]}>
                       {entry.score}
                     </Text>
@@ -1685,30 +1712,27 @@ function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedSc
                 ))}
 
                 {/* Show user's rank if not in top 3 */}
-                {displayRank && displayRank > 3 && (
+                {displayRank && displayRank > 3 && displayScore && (
                   <>
                     <View style={styles.leaderboardDivider}>
                       <Text style={styles.leaderboardDividerText}>•••</Text>
                     </View>
-                    {leaderboard.filter(e => e.isCurrentUser).map((entry, index) => (
-                      <View
-                        key={`user-${index}`}
-                        style={[styles.leaderboardCompactRow, styles.leaderboardCompactRowCurrentUser]}
-                      >
-                        <View style={styles.leaderboardCompactRank}>
-                          <Text style={styles.leaderboardCompactRankText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
-                            #{entry.rank}
-                          </Text>
-                        </View>
-                        <Text style={[styles.leaderboardCompactName, styles.leaderboardCompactNameCurrentUser]} numberOfLines={1}>
-                          {entry.displayName || 'Anonymous'} (you)
-                        </Text>
-                        <Text style={styles.leaderboardCompactCorrect}>{entry.correctPlacements}/16</Text>
-                        <Text style={[styles.leaderboardCompactScore, styles.leaderboardCompactScoreCurrentUser]}>
-                          {entry.score}
+                    <View
+                      style={[styles.leaderboardCompactRow, styles.leaderboardCompactRowCurrentUser]}
+                    >
+                      <View style={styles.leaderboardCompactRank}>
+                        <Text style={styles.leaderboardCompactRankText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
+                          #{displayRank}
                         </Text>
                       </View>
-                    ))}
+                      <Text style={[styles.leaderboardCompactName, styles.leaderboardCompactNameCurrentUser]} numberOfLines={1}>
+                        Anonymous (you)
+                      </Text>
+                      <Text style={styles.leaderboardCompactCorrect}>{displayScore.correctPlacements}/16</Text>
+                      <Text style={[styles.leaderboardCompactScore, styles.leaderboardCompactScoreCurrentUser]}>
+                        {displayScore.score}
+                      </Text>
+                    </View>
                   </>
                 )}
               </View>
