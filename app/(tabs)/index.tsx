@@ -138,6 +138,8 @@ export default function GameScreen() {
   const [fullLeaderboardHasMore, setFullLeaderboardHasMore] = useState(true);
   const [showAnswersModal, setShowAnswersModal] = useState(false);
   const [todaysPuzzle, setTodaysPuzzle] = useState<Puzzle | null>(null);
+  const [lastLeaderboardRefresh, setLastLeaderboardRefresh] = useState<number>(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   
   // Display name state
   const [displayName, setDisplayName] = useState<string | null>(null);
@@ -222,35 +224,61 @@ export default function GameScreen() {
   };
 
   // Load leaderboard data (for both preview and full modal)
-  const loadLeaderboard = async () => {
-    if (loadingLeaderboard) return;
-    setLoadingLeaderboard(true);
+  // This function loads all data atomically - leaderboard won't show until everything is ready
+  const loadLeaderboard = async (opts?: { forceRefresh?: boolean }) => {
+    if (loadingLeaderboard && !opts?.forceRefresh) return;
+
+    // If force refresh, mark as refreshing but keep existing data visible
+    if (opts?.forceRefresh) {
+      setIsRefreshing(true);
+    } else {
+      setLoadingLeaderboard(true);
+    }
+
     try {
       console.log('Loading leaderboard for user:', user?.id);
-      const data = await getTodayLeaderboard(user?.id);
-      console.log('Leaderboard data:', data);
-      setLeaderboard(data);
-      // Find user's rank
-      const userEntry = data.find(e => e.isCurrentUser);
+
+      // Load all data in parallel
+      const [leaderboardData, puzzleData] = await Promise.all([
+        getTodayLeaderboard(user?.id),
+        !todaysPuzzle ? fetchTodaysPuzzle() : Promise.resolve(todaysPuzzle),
+      ]);
+
+      console.log('Leaderboard data:', leaderboardData);
+
+      // Find user's rank from the leaderboard data
+      const userEntry = leaderboardData.find(e => e.isCurrentUser);
       console.log('User entry found:', userEntry);
+
+      // Set all state atomically - this ensures the UI updates together
+      setLeaderboard(leaderboardData);
       if (userEntry) {
         setUserRank(userEntry.rank);
       }
-      setLeaderboardLoaded(true);
 
-      // Also load the puzzle for showing correct answers
-      if (!todaysPuzzle) {
-        const puzzle = await fetchTodaysPuzzle();
-        if (puzzle) {
-          setTodaysPuzzle(puzzle);
-        } else {
-          setTodaysPuzzle(generateDailyPuzzle());
-        }
+      // Set puzzle data
+      if (puzzleData) {
+        setTodaysPuzzle(puzzleData);
+      } else if (!todaysPuzzle) {
+        setTodaysPuzzle(generateDailyPuzzle());
       }
+
+      setLeaderboardLoaded(true);
+      setLastLeaderboardRefresh(Date.now());
     } catch (e) {
       console.error('Error loading leaderboard:', e);
     } finally {
       setLoadingLeaderboard(false);
+      setIsRefreshing(false);
+    }
+  };
+
+  // Refresh leaderboard data (keeps existing data visible during refresh)
+  const refreshLeaderboard = async () => {
+    await loadLeaderboard({ forceRefresh: true });
+    // Also refresh the full leaderboard if it was loaded
+    if (fullLeaderboardLoaded) {
+      await loadFullLeaderboard({ reset: true });
     }
   };
 
@@ -292,6 +320,24 @@ export default function GameScreen() {
       setFullLeaderboardHasMore(true);
     }
   }, [user?.id]);
+
+  // Auto-refresh leaderboard every 60 seconds when on home screen and puzzle is completed
+  useEffect(() => {
+    if (!dailyCompleted || !leaderboardLoaded || isPlaying || showLeaderboardScreen) {
+      return;
+    }
+
+    const REFRESH_INTERVAL = 60000; // 60 seconds
+    const intervalId = setInterval(() => {
+      // Only refresh if data is older than the refresh interval
+      if (Date.now() - lastLeaderboardRefresh >= REFRESH_INTERVAL) {
+        console.log('Auto-refreshing leaderboard...');
+        loadLeaderboard({ forceRefresh: true });
+      }
+    }, REFRESH_INTERVAL);
+
+    return () => clearInterval(intervalId);
+  }, [dailyCompleted, leaderboardLoaded, isPlaying, showLeaderboardScreen, lastLeaderboardRefresh]);
 
   const openLeaderboard = async () => {
     setShowLeaderboardScreen(true);
@@ -500,7 +546,17 @@ export default function GameScreen() {
             <MaterialCommunityIcons name="trophy" size={24} color="#ffd700" />
             <Text style={styles.leaderboardScreenTitle}>Today's Leaderboard</Text>
           </View>
-          <View style={{ width: 40 }} />
+          <TouchableOpacity
+            style={styles.leaderboardScreenRefreshButton}
+            onPress={refreshLeaderboard}
+            disabled={isRefreshing || loadingFullLeaderboard}
+          >
+            <Ionicons
+              name="refresh"
+              size={22}
+              color={isRefreshing || loadingFullLeaderboard ? '#666' : '#6a9fff'}
+            />
+          </TouchableOpacity>
         </View>
 
         <FlatList
@@ -863,24 +919,51 @@ export default function GameScreen() {
                   onPress={openLeaderboard}
                   activeOpacity={0.8}
                 >
-                  {/* Header */}
+                  {/* Header with refresh button */}
                   <View style={styles.completedHeader}>
                     <View style={styles.completedHeaderLeft}>
                       <MaterialCommunityIcons name="trophy" size={20} color="#ffd700" />
                       <Text style={styles.completedTitle}>Today's Leaderboard</Text>
                     </View>
-                    {userRank && (
-                      <Text style={styles.completedRankText}>#{userRank} in the world</Text>
-                    )}
+                    <View style={styles.completedHeaderRight}>
+                      {userRank && (
+                        <Text style={styles.completedRankText}>#{userRank} in the world</Text>
+                      )}
+                      <TouchableOpacity
+                        style={styles.refreshButton}
+                        onPress={(e) => {
+                          e.stopPropagation();
+                          refreshLeaderboard();
+                        }}
+                        disabled={isRefreshing || loadingLeaderboard}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                      >
+                        <Ionicons
+                          name="refresh"
+                          size={18}
+                          color={isRefreshing ? '#666' : '#6a9fff'}
+                        />
+                      </TouchableOpacity>
+                    </View>
                   </View>
 
-                  {/* Condensed Leaderboard */}
-                  {loadingLeaderboard && !leaderboardLoaded ? (
-                    <ActivityIndicator size="small" color="#6a9fff" style={{ marginVertical: 16 }} />
+                  {/* Condensed Leaderboard - show loading until ALL data is ready */}
+                  {/* For logged-in users, we wait for userRank; for guests, just leaderboard */}
+                  {(loadingLeaderboard && !leaderboardLoaded) || (user && leaderboardLoaded && leaderboard.length > 0 && userRank === null) ? (
+                    <View style={styles.leaderboardLoadingContainer}>
+                      <ActivityIndicator size="small" color="#6a9fff" />
+                      <Text style={styles.leaderboardLoadingText}>Loading rankings...</Text>
+                    </View>
                   ) : leaderboard.length === 0 ? (
                     <Text style={styles.leaderboardEmptyText}>No scores yet</Text>
                   ) : (
                     <View style={styles.leaderboardCompact}>
+                      {/* Refreshing overlay indicator */}
+                      {isRefreshing && (
+                        <View style={styles.refreshingOverlay}>
+                          <ActivityIndicator size="small" color="#6a9fff" />
+                        </View>
+                      )}
                       {/* Top 3 */}
                       {leaderboard.slice(0, 3).map((entry, index) => (
                         <View
@@ -1990,6 +2073,37 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
+  completedHeaderRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  refreshButton: {
+    padding: 4,
+  },
+  refreshingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(26, 42, 58, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 8,
+    zIndex: 1,
+  },
+  leaderboardLoadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 20,
+    gap: 10,
+  },
+  leaderboardLoadingText: {
+    fontSize: 14,
+    color: '#888',
+  },
   completedTitle: {
     fontSize: 16,
     fontWeight: '600',
@@ -2187,6 +2301,11 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: '#fff',
+  },
+  leaderboardScreenRefreshButton: {
+    padding: 8,
+    width: 40,
+    alignItems: 'center',
   },
   leaderboardScreenContent: {
     flex: 1,
