@@ -120,6 +120,8 @@ export interface GameScore {
   completed: boolean;
   /** Percentile rank (0-100, calculated after submission) */
   percentile?: number;
+  /** Database ID of the score record (for claiming anonymous scores) */
+  scoreId?: string;
 }
 
 /**

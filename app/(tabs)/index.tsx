@@ -189,7 +189,10 @@ export default function GameScreen() {
     }
   };
 
-  // Fetch display name when user logs in
+  // Track previous user for sign-out detection
+  const prevUserForSignOutRef = useRef<string | null>(null);
+
+  // Fetch display name when user logs in, clear state on sign-out
   useEffect(() => {
     if (user) {
       getOrCreateProfile(user.id).then(profile => {
@@ -201,8 +204,17 @@ export default function GameScreen() {
           }
         }
       });
+      prevUserForSignOutRef.current = user.id;
     } else {
+      // User signed out - clear display name and refresh leaderboard
       setDisplayName(null);
+
+      // If there was a previous user, refresh leaderboard to clear isCurrentUser flags
+      if (prevUserForSignOutRef.current) {
+        console.log('User signed out, refreshing leaderboard');
+        loadLeaderboard({ forceRefresh: true });
+        prevUserForSignOutRef.current = null;
+      }
     }
   }, [user]);
 
@@ -221,42 +233,70 @@ export default function GameScreen() {
   const prevUserRef = useRef<string | null>(null);
 
   // Reconcile score state when user signs in
-  // This handles: anonymous→signed-in transfers, blocking cheating, loading existing scores
+  // This handles: anonymous→signed-in transfers and loading existing scores
   useEffect(() => {
-    const runReconciliation = async () => {
-      // Only run when user transitions from null to signed-in
-      if (!user || prevUserRef.current === user.id) {
-        prevUserRef.current = user?.id ?? null;
-        return;
-      }
+    // Only run when user transitions from null to signed-in
+    if (!user || prevUserRef.current === user.id) {
+      prevUserRef.current = user?.id ?? null;
+      return;
+    }
 
-      // User just signed in - run reconciliation
+    // Set immediately to prevent duplicate runs from concurrent renders
+    prevUserRef.current = user.id;
+
+    const runReconciliation = async (retryCount = 0) => {
       const todayKey = getTodayKey();
+      const MAX_RETRIES = 3;
+      const RETRY_DELAY = 1000; // 1 second
 
       try {
-        // Check if device has started today's puzzle
-        const deviceStarted = await AsyncStorage.getItem(`device-started-${todayKey}`);
-        const deviceHasStarted = deviceStarted === 'true';
-
-        // Get local score if any
-        let localScore: { score: number; timeSeconds: number; mistakes: number; correctPlacements: number } | null = null;
+        // Get local score if any (including scoreId for claiming anonymous scores)
+        // Only claim anonymous scores (odak === null), not scores from other users
+        let localScore: { scoreId: string; score: number; timeSeconds: number; mistakes: number; correctPlacements: number } | null = null;
         const scoreData = await AsyncStorage.getItem(`score-${todayKey}`);
+        console.log('Reconciliation: Raw local score data:', scoreData);
         if (scoreData) {
           try {
             const parsed = JSON.parse(scoreData);
-            localScore = {
+            console.log('Reconciliation: Parsed local score:', {
+              scoreId: parsed.scoreId,
+              odak: parsed.odak,
               score: parsed.score,
-              timeSeconds: parsed.timeSeconds,
-              mistakes: parsed.mistakes,
-              correctPlacements: parsed.correctPlacements,
-            };
+            });
+            // Only include if:
+            // 1. We have a scoreId (required for claiming)
+            // 2. The score was anonymous (odak === null) - don't claim another user's score
+            if (parsed.scoreId && parsed.odak === null) {
+              localScore = {
+                scoreId: parsed.scoreId,
+                score: parsed.score,
+                timeSeconds: parsed.timeSeconds,
+                mistakes: parsed.mistakes,
+                correctPlacements: parsed.correctPlacements,
+              };
+              console.log('Reconciliation: Will attempt to claim anonymous score');
+            } else if (!parsed.scoreId && parsed.odak === null && parsed.score !== undefined) {
+              // Score exists but scoreId is missing - the API submission might still be in progress
+              // Retry after a delay to give it time to complete
+              if (retryCount < MAX_RETRIES) {
+                console.log(`Reconciliation: Score found but no scoreId yet, retrying in ${RETRY_DELAY}ms (attempt ${retryCount + 1}/${MAX_RETRIES})`);
+                setTimeout(() => runReconciliation(retryCount + 1), RETRY_DELAY);
+                return;
+              } else {
+                console.log('Reconciliation: Max retries reached, scoreId still missing');
+              }
+            } else {
+              console.log('Reconciliation: Not claiming - scoreId:', !!parsed.scoreId, 'odak:', parsed.odak);
+            }
           } catch (e) {
             console.error('Error parsing local score:', e);
           }
+        } else {
+          console.log('Reconciliation: No local score found');
         }
 
         // Run reconciliation
-        const result = await reconcileScoreOnSignIn(user.id, deviceHasStarted, localScore);
+        const result = await reconcileScoreOnSignIn(user.id, localScore);
 
         console.log('Reconciliation result:', result);
 
@@ -273,24 +313,19 @@ export default function GameScreen() {
               });
               setDailyCompleted(true);
               if (result.rank) setUserRank(result.rank);
-              // Save to local storage for consistency
+              // Save to local storage for consistency, with odak set to this user
               await AsyncStorage.setItem(`completed-${todayKey}`, 'true');
-              await AsyncStorage.setItem(`score-${todayKey}`, JSON.stringify(result.score));
-              await AsyncStorage.setItem(`device-started-${todayKey}`, 'true');
+              await AsyncStorage.setItem(`score-${todayKey}`, JSON.stringify({ ...result.score, odak: user.id }));
             }
             break;
 
           case 'claimed_anonymous':
             // Anonymous score was claimed for this user - update rank/percentile
             if (result.rank) setUserRank(result.rank);
-            // Score already saved locally, just ensure consistency
-            break;
-
-          case 'blocked_device_used':
-            // Device already played but can't claim the score (different user's score or mid-game)
-            // Mark as completed to block further play
-            setDailyCompleted(true);
-            await AsyncStorage.setItem(`completed-${todayKey}`, 'true');
+            // Update local storage to mark this score as belonging to this user
+            if (result.score) {
+              await AsyncStorage.setItem(`score-${todayKey}`, JSON.stringify({ ...result.score, odak: user.id }));
+            }
             break;
 
           case 'no_change':
@@ -300,8 +335,6 @@ export default function GameScreen() {
       } catch (e) {
         console.error('Error during sign-in reconciliation:', e);
       }
-
-      prevUserRef.current = user.id;
     };
 
     runReconciliation();
@@ -480,18 +513,27 @@ export default function GameScreen() {
               });
             }
           } else {
-            // Check local storage as fallback (in case completed on another device or as guest)
-            const localCompleted = await AsyncStorage.getItem(`completed-${todayKey}`);
-            if (localCompleted === 'true') {
-              setDailyCompleted(true);
-              // Try to load local score
-              const scoreData = await AsyncStorage.getItem(`score-${todayKey}`);
-              if (scoreData) {
-                const score = JSON.parse(scoreData) as GameScore;
-                const freshPercentile = await getPercentile(score.score);
-                score.percentile = freshPercentile;
-                setSavedScore(score);
+            // User hasn't played on their account today - check local storage
+            const scoreData = await AsyncStorage.getItem(`score-${todayKey}`);
+            if (scoreData) {
+              const localScore = JSON.parse(scoreData);
+              const localOdak = localScore.odak; // Who played locally: null = anon, string = userId
+
+              if (localOdak === null) {
+                // Anonymous play on this device - can be claimed by this user
+                // Show as completed, reconciliation will claim the score
+                setDailyCompleted(true);
+                const freshPercentile = await getPercentile(localScore.score);
+                localScore.percentile = freshPercentile;
+                setSavedScore(localScore);
+              } else if (localOdak === user.id) {
+                // This user played locally but DB doesn't have it (edge case, maybe offline)
+                setDailyCompleted(true);
+                const freshPercentile = await getPercentile(localScore.score);
+                localScore.percentile = freshPercentile;
+                setSavedScore(localScore);
               }
+              // else: Different user played locally - current user can play fresh
             }
           }
 
@@ -568,12 +610,6 @@ export default function GameScreen() {
         setPuzzle(generateDailyPuzzle());
       }
 
-      // Mark that this device has started today's puzzle (for cheat prevention)
-      // This flag persists regardless of auth state changes
-      if (!dailyCompleted) {
-        const todayKey = getTodayKey();
-        await AsyncStorage.setItem(`device-started-${todayKey}`, 'true');
-      }
 
       // If already completed, open in review mode
       setIsReviewMode(dailyCompleted);
@@ -596,9 +632,17 @@ export default function GameScreen() {
       const todayDate = new Date().toISOString().split('T')[0];
       const yesterdayDate = new Date(Date.now() - 86400000).toISOString().split('T')[0];
 
-      // Always save to local storage
+      // Always save to local storage with userId to track who played
       await AsyncStorage.setItem(`completed-${todayKey}`, 'true');
-      await AsyncStorage.setItem(`score-${todayKey}`, JSON.stringify(score));
+      // Store odak (userId) with the score so we know who played on this device
+      // null = anonymous, string = specific user
+      const scoreWithUser = { ...score, odak: user?.id ?? null };
+      console.log('handleComplete: Saving score to AsyncStorage:', {
+        scoreId: scoreWithUser.scoreId,
+        odak: scoreWithUser.odak,
+        score: scoreWithUser.score,
+      });
+      await AsyncStorage.setItem(`score-${todayKey}`, JSON.stringify(scoreWithUser));
       if (rank) {
         await AsyncStorage.setItem(`rank-${todayKey}`, rank.toString());
       }
@@ -1596,8 +1640,11 @@ function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedSc
         .then((result) => {
           if (result) {
             setResultRank(result.rank);
-            // Update finalScore with percentile before saving (keep for backwards compat)
+            // Update finalScore with percentile and scoreId
             finalScore.percentile = result.percentile;
+            finalScore.scoreId = result.scoreId;
+            // Re-call onComplete with the scoreId so it gets saved
+            onComplete(finalScore, result.rank);
           }
         })
         .catch(console.error)

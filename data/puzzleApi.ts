@@ -3,6 +3,9 @@ import { IntersectionsDailyPuzzle, Puzzle, Word } from "@/types/game";
 
 const GRID_SIZE = 4;
 
+// Lock to prevent concurrent reconciliation attempts
+let reconciliationInProgress: string | null = null;
+
 // optional sanity check
 function isIntersectionsDailyPuzzle(payload: any): payload is IntersectionsDailyPuzzle {
   return (
@@ -116,7 +119,7 @@ export async function getPercentile(score: number): Promise<number> {
 
 /**
  * Submit a score for today's puzzle
- * Returns the percentile rank (0-100)
+ * Returns the percentile rank (0-100), the rank, and the score ID
  * If userId is provided, links the score to the user
  */
 export async function submitScore(
@@ -125,7 +128,7 @@ export async function submitScore(
   mistakes: number,
   correctPlacements: number,
   userId?: string
-): Promise<{ percentile: number; rank: number } | null> {
+): Promise<{ percentile: number; rank: number; scoreId: string } | null> {
   const puzzleDate = getTodayDateString();
 
   try {
@@ -137,7 +140,7 @@ export async function submitScore(
         console.log('User already has a score for today, skipping submission');
         const percentile = await getScorePercentile(puzzleDate, existingScore.score);
         const rank = await getScoreRank(puzzleDate, existingScore.score, existingScore.timeSeconds);
-        return { percentile, rank };
+        return { percentile, rank, scoreId: existingScore.id };
       }
     }
 
@@ -161,11 +164,13 @@ export async function submitScore(
       scoreData.user_id = userId;
     }
 
-    const { error: insertError } = await supabase
+    const { data, error: insertError } = await supabase
       .from('puzzle_scores')
-      .insert(scoreData);
+      .insert(scoreData)
+      .select('id')
+      .single();
 
-    if (insertError) {
+    if (insertError || !data) {
       console.error('Error submitting score:', insertError);
       return null;
     }
@@ -173,7 +178,7 @@ export async function submitScore(
     // Calculate percentile and rank
     const percentile = await getScorePercentile(puzzleDate, score);
     const rank = await getScoreRank(puzzleDate, score, timeSeconds);
-    return { percentile, rank };
+    return { percentile, rank, scoreId: data.id };
   } catch (e) {
     console.error('Error in submitScore:', e);
     return null;
@@ -387,17 +392,18 @@ export async function hasUserCompletedToday(userId: string): Promise<boolean> {
  * Get user's score for today
  */
 export async function getUserTodayScore(userId: string): Promise<{
+  id: string;
   score: number;
   timeSeconds: number;
   mistakes: number;
   correctPlacements: number;
 } | null> {
   const puzzleDate = getTodayDateString();
-  
+
   try {
     const { data, error } = await supabase
       .from('puzzle_scores')
-      .select('score, time_seconds, mistakes, correct_placements')
+      .select('id, score, time_seconds, mistakes, correct_placements')
       .eq('puzzle_date', puzzleDate)
       .eq('user_id', userId)
       .maybeSingle();
@@ -407,6 +413,7 @@ export async function getUserTodayScore(userId: string): Promise<{
     }
 
     return {
+      id: data.id,
       score: data.score,
       timeSeconds: data.time_seconds,
       mistakes: data.mistakes,
@@ -719,7 +726,7 @@ export async function updateDisplayName(userId: string, displayName: string): Pr
  * Reconciliation result when a user signs in
  */
 export interface ReconciliationResult {
-  action: 'claimed_anonymous' | 'loaded_existing' | 'no_change' | 'blocked_device_used';
+  action: 'claimed_anonymous' | 'loaded_existing' | 'no_change';
   score?: {
     score: number;
     timeSeconds: number;
@@ -731,33 +738,65 @@ export interface ReconciliationResult {
 }
 
 /**
- * Claim an anonymous score by creating a new record with the user's ID
- * This effectively "transfers" the anonymous play to the signed-in user
+ * Claim an anonymous score by updating the existing record with the user's ID
+ * If scoreId is provided, updates that specific record
+ * Otherwise falls back to inserting a new record (legacy behavior)
  */
 export async function claimAnonymousScore(
   userId: string,
+  scoreId: string | null,
   score: number,
-  timeSeconds: number,
-  mistakes: number,
-  correctPlacements: number
+  timeSeconds: number
 ): Promise<{ rank: number; percentile: number } | null> {
   const puzzleDate = getTodayDateString();
 
   try {
-    // Insert a new record with user_id (the anonymous one stays orphaned)
-    const { error: insertError } = await supabase
-      .from('puzzle_scores')
-      .insert({
-        puzzle_date: puzzleDate,
-        score,
-        time_seconds: timeSeconds,
-        mistakes,
-        correct_placements: correctPlacements,
-        user_id: userId,
-      });
+    // Check if user already has a score for today (prevents duplicates from race conditions)
+    const existingScore = await getUserTodayScore(userId);
+    if (existingScore) {
+      // Already claimed - just return the rank/percentile
+      const percentile = await getScorePercentile(puzzleDate, existingScore.score);
+      const rank = await getScoreRank(puzzleDate, existingScore.score, existingScore.timeSeconds);
+      return { rank, percentile };
+    }
 
-    if (insertError) {
-      console.error('Error claiming anonymous score:', insertError);
+    if (scoreId) {
+      // Update the existing anonymous record with the user's ID
+      console.log('Attempting to claim anonymous score:', { scoreId, userId });
+      const { data: updateData, error: updateError } = await supabase
+        .from('puzzle_scores')
+        .update({ user_id: userId })
+        .eq('id', scoreId)
+        .is('user_id', null) // Only update if still anonymous
+        .select('id');
+
+      if (updateError) {
+        console.error('Error claiming anonymous score:', updateError);
+        return null;
+      }
+
+      // Verify the update actually affected a row
+      if (!updateData || updateData.length === 0) {
+        console.warn('claimAnonymousScore: No rows updated. Score may already be claimed or does not exist.', { scoreId });
+        // Check if this user now owns the score (maybe it was already claimed by them)
+        const checkResult = await supabase
+          .from('puzzle_scores')
+          .select('id, user_id')
+          .eq('id', scoreId)
+          .single();
+
+        if (checkResult.data?.user_id === userId) {
+          console.log('Score already belongs to this user, continuing...');
+        } else {
+          console.error('Score not claimed - belongs to:', checkResult.data?.user_id);
+          return null;
+        }
+      } else {
+        console.log('Successfully claimed anonymous score:', updateData);
+      }
+    } else {
+      // No scoreId - this shouldn't happen in normal flow, but handle gracefully
+      console.warn('claimAnonymousScore called without scoreId');
       return null;
     }
 
@@ -777,20 +816,26 @@ export async function claimAnonymousScore(
  *
  * This handles the following scenarios:
  * 1. User already has a DB score (played on another device) → Load existing
- * 2. Device played anonymously and has local score → Claim that score
- * 3. Device played but no local score (cleared storage?) → Block
- * 4. Fresh device, no prior play → Allow new play
+ * 2. Local score exists and user has no DB score → Claim that score
+ * 3. No local score and no DB score → Allow new play
  */
 export async function reconcileScoreOnSignIn(
   userId: string,
-  deviceHasStarted: boolean,
   localScore: {
+    scoreId: string;
     score: number;
     timeSeconds: number;
     mistakes: number;
     correctPlacements: number;
   } | null
 ): Promise<ReconciliationResult> {
+  // Prevent concurrent reconciliation for the same user
+  if (reconciliationInProgress === userId) {
+    console.log('Reconciliation already in progress for user, skipping');
+    return { action: 'no_change' };
+  }
+
+  reconciliationInProgress = userId;
   const puzzleDate = getTodayDateString();
 
   try {
@@ -811,40 +856,27 @@ export async function reconcileScoreOnSignIn(
       };
     }
 
-    // User has no DB score - check device state
-    if (deviceHasStarted) {
-      if (localScore) {
-        // Device played anonymously, user hasn't played elsewhere
-        // Claim the anonymous score for this user
-        const result = await claimAnonymousScore(
-          userId,
-          localScore.score,
-          localScore.timeSeconds,
-          localScore.mistakes,
-          localScore.correctPlacements
-        );
+    // User has no DB score - check if there's a local score to claim
+    if (localScore) {
+      // Claim the local score for this user by updating the existing record
+      const result = await claimAnonymousScore(
+        userId,
+        localScore.scoreId,
+        localScore.score,
+        localScore.timeSeconds
+      );
 
-        if (result) {
-          return {
-            action: 'claimed_anonymous',
-            score: localScore,
-            rank: result.rank,
-            percentile: result.percentile,
-          };
-        }
-        // If claim failed, fall through to blocked
+      if (result) {
+        return {
+          action: 'claimed_anonymous',
+          score: localScore,
+          rank: result.rank,
+          percentile: result.percentile,
+        };
       }
-
-      // Device started puzzle but no local score to claim
-      // This could be: mid-game sign-in, cleared storage, or different user's score
-      // Block to prevent cheating
-      return {
-        action: 'blocked_device_used',
-      };
     }
 
-    // Device hasn't started today's puzzle, user hasn't played elsewhere
-    // Fresh state - allow play
+    // No existing score and no local score to claim - allow new play
     return {
       action: 'no_change',
     };
@@ -852,5 +884,7 @@ export async function reconcileScoreOnSignIn(
     console.error('Error in reconcileScoreOnSignIn:', e);
     // On error, default to no_change to avoid blocking legitimate users
     return { action: 'no_change' };
+  } finally {
+    reconciliationInProgress = null;
   }
 }
