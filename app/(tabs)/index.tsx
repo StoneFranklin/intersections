@@ -1587,18 +1587,18 @@ function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedSc
 
     const gameEnded = gameState.isSolved || shouldShowGameOver;
     if (gameEnded && finalScore && !submittingScore && resultRank === null) {
+      // Transition to results screen immediately
+      onComplete(finalScore, null);
+
+      // Submit score in the background
       setSubmittingScore(true);
       submitScore(finalScore.score, finalScore.timeSeconds, finalScore.mistakes, finalScore.correctPlacements, userId)
         .then((result) => {
-          let rank: number | null = null;
           if (result) {
-            rank = result.rank;
             setResultRank(result.rank);
             // Update finalScore with percentile before saving (keep for backwards compat)
             finalScore.percentile = result.percentile;
           }
-          // Save completion and navigate to leaderboard
-          onComplete(finalScore, rank);
         })
         .catch(console.error)
         .finally(() => setSubmittingScore(false));
@@ -1931,11 +1931,13 @@ function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedSc
       </View>
 
       {/* Word Tray */}
-      <WordTray
-        words={unplacedWords}
-        selectedWordId={gameState.selectedWordId}
-        onWordSelect={handleWordSelect}
-      />
+      {unplacedWords.length > 0 && (
+        <WordTray
+          words={unplacedWords}
+          selectedWordId={gameState.selectedWordId}
+          onWordSelect={handleWordSelect}
+        />
+      )}
 
       {/* Rewarded Ad Modal */}
       <RewardedAdModal
