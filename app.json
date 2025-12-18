@@ -11,12 +11,13 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.stonefranklin.intersections",
+      "buildNumber": "1",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "CFBundleDisplayName": "Intersections"
       },
       "entitlements": {
-        "aps-environment": "development"
+        "aps-environment": "production"
       }
     },
     "android": {

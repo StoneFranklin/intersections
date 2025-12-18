@@ -10,6 +10,9 @@
     },
     "preview": {
       "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
       "env": {
         "EXPO_IOS_BUNDLE_IDENTIFIER": "com.stonefranklin.intersections",
         "EXPO_ANDROID_PACKAGE": "com.stonefranklin.intersections"
@@ -17,6 +20,12 @@
     },
     "production": {
       "autoIncrement": true,
+      "android": {
+        "buildType": "app-bundle"
+      },
+      "ios": {
+        "autoIncrement": true
+      },
       "env": {
         "EXPO_IOS_BUNDLE_IDENTIFIER": "com.stonefranklin.intersections",
         "EXPO_ANDROID_PACKAGE": "com.stonefranklin.intersections"
