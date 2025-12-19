@@ -9,9 +9,10 @@ import { GameGrid } from '../game/game-grid';
 interface CorrectAnswersScreenProps {
   puzzle: Puzzle | null;
   onBack: () => void;
+  onRetry: () => void;
 }
 
-export function CorrectAnswersScreen({ puzzle, onBack }: CorrectAnswersScreenProps) {
+export function CorrectAnswersScreen({ puzzle, onBack, onRetry }: CorrectAnswersScreenProps) {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.leaderboardScreenHeader}>
@@ -25,7 +26,7 @@ export function CorrectAnswersScreen({ puzzle, onBack }: CorrectAnswersScreenPro
       </View>
 
       <ScrollView contentContainerStyle={styles.answersModalContent}>
-        {puzzle && (
+        {puzzle ? (
           <GameGrid
             puzzle={puzzle}
             getWordAtCell={(pos) => {
@@ -42,6 +43,13 @@ export function CorrectAnswersScreen({ puzzle, onBack }: CorrectAnswersScreenPro
             onCellPress={() => {}}
             onCellLongPress={() => {}}
           />
+        ) : (
+          <View style={styles.answersEmptyState}>
+            <Text style={styles.answersEmptyText}>No puzzle loaded yet.</Text>
+            <TouchableOpacity style={styles.answersEmptyButton} onPress={onRetry}>
+              <Text style={styles.answersEmptyButtonText}>Try Again</Text>
+            </TouchableOpacity>
+          </View>
         )}
       </ScrollView>
     </SafeAreaView>

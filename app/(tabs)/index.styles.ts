@@ -129,6 +129,11 @@ export const styles = StyleSheet.create({
     fontSize: 14,
     color: '#aaa',
   },
+  playButtonError: {
+    fontSize: 13,
+    color: '#f87171',
+    textAlign: 'center',
+  },
   // Completed container styles (condensed leaderboard)
   completedContainer: {
     backgroundColor: '#1a2a3e',
@@ -349,6 +354,27 @@ export const styles = StyleSheet.create({
   answersModalContent: {
     alignItems: 'center',
     padding: 20,
+  },
+  answersEmptyState: {
+    alignItems: 'center',
+    gap: 12,
+  },
+  answersEmptyText: {
+    fontSize: 16,
+    color: '#888',
+    textAlign: 'center',
+  },
+  answersEmptyButton: {
+    borderWidth: 1,
+    borderColor: '#6a9fff',
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+  },
+  answersEmptyButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#6a9fff',
   },
   tutorialScreenContent: {
     paddingHorizontal: 20,

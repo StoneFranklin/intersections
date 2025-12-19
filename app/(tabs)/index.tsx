@@ -2,7 +2,6 @@ import { LeaderboardScreen } from '@/components/leaderboard/leaderboard-screen';
 import { CorrectAnswersScreen } from '@/components/screens/correct-answers-screen';
 import { HowToPlayScreen } from '@/components/screens/how-to-play-screen';
 import { useAuth } from '@/contexts/auth-context';
-import { generateDailyPuzzle } from '@/data/puzzle-generator';
 import { fetchTodaysPuzzle, getOrCreateProfile, getPercentile, getTodayLeaderboard, getTodayLeaderboardPage, getUserStreak, getUserTodayScore, hasUserCompletedToday, LeaderboardEntry, reconcileScoreOnSignIn, updateDisplayName, updateUserStreak } from '@/data/puzzleApi';
 import { GameScore, Puzzle } from '@/types/game';
 import { getTodayKey, getYesterdayKey } from '@/utils/dateKeys';
@@ -53,6 +52,7 @@ export default function GameScreen() {
   const [lastLeaderboardRefresh, setLastLeaderboardRefresh] = useState<number>(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [currentGameEnded, setCurrentGameEnded] = useState(false);
+  const [puzzleFetchError, setPuzzleFetchError] = useState<string | null>(null);
 
   // Helper to determine if a leaderboard entry is the current user
   // For logged-in users, this uses isCurrentUser from the API
@@ -331,8 +331,6 @@ export default function GameScreen() {
       // Set puzzle data
       if (puzzleData) {
         setTodaysPuzzle(puzzleData);
-      } else if (!todaysPuzzle) {
-        setTodaysPuzzle(generateDailyPuzzle());
       }
 
       setLeaderboardLoaded(true);
@@ -541,6 +539,7 @@ export default function GameScreen() {
   const [fetchingPuzzle, setFetchingPuzzle] = useState(false);
 
   const handlePlayDaily = async () => {
+    setPuzzleFetchError(null);
     setFetchingPuzzle(true);
     setCurrentGameEnded(false);
     try {
@@ -548,22 +547,15 @@ export default function GameScreen() {
       const dbPuzzle = await fetchTodaysPuzzle();
       if (dbPuzzle) {
         setPuzzle(dbPuzzle);
+        // If already completed, open in review mode
+        setIsReviewMode(dailyCompleted);
+        setIsPlaying(true);
       } else {
-        // Fallback to static puzzle if DB fetch fails
-        logger.log('No puzzle in DB, using static fallback');
-        setPuzzle(generateDailyPuzzle());
+        setPuzzleFetchError("Can't load today's puzzle. Check your connection and try again.");
       }
-
-
-      // If already completed, open in review mode
-      setIsReviewMode(dailyCompleted);
-      setIsPlaying(true);
     } catch (e) {
       logger.error('Error fetching puzzle:', e);
-      // Fallback to static puzzle on error
-      setPuzzle(generateDailyPuzzle());
-      setIsReviewMode(dailyCompleted);
-      setIsPlaying(true);
+      setPuzzleFetchError("Can't load today's puzzle. Check your connection and try again.");
     } finally {
       setFetchingPuzzle(false);
     }
@@ -668,6 +660,12 @@ export default function GameScreen() {
       <CorrectAnswersScreen
         puzzle={todaysPuzzle}
         onBack={() => setShowAnswersScreen(false)}
+        onRetry={async () => {
+          const puzzleData = await fetchTodaysPuzzle();
+          if (puzzleData) {
+            setTodaysPuzzle(puzzleData);
+          }
+        }}
       />
     );
   }
@@ -692,6 +690,7 @@ export default function GameScreen() {
         userRank={userRank}
         savedScore={savedScore}
         isRefreshing={isRefreshing}
+        puzzleFetchError={puzzleFetchError}
         showSignIn={showSignIn}
         setShowSignIn={setShowSignIn}
         signingIn={signingIn}

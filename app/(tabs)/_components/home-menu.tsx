@@ -35,6 +35,7 @@ export interface HomeMenuProps {
   userRank: number | null;
   savedScore: GameScore | null;
   isRefreshing: boolean;
+  puzzleFetchError: string | null;
 
   showSignIn: boolean;
   setShowSignIn: (show: boolean) => void;
@@ -86,6 +87,7 @@ export function HomeMenu({
   userRank,
   savedScore,
   isRefreshing,
+  puzzleFetchError,
   showSignIn,
   setShowSignIn,
   signingIn,
@@ -195,25 +197,30 @@ export function HomeMenu({
 
           <View style={styles.menuButtons}>
             {!dailyCompleted ? (
-              <TouchableOpacity
-                style={styles.playButton}
-                onPress={onPlayDaily}
-                disabled={fetchingPuzzle || loading}
-              >
-                {loading ? (
-                  <View style={styles.playButtonLoading}>
-                    <ActivityIndicator size="small" color="#fff" />
-                    <Text style={styles.playButtonLoadingText}>Loading...</Text>
-                  </View>
-                ) : (
-                  <>
-                    <Text style={styles.playButtonLabel}>{fetchingPuzzle ? 'Loading...' : "Today's Puzzle"}</Text>
-                    <Text style={styles.playButtonDesc}>
-                      {fetchingPuzzle ? 'Fetching puzzle' : 'New puzzle every day'}
-                    </Text>
-                  </>
+              <>
+                <TouchableOpacity
+                  style={styles.playButton}
+                  onPress={onPlayDaily}
+                  disabled={fetchingPuzzle || loading}
+                >
+                  {loading ? (
+                    <View style={styles.playButtonLoading}>
+                      <ActivityIndicator size="small" color="#fff" />
+                      <Text style={styles.playButtonLoadingText}>Loading...</Text>
+                    </View>
+                  ) : (
+                    <>
+                      <Text style={styles.playButtonLabel}>{fetchingPuzzle ? 'Loading...' : "Today's Puzzle"}</Text>
+                      <Text style={styles.playButtonDesc}>
+                        {fetchingPuzzle ? 'Fetching puzzle' : 'New puzzle every day'}
+                      </Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+                {!!puzzleFetchError && (
+                  <Text style={styles.playButtonError}>{puzzleFetchError}</Text>
                 )}
-              </TouchableOpacity>
+              </>
             ) : (
               <>
                 {user ? (
