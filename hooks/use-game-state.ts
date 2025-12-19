@@ -65,6 +65,12 @@ export function useGameState(puzzle: Puzzle): UseGameStateReturn {
 
   // Start/stop timer based on game state
   useEffect(() => {
+    // Clear any existing timer first to prevent memory leaks
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+
     // Start timer when game begins
     if (!gameState.isSolved && gameState.lives > 0) {
       timerRef.current = setInterval(() => {
@@ -75,6 +81,7 @@ export function useGameState(puzzle: Puzzle): UseGameStateReturn {
     return () => {
       if (timerRef.current) {
         clearInterval(timerRef.current);
+        timerRef.current = null;
       }
     };
   }, [gameState.isSolved, gameState.lives]);

@@ -30,7 +30,7 @@ export function HowToPlayScreen({ onBack }: HowToPlayScreenProps) {
         <Text style={styles.tutorialHeading}>Example</Text>
         <Text style={styles.tutorialText}>
           If the row is &quot;Fruits&quot; and the column is &quot;Red Things&quot;, the correct
-          word might be &quot;Apple&quot; — it belongs to both categories!
+          word might be &quot;Apple&quot; - it belongs to both categories!
         </Text>
 
         <Text style={styles.tutorialHeading}>How to Play</Text>
@@ -49,10 +49,10 @@ export function HowToPlayScreen({ onBack }: HowToPlayScreenProps) {
 
         <Text style={styles.tutorialHeading}>Scoring</Text>
         <Text style={styles.tutorialText}>
-          • Complete the puzzle: up to 1000 points{'\n'}
-          • Faster = higher score{'\n'}
-          • Fewer mistakes = higher score{'\n'}
-          • Compare your score with other players!
+          - Complete the puzzle: up to 1000 points{'\n'}
+          - Faster = higher score{'\n'}
+          - Fewer mistakes = higher score{'\n'}
+          - Compare your score with other players!
         </Text>
       </ScrollView>
     </SafeAreaView>

@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { logger } from '@/utils/logger';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Platform } from 'react-native';
 import MobileAds, {
   AdEventType,
@@ -35,28 +36,23 @@ export function useRewardedAd(): UseRewardedAdReturn {
   const [isReady, setIsReady] = useState(false);
   const [isShowing, setIsShowing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [rewardedAd, setRewardedAd] = useState<RewardedAd | null>(null);
+  const rewardedAdRef = useRef<RewardedAd | null>(null);
+  const cleanupFnRef = useRef<(() => void) | null>(null);
 
   // Initialize AdMob on first launch
   useEffect(() => {
     MobileAds().initialize().catch((err) => {
-      console.error('Failed to initialize AdMob:', err);
+      logger.error('Failed to initialize AdMob:', err);
     });
   }, []);
 
-  // Load the ad when component mounts
-  useEffect(() => {
-    loadAd();
+  const loadAd = useCallback(() => {
+    // Clean up previous ad listeners before creating a new one
+    if (cleanupFnRef.current) {
+      cleanupFnRef.current();
+      cleanupFnRef.current = null;
+    }
 
-    return () => {
-      // Cleanup
-      if (rewardedAd) {
-        rewardedAd.removeAllListeners();
-      }
-    };
-  }, []);
-
-  const loadAd = () => {
     setIsLoading(true);
     setError(null);
 
@@ -68,27 +64,47 @@ export function useRewardedAd(): UseRewardedAdReturn {
     const unsubscribeLoaded = ad.addAdEventListener(RewardedAdEventType.LOADED, () => {
       setIsLoading(false);
       setIsReady(true);
-      setRewardedAd(ad);
+      rewardedAdRef.current = ad;
     });
 
     const unsubscribeError = ad.addAdEventListener(
       AdEventType.ERROR,
-      (error) => {
+      (err) => {
         setIsLoading(false);
-        setError(error.message || 'Failed to load ad');
-        console.error('Rewarded ad error:', error);
+        setError(err.message || 'Failed to load ad');
+        logger.error('Rewarded ad error:', err);
       }
     );
 
     ad.load();
 
-    return () => {
+    // Store cleanup function
+    cleanupFnRef.current = () => {
       unsubscribeLoaded();
       unsubscribeError();
+      ad.removeAllListeners();
     };
-  };
+  }, []);
+
+  // Load the ad when component mounts
+  useEffect(() => {
+    loadAd();
+
+    return () => {
+      // Cleanup on unmount
+      if (cleanupFnRef.current) {
+        cleanupFnRef.current();
+        cleanupFnRef.current = null;
+      }
+      if (rewardedAdRef.current) {
+        rewardedAdRef.current.removeAllListeners();
+        rewardedAdRef.current = null;
+      }
+    };
+  }, [loadAd]);
 
   const show = async (): Promise<boolean> => {
+    const rewardedAd = rewardedAdRef.current;
     if (!rewardedAd || !isReady) {
       setError('Ad is not ready yet');
       return false;
@@ -101,7 +117,7 @@ export function useRewardedAd(): UseRewardedAdReturn {
       const unsubscribeEarned = rewardedAd.addAdEventListener(
         RewardedAdEventType.EARNED_REWARD,
         (reward) => {
-          console.log('User earned reward:', reward);
+          logger.log('User earned reward:', reward);
           earnedReward = true;
           // Don't resolve here - wait for CLOSED event to ensure ad is fully dismissed
         }
@@ -125,7 +141,7 @@ export function useRewardedAd(): UseRewardedAdReturn {
       try {
         rewardedAd.show();
       } catch (err) {
-        console.error('Failed to show ad:', err);
+        logger.error('Failed to show ad:', err);
         unsubscribeEarned();
         unsubscribeDismissed();
         setIsShowing(false);

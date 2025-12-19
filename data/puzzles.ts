@@ -8,6 +8,7 @@ import { Puzzle } from '@/types/game';
 export const samplePuzzle: Puzzle = {
   id: 'puzzle-1',
   title: 'Animals, Clothes & More',
+  difficulty: 'medium',
   rowCategories: [
     { id: 'len-4', label: '4 Letters' },
     { id: 'len-5', label: '5 Letters' },

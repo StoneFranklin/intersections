@@ -1,5 +1,5 @@
 import { CellPosition, Puzzle, Word } from '@/types/game';
-import React, { useEffect, useState } from 'react';
+import React, { memo, useCallback, useEffect, useState } from 'react';
 import { Dimensions, Image, Platform, StyleSheet, Text, View } from 'react-native';
 import { GameCell } from './game-cell';
 
@@ -12,7 +12,7 @@ interface GameGridProps {
   onCellLongPress: (position: CellPosition) => void;
 }
 
-export function GameGrid({
+export const GameGrid = memo(function GameGrid({
   puzzle,
   getWordAtCell,
   isCellCorrect,
@@ -137,7 +137,7 @@ export function GameGrid({
       ))}
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {

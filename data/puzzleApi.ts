@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import { IntersectionsDailyPuzzle, Puzzle, Word } from "@/types/game";
+import { logger } from "@/utils/logger";
 
 const GRID_SIZE = 4;
 
@@ -25,14 +26,14 @@ export async function getDailyPuzzle(date: string): Promise<IntersectionsDailyPu
     .maybeSingle();  // returns null if not found
 
   if (error) {
-    console.error('Error fetching daily puzzle:', error);
+    logger.error('Error fetching daily puzzle:', error);
     return null;
   }
 
   const payload = data?.payload;
 
   if (!isIntersectionsDailyPuzzle(payload)) {
-    console.error('Daily puzzle payload has unexpected shape:', payload);
+    logger.error('Daily puzzle payload has unexpected shape:', payload);
     return null;
   }
 
@@ -137,7 +138,7 @@ export async function submitScore(
       const existingScore = await getUserTodayScore(userId);
       if (existingScore) {
         // User already has a score - return their existing rank/percentile
-        console.log('User already has a score for today, skipping submission');
+        logger.log('User already has a score for today, skipping submission');
         const percentile = await getScorePercentile(puzzleDate, existingScore.score);
         const rank = await getScoreRank(puzzleDate, existingScore.score, existingScore.timeSeconds);
         return { percentile, rank, scoreId: existingScore.id };
@@ -171,7 +172,7 @@ export async function submitScore(
       .single();
 
     if (insertError || !data) {
-      console.error('Error submitting score:', insertError);
+      logger.error('Error submitting score:', insertError);
       return null;
     }
 
@@ -180,7 +181,7 @@ export async function submitScore(
     const rank = await getScoreRank(puzzleDate, score, timeSeconds);
     return { percentile, rank, scoreId: data.id };
   } catch (e) {
-    console.error('Error in submitScore:', e);
+    logger.error('Error in submitScore:', e);
     return null;
   }
 }
@@ -202,7 +203,7 @@ export async function getScorePercentile(
       .lt('score', score);
 
     if (lowerError) {
-      console.error('Error getting lower scores:', lowerError);
+      logger.error('Error getting lower scores:', lowerError);
       return 50; // Default to 50th percentile on error
     }
 
@@ -213,7 +214,7 @@ export async function getScorePercentile(
       .eq('puzzle_date', puzzleDate);
 
     if (totalError || !totalCount) {
-      console.error('Error getting total scores:', totalError);
+      logger.error('Error getting total scores:', totalError);
       return 50;
     }
 
@@ -221,7 +222,7 @@ export async function getScorePercentile(
     const percentile = Math.round(((lowerCount || 0) / totalCount) * 100);
     return percentile;
   } catch (e) {
-    console.error('Error calculating percentile:', e);
+    logger.error('Error calculating percentile:', e);
     return 50;
   }
 }
@@ -244,13 +245,13 @@ export async function getScoreRank(
       .or(`score.gt.${score},and(score.eq.${score},time_seconds.lt.${timeSeconds})`);
 
     if (error) {
-      console.error('Error getting rank:', error);
+      logger.error('Error getting rank:', error);
       return 1;
     }
 
     return (betterCount || 0) + 1;
   } catch (e) {
-    console.error('Error calculating rank:', e);
+    logger.error('Error calculating rank:', e);
     return 1;
   }
 }
@@ -282,7 +283,7 @@ export async function getTodayStats(): Promise<{
 
     return { totalPlayers, averageScore, topScore };
   } catch (e) {
-    console.error('Error getting today stats:', e);
+    logger.error('Error getting today stats:', e);
     return null;
   }
 }
@@ -303,7 +304,7 @@ export async function getUserStreak(userId: string): Promise<{
       .maybeSingle();
 
     if (error) {
-      console.error('Error getting user streak:', error);
+      logger.error('Error getting user streak:', error);
       return null;
     }
 
@@ -317,7 +318,7 @@ export async function getUserStreak(userId: string): Promise<{
       lastPlayedDate: data.last_played_date,
     };
   } catch (e) {
-    console.error('Error in getUserStreak:', e);
+    logger.error('Error in getUserStreak:', e);
     return null;
   }
 }
@@ -345,7 +346,7 @@ export async function updateUserStreak(
       });
 
     if (error) {
-      console.error('Error updating user streak:', error);
+      logger.error('Error updating user streak:', error);
       return false;
     }
 
@@ -358,7 +359,7 @@ export async function updateUserStreak(
 
     return true;
   } catch (e) {
-    console.error('Error in updateUserStreak:', e);
+    logger.error('Error in updateUserStreak:', e);
     return false;
   }
 }
@@ -377,13 +378,13 @@ export async function hasUserCompletedToday(userId: string): Promise<boolean> {
       .eq('user_id', userId);
 
     if (error) {
-      console.error('Error checking user completion:', error);
+      logger.error('Error checking user completion:', error);
       return false;
     }
 
     return (count || 0) > 0;
   } catch (e) {
-    console.error('Error in hasUserCompletedToday:', e);
+    logger.error('Error in hasUserCompletedToday:', e);
     return false;
   }
 }
@@ -420,7 +421,7 @@ export async function getUserTodayScore(userId: string): Promise<{
       correctPlacements: data.correct_placements ?? 16,
     };
   } catch (e) {
-    console.error('Error in getUserTodayScore:', e);
+    logger.error('Error in getUserTodayScore:', e);
     return null;
   }
 }
@@ -498,7 +499,7 @@ export async function getTodayLeaderboardPage(params?: {
       .range(from, from + pageSize);
 
     if (error) {
-      console.error('Error fetching leaderboard page:', error);
+      logger.error('Error fetching leaderboard page:', error);
       return { entries: [], hasMore: false, nextFrom: from };
     }
 
@@ -523,7 +524,7 @@ export async function getTodayLeaderboardPage(params?: {
 
     return { entries, hasMore, nextFrom: from + pageRows.length };
   } catch (e) {
-    console.error('Error in getTodayLeaderboardPage:', e);
+    logger.error('Error in getTodayLeaderboardPage:', e);
     return { entries: [], hasMore: false, nextFrom: from };
   }
 }
@@ -545,7 +546,7 @@ export async function getTodayLeaderboard(currentUserId?: string): Promise<Leade
       .limit(50);
 
     if (error) {
-      console.error('Error fetching leaderboard:', error);
+      logger.error('Error fetching leaderboard:', error);
       return [];
     }
 
@@ -581,7 +582,7 @@ export async function getTodayLeaderboard(currentUserId?: string): Promise<Leade
       .filter(e => e.user_id)
       .map(e => e.user_id as string);
     
-    console.log('Fetching display names for user IDs:', userIds);
+    logger.log('Fetching display names for user IDs:', userIds);
     
     const displayNames = new Map<string, string>();
     if (userIds.length > 0) {
@@ -593,7 +594,7 @@ export async function getTodayLeaderboard(currentUserId?: string): Promise<Leade
           .eq('id', userId)
           .maybeSingle();
         
-        console.log(`Profile for ${userId}:`, { profile, error: profileError });
+        logger.log(`Profile for ${userId}:`, { profile, error: profileError });
         
         if (profile?.display_name) {
           displayNames.set(profile.id, profile.display_name);
@@ -601,7 +602,7 @@ export async function getTodayLeaderboard(currentUserId?: string): Promise<Leade
       }
     }
     
-    console.log('Display names map:', Object.fromEntries(displayNames));
+    logger.log('Display names map:', Object.fromEntries(displayNames));
 
     // Build leaderboard entries
     const leaderboard: LeaderboardEntry[] = sortedEntries.map((entry, index) => ({
@@ -630,7 +631,7 @@ export async function getTodayLeaderboard(currentUserId?: string): Promise<Leade
           .maybeSingle();
 
         if (userEntryError) {
-          console.error('Error fetching current user score:', userEntryError);
+          logger.error('Error fetching current user score:', userEntryError);
         }
 
         if (userEntry) {
@@ -656,7 +657,7 @@ export async function getTodayLeaderboard(currentUserId?: string): Promise<Leade
 
     return leaderboard;
   } catch (e) {
-    console.error('Error in getTodayLeaderboard:', e);
+    logger.error('Error in getTodayLeaderboard:', e);
     return [];
   }
 }
@@ -673,7 +674,7 @@ export async function getOrCreateProfile(userId: string): Promise<{ displayName:
       .maybeSingle();
 
     if (error && error.code !== 'PGRST116') {
-      console.error('Error fetching profile:', error);
+      logger.error('Error fetching profile:', error);
       return null;
     }
 
@@ -684,14 +685,14 @@ export async function getOrCreateProfile(userId: string): Promise<{ displayName:
         .insert({ id: userId });
       
       if (insertError) {
-        console.error('Error creating profile:', insertError);
+        logger.error('Error creating profile:', insertError);
       }
       return { displayName: null };
     }
 
     return { displayName: data.display_name };
   } catch (e) {
-    console.error('Error in getOrCreateProfile:', e);
+    logger.error('Error in getOrCreateProfile:', e);
     return null;
   }
 }
@@ -711,13 +712,13 @@ export async function updateDisplayName(userId: string, displayName: string): Pr
       });
 
     if (error) {
-      console.error('Error updating display name:', error);
+      logger.error('Error updating display name:', error);
       return false;
     }
 
     return true;
   } catch (e) {
-    console.error('Error in updateDisplayName:', e);
+    logger.error('Error in updateDisplayName:', e);
     return false;
   }
 }
@@ -762,7 +763,7 @@ export async function claimAnonymousScore(
 
     if (scoreId) {
       // Update the existing anonymous record with the user's ID
-      console.log('Attempting to claim anonymous score:', { scoreId, userId });
+      logger.log('Attempting to claim anonymous score:', { scoreId, userId });
       const { data: updateData, error: updateError } = await supabase
         .from('puzzle_scores')
         .update({ user_id: userId })
@@ -771,13 +772,13 @@ export async function claimAnonymousScore(
         .select('id');
 
       if (updateError) {
-        console.error('Error claiming anonymous score:', updateError);
+        logger.error('Error claiming anonymous score:', updateError);
         return null;
       }
 
       // Verify the update actually affected a row
       if (!updateData || updateData.length === 0) {
-        console.warn('claimAnonymousScore: No rows updated. Score may already be claimed or does not exist.', { scoreId });
+        logger.warn('claimAnonymousScore: No rows updated. Score may already be claimed or does not exist.', { scoreId });
         // Check if this user now owns the score (maybe it was already claimed by them)
         const checkResult = await supabase
           .from('puzzle_scores')
@@ -786,17 +787,17 @@ export async function claimAnonymousScore(
           .single();
 
         if (checkResult.data?.user_id === userId) {
-          console.log('Score already belongs to this user, continuing...');
+          logger.log('Score already belongs to this user, continuing...');
         } else {
-          console.error('Score not claimed - belongs to:', checkResult.data?.user_id);
+          logger.error('Score not claimed - belongs to:', checkResult.data?.user_id);
           return null;
         }
       } else {
-        console.log('Successfully claimed anonymous score:', updateData);
+        logger.log('Successfully claimed anonymous score:', updateData);
       }
     } else {
       // No scoreId - this shouldn't happen in normal flow, but handle gracefully
-      console.warn('claimAnonymousScore called without scoreId');
+      logger.warn('claimAnonymousScore called without scoreId');
       return null;
     }
 
@@ -806,7 +807,7 @@ export async function claimAnonymousScore(
 
     return { rank, percentile };
   } catch (e) {
-    console.error('Error in claimAnonymousScore:', e);
+    logger.error('Error in claimAnonymousScore:', e);
     return null;
   }
 }
@@ -831,7 +832,7 @@ export async function reconcileScoreOnSignIn(
 ): Promise<ReconciliationResult> {
   // Prevent concurrent reconciliation for the same user
   if (reconciliationInProgress === userId) {
-    console.log('Reconciliation already in progress for user, skipping');
+    logger.log('Reconciliation already in progress for user, skipping');
     return { action: 'no_change' };
   }
 
@@ -881,7 +882,7 @@ export async function reconcileScoreOnSignIn(
       action: 'no_change',
     };
   } catch (e) {
-    console.error('Error in reconcileScoreOnSignIn:', e);
+    logger.error('Error in reconcileScoreOnSignIn:', e);
     // On error, default to no_change to avoid blocking legitimate users
     return { action: 'no_change' };
   } finally {

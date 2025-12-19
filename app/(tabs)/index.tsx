@@ -21,16 +21,18 @@ import {
   serializeStoredDailyScore,
 } from '@/utils/dailyScoreStorage';
 import { haptics } from '@/utils/haptics';
+import { logger } from '@/utils/logger';
 import { areNotificationsEnabled, scheduleDailyNotification, setNotificationsEnabled } from '@/utils/notificationService';
 import { formatTime, shareScore } from '@/utils/share';
 import { Ionicons, MaterialCommunityIcons, AntDesign } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
 import { Link } from 'expo-router';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
+  KeyboardAvoidingView,
   Modal,
   Platform,
   ScrollView,
@@ -114,7 +116,7 @@ export default function GameScreen() {
     try {
       await AsyncStorage.setItem('signInBannerDismissed', 'true');
     } catch (e) {
-      console.error('Error saving banner dismissed state:', e);
+      logger.error('Error saving banner dismissed state:', e);
     }
   };
 
@@ -140,7 +142,7 @@ export default function GameScreen() {
 
       // If there was a previous user, refresh leaderboard to clear isCurrentUser flags
       if (prevUserForSignOutRef.current) {
-        console.log('User signed out, refreshing leaderboard');
+        logger.log('User signed out, refreshing leaderboard');
         loadLeaderboard({ forceRefresh: true });
         prevUserForSignOutRef.current = null;
       }
@@ -162,7 +164,7 @@ export default function GameScreen() {
   const prevUserRef = useRef<string | null>(null);
 
   // Reconcile score state when user signs in
-  // This handles: anonymousâ†’signed-in transfers and loading existing scores
+  // This handles: anonymous->signed-in transfers and loading existing scores
   useEffect(() => {
     // Only run when user transitions from null to signed-in
     if (!user || prevUserRef.current === user.id) {
@@ -183,13 +185,13 @@ export default function GameScreen() {
         // Only claim anonymous scores (localUserId === null), not scores from other users
         let localScore: { scoreId: string; score: number; timeSeconds: number; mistakes: number; correctPlacements: number } | null = null;
         const scoreData = await AsyncStorage.getItem(dailyScoreKey(todayKey));
-        console.log('Reconciliation: Raw local score data:', scoreData);
+        logger.log('Reconciliation: Raw local score data:', scoreData);
         if (scoreData) {
           const parsed = safeJsonParse(scoreData);
           const parsedOwnerId = getStoredLocalUserId(parsed) ?? null;
 
           const claimable = extractClaimableAnonymousScore(parsed);
-          console.log('Reconciliation: Parsed local score:', {
+          logger.log('Reconciliation: Parsed local score:', {
             scoreId: (parsed as any)?.scoreId,
             localUserId: parsedOwnerId,
             score: (parsed as any)?.score,
@@ -197,28 +199,28 @@ export default function GameScreen() {
 
           if (claimable) {
             localScore = claimable;
-            console.log('Reconciliation: Will attempt to claim anonymous score');
+            logger.log('Reconciliation: Will attempt to claim anonymous score');
           } else if ((parsed as any)?.score !== undefined && parsedOwnerId === null && !(parsed as any)?.scoreId) {
             // Score exists but scoreId is missing - the API submission might still be in progress
             // Retry after a delay to give it time to complete
             if (retryCount < MAX_RETRIES) {
-              console.log(`Reconciliation: Score found but no scoreId yet, retrying in ${RETRY_DELAY}ms (attempt ${retryCount + 1}/${MAX_RETRIES})`);
+              logger.log(`Reconciliation: Score found but no scoreId yet, retrying in ${RETRY_DELAY}ms (attempt ${retryCount + 1}/${MAX_RETRIES})`);
               setTimeout(() => runReconciliation(retryCount + 1), RETRY_DELAY);
               return;
             } else {
-              console.log('Reconciliation: Max retries reached, scoreId still missing');
+              logger.log('Reconciliation: Max retries reached, scoreId still missing');
             }
           } else {
-            console.log('Reconciliation: Not claiming - scoreId:', !!(parsed as any)?.scoreId, 'localUserId:', parsedOwnerId);
+            logger.log('Reconciliation: Not claiming - scoreId:', !!(parsed as any)?.scoreId, 'localUserId:', parsedOwnerId);
           }
         } else {
-          console.log('Reconciliation: No local score found');
+          logger.log('Reconciliation: No local score found');
         }
 
         // Run reconciliation
         const result = await reconcileScoreOnSignIn(user.id, localScore);
 
-        console.log('Reconciliation result:', result);
+        logger.log('Reconciliation result:', result);
 
         switch (result.action) {
           case 'loaded_existing':
@@ -269,7 +271,7 @@ export default function GameScreen() {
             break;
         }
       } catch (e) {
-        console.error('Error during sign-in reconciliation:', e);
+        logger.error('Error during sign-in reconciliation:', e);
       }
     };
 
@@ -308,7 +310,7 @@ export default function GameScreen() {
     }
 
     try {
-      console.log('Loading leaderboard for user:', user?.id);
+      logger.log('Loading leaderboard for user:', user?.id);
 
       // Load all data in parallel
       const [leaderboardData, puzzleData] = await Promise.all([
@@ -316,11 +318,11 @@ export default function GameScreen() {
         !todaysPuzzle ? fetchTodaysPuzzle() : Promise.resolve(todaysPuzzle),
       ]);
 
-      console.log('Leaderboard data:', leaderboardData);
+      logger.log('Leaderboard data:', leaderboardData);
 
       // Find user's rank from the leaderboard data
       const userEntry = leaderboardData.find(e => e.isCurrentUser);
-      console.log('User entry found:', userEntry);
+      logger.log('User entry found:', userEntry);
 
       // Set all state atomically - this ensures the UI updates together
       setLeaderboard(leaderboardData);
@@ -338,7 +340,7 @@ export default function GameScreen() {
       setLeaderboardLoaded(true);
       setLastLeaderboardRefresh(Date.now());
     } catch (e) {
-      console.error('Error loading leaderboard:', e);
+      logger.error('Error loading leaderboard:', e);
     } finally {
       setLoadingLeaderboard(false);
       setIsRefreshing(false);
@@ -367,7 +369,7 @@ export default function GameScreen() {
       setFullLeaderboardHasMore(page.hasMore);
       setFullLeaderboardLoaded(true);
     } catch (e) {
-      console.error('Error loading full leaderboard:', e);
+      logger.error('Error loading full leaderboard:', e);
     } finally {
       setLoadingFullLeaderboard(false);
     }
@@ -403,7 +405,7 @@ export default function GameScreen() {
     const intervalId = setInterval(() => {
       // Only refresh if data is older than the refresh interval
       if (Date.now() - lastLeaderboardRefresh >= REFRESH_INTERVAL) {
-        console.log('Auto-refreshing leaderboard...');
+        logger.log('Auto-refreshing leaderboard...');
         loadLeaderboard({ forceRefresh: true });
       }
     }, REFRESH_INTERVAL);
@@ -430,9 +432,9 @@ export default function GameScreen() {
         
         // If logged in, check database first
         if (user) {
-          console.log('Checking completion for user:', user.id, user.email);
+          logger.log('Checking completion for user:', user.id, user.email);
           const dbCompleted = await hasUserCompletedToday(user.id);
-          console.log('DB completed:', dbCompleted);
+          logger.log('DB completed:', dbCompleted);
           if (dbCompleted) {
             setDailyCompleted(true);
             // Get score from database
@@ -525,7 +527,7 @@ export default function GameScreen() {
           }
         }
       } catch (e) {
-        console.log('Error checking completion:', e);
+        logger.error('Error checking completion:', e);
       }
       setLoading(false);
     };
@@ -544,7 +546,7 @@ export default function GameScreen() {
         setPuzzle(dbPuzzle);
       } else {
         // Fallback to static puzzle if DB fetch fails
-        console.log('No puzzle in DB, using static fallback');
+        logger.log('No puzzle in DB, using static fallback');
         setPuzzle(generateDailyPuzzle());
       }
 
@@ -553,7 +555,7 @@ export default function GameScreen() {
       setIsReviewMode(dailyCompleted);
       setIsPlaying(true);
     } catch (e) {
-      console.error('Error fetching puzzle:', e);
+      logger.error('Error fetching puzzle:', e);
       // Fallback to static puzzle on error
       setPuzzle(generateDailyPuzzle());
       setIsReviewMode(dailyCompleted);
@@ -575,7 +577,7 @@ export default function GameScreen() {
       // Store localUserId with the score so we know who played on this device
       // null = anonymous, string = specific user
       const scoreWithUser = serializeStoredDailyScore(score, user?.id ?? null);
-      console.log('handleComplete: Saving score to AsyncStorage:', {
+      logger.log('handleComplete: Saving score to AsyncStorage:', {
         scoreId: scoreWithUser.scoreId,
         localUserId: scoreWithUser.localUserId,
         score: scoreWithUser.score,
@@ -627,7 +629,7 @@ export default function GameScreen() {
       // Load leaderboard data for the results screen
       loadLeaderboard();
     } catch (e) {
-      console.log('Error saving completion:', e);
+      logger.error('Error saving completion:', e);
     }
   };
 
@@ -719,11 +721,11 @@ export default function GameScreen() {
                 <Text style={styles.signInBannerButtonText}>Sign In</Text>
               </TouchableOpacity>
             </View>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.signInBannerDismiss}
               onPress={dismissSignInBanner}
             >
-              <Text style={styles.signInBannerDismissText}>Ã—</Text>
+              <Ionicons name="close" size={20} color="#666" />
             </TouchableOpacity>
           </View>
         )}
@@ -876,7 +878,7 @@ export default function GameScreen() {
                       {userRank && userRank > 3 && savedScore && (
                         <>
                           <View style={styles.leaderboardDivider}>
-                            <Text style={styles.leaderboardDividerText}>â€¢â€¢â€¢</Text>
+                            <Text style={styles.leaderboardDividerText}>...</Text>
                           </View>
                           <View
                             style={[styles.leaderboardCompactRow, styles.leaderboardCompactRowCurrentUser]}
@@ -932,7 +934,7 @@ export default function GameScreen() {
                 <Text style={styles.footerLinkText}>Privacy</Text>
               </TouchableOpacity>
             </Link>
-            <Text style={styles.footerLinkDivider}>â€¢</Text>
+            <Text style={styles.footerLinkDivider}>•</Text>
             <Link href={"/terms" as any} asChild>
               <TouchableOpacity>
                 <Text style={styles.footerLinkText}>Terms</Text>
@@ -964,7 +966,7 @@ export default function GameScreen() {
                     await signInWithGoogle();
                     setShowSignIn(false);
                   } catch (e) {
-                    console.error('Sign in error:', e);
+                    logger.error('Sign in error:', e);
                   } finally {
                     setSigningIn(false);
                   }
@@ -988,7 +990,7 @@ export default function GameScreen() {
                       await signInWithApple();
                       setShowSignIn(false);
                     } catch (e) {
-                      console.error('Apple sign in error:', e);
+                      logger.error('Apple sign in error:', e);
                     } finally {
                       setSigningInWithApple(false);
                     }
@@ -1105,7 +1107,10 @@ export default function GameScreen() {
           transparent={true}
           onRequestClose={() => setShowDisplayNameModal(false)}
         >
-          <View style={styles.modalOverlay}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.modalOverlay}
+          >
             <View style={styles.displayNameModal}>
               <Text style={styles.displayNameTitle}>
                 {displayName ? 'Edit Display Name' : 'Set Your Display Name'}
@@ -1122,6 +1127,10 @@ export default function GameScreen() {
                 placeholderTextColor="#666"
                 maxLength={20}
                 autoFocus
+                returnKeyType="done"
+                onSubmitEditing={handleSaveDisplayName}
+                accessibilityLabel="Display name input"
+                accessibilityHint="Enter a name to show on the leaderboard"
               />
 
               <TouchableOpacity
@@ -1131,6 +1140,8 @@ export default function GameScreen() {
                 ]}
                 onPress={handleSaveDisplayName}
                 disabled={!displayNameInput.trim() || savingDisplayName}
+                accessibilityRole="button"
+                accessibilityLabel={savingDisplayName ? 'Saving display name' : 'Save display name'}
               >
                 <Text style={styles.displayNameSaveText}>
                   {savingDisplayName ? 'Saving...' : 'Save'}
@@ -1144,12 +1155,14 @@ export default function GameScreen() {
                     setShowDisplayNameModal(false);
                     setDisplayNameInput('');
                   }}
+                  accessibilityRole="button"
+                  accessibilityLabel="Cancel editing display name"
                 >
                   <Text style={styles.displayNameCancelText}>Cancel</Text>
                 </TouchableOpacity>
               )}
             </View>
-          </View>
+          </KeyboardAvoidingView>
         </Modal>
       </SafeAreaView>
     );
@@ -1170,6 +1183,7 @@ export default function GameScreen() {
         loadingLeaderboard={loadingLeaderboard}
         onShowAnswersModal={() => setShowAnswersScreen(true)}
         onOpenLeaderboard={openLeaderboard}
+        onShowTutorial={() => setShowTutorial(true)}
         gameEnded={currentGameEnded}
       />
     </>
@@ -1189,10 +1203,11 @@ interface GameContentProps {
   loadingLeaderboard: boolean;
   onShowAnswersModal: () => void;
   onOpenLeaderboard: () => void;
+  onShowTutorial: () => void;
   gameEnded: boolean;
 }
 
-function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedScore, userId, userRank, leaderboard, leaderboardLoaded, loadingLeaderboard, onShowAnswersModal, onOpenLeaderboard, gameEnded }: GameContentProps) {
+function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedScore, userId, userRank, leaderboard, leaderboardLoaded, loadingLeaderboard, onShowAnswersModal, onOpenLeaderboard, onShowTutorial, gameEnded }: GameContentProps) {
   const {
     gameState,
     unplacedWords,
@@ -1289,7 +1304,7 @@ function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedSc
             onComplete(finalScore, result.rank);
           }
         })
-        .catch(console.error)
+        .catch((e) => logger.error('Error submitting score:', e))
         .finally(() => setSubmittingScore(false));
     }
   }, [gameState.isSolved, shouldShowGameOver, finalScore, submittingScore, resultRank, onComplete]);
@@ -1340,7 +1355,7 @@ function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedSc
         {/* Header with back arrow */}
         <View style={styles.header}>
           <TouchableOpacity onPress={onBack} style={styles.headerBackButton}>
-            <Text style={styles.headerBackIcon}>â€¹</Text>
+            <Ionicons name="chevron-back" size={28} color="#fff" />
           </TouchableOpacity>
           <View style={styles.headerCenter}>
             <Text style={styles.reviewHeaderTitle}>Your Results</Text>
@@ -1514,7 +1529,7 @@ function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedSc
                 {displayRank && displayRank > 3 && displayScore && (
                   <>
                     <View style={styles.leaderboardDivider}>
-                      <Text style={styles.leaderboardDividerText}>â€¢â€¢â€¢</Text>
+                      <Text style={styles.leaderboardDividerText}>...</Text>
                     </View>
                     <View
                       style={[styles.leaderboardCompactRow, styles.leaderboardCompactRowCurrentUser]}
@@ -1581,12 +1596,12 @@ function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedSc
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={onBack} style={styles.headerBackButton}>
-          <Text style={styles.headerBackIcon}>â€¹</Text>
+          <Ionicons name="chevron-back" size={28} color="#fff" />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
           <Text style={styles.timerText}>{formatTime(elapsedTime)}</Text>
         </View>
-        <TouchableOpacity onPress={() => setShowTutorial(true)} style={styles.headerHelpButton}>
+        <TouchableOpacity onPress={onShowTutorial} style={styles.headerHelpButton}>
           <View style={styles.helpCircle}>
             <Text style={styles.headerHelpIcon}>?</Text>
           </View>
