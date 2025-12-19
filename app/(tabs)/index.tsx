@@ -7,7 +7,20 @@ import { fetchTodaysPuzzle, getOrCreateProfile, getPercentile, getTodayLeaderboa
 import { useGameState } from '@/hooks/use-game-state';
 import { useRewardedAd } from '@/hooks/use-rewarded-ad';
 import { CellPosition, GameScore, Puzzle } from '@/types/game';
+import { getTodayKey, getYesterdayKey } from '@/utils/dateKeys';
+import {
+  dailyCompletedKey,
+  dailyRankKey,
+  dailyScoreKey,
+  extractClaimableAnonymousScore,
+  getStoredLocalUserId,
+  normalizeStoredDailyScore,
+  safeJsonParse,
+  serializeStoredDailyScore,
+} from '@/utils/dailyScoreStorage';
+import { haptics } from '@/utils/haptics';
 import { areNotificationsEnabled, scheduleDailyNotification, setNotificationsEnabled } from '@/utils/notificationService';
+import { formatTime, shareScore } from '@/utils/share';
 import { Ionicons, MaterialCommunityIcons, AntDesign } from '@expo/vector-icons';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -21,7 +34,6 @@ import {
   Modal,
   Platform,
   ScrollView,
-  Share,
   StyleSheet,
   Text,
   TextInput,
@@ -29,90 +41,6 @@ import {
   View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-// Format seconds into MM:SS
-function formatTime(seconds: number): string {
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${mins}:${secs.toString().padStart(2, '0')}`;
-}
-
-// Generate share text for score
-function generateShareText(score: GameScore, rank: number | null): string {
-  const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-
-  let text = `Intersections - ${today}\n\n`;
-  text += `My score today: ${score.score}\n`;
-  text += `${score.correctPlacements}/16 correct in ${formatTime(score.timeSeconds)}\n`;
-
-  if (rank !== null) {
-    text += `Ranked #${rank} today\n`;
-  }
-
-  text += `\nPlay at: stonefranklin.github.io/intersections`;
-
-  return text;
-}
-
-// Share score function
-async function shareScore(score: GameScore, rank: number | null) {
-  const text = generateShareText(score, rank);
-  
-  if (Platform.OS === 'web') {
-    // Web share API or fallback to clipboard
-    if (navigator.share) {
-      try {
-        await navigator.share({ text });
-      } catch (e) {
-        // User cancelled or error
-        await navigator.clipboard.writeText(text);
-        alert('Score copied to clipboard!');
-      }
-    } else {
-      await navigator.clipboard.writeText(text);
-      alert('Score copied to clipboard!');
-    }
-  } else {
-    // Native share
-    try {
-      await Share.share({ message: text });
-    } catch (e) {
-      console.error('Share error:', e);
-    }
-  }
-}
-
-// Safe haptics wrapper for web
-const haptics = {
-  impact: (style: Haptics.ImpactFeedbackStyle) => {
-    if (Platform.OS !== 'web') {
-      Haptics.impactAsync(style);
-    }
-  },
-  selection: () => {
-    if (Platform.OS !== 'web') {
-      Haptics.selectionAsync();
-    }
-  },
-  notification: (type: Haptics.NotificationFeedbackType) => {
-    if (Platform.OS !== 'web') {
-      Haptics.notificationAsync(type);
-    }
-  },
-};
-
-// Get today's date string for storage key
-function getTodayKey(): string {
-  const today = new Date();
-  return `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
-}
-
-// Get yesterday's date key
-function getYesterdayKey(): string {
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  return `${yesterday.getFullYear()}-${yesterday.getMonth() + 1}-${yesterday.getDate()}`;
-}
 
 export default function GameScreen() {
   const { user, loading: authLoading, signInWithGoogle, signInWithApple, signOut } = useAuth();
@@ -251,45 +179,36 @@ export default function GameScreen() {
 
       try {
         // Get local score if any (including scoreId for claiming anonymous scores)
-        // Only claim anonymous scores (odak === null), not scores from other users
+        // Only claim anonymous scores (localUserId === null), not scores from other users
         let localScore: { scoreId: string; score: number; timeSeconds: number; mistakes: number; correctPlacements: number } | null = null;
-        const scoreData = await AsyncStorage.getItem(`score-${todayKey}`);
+        const scoreData = await AsyncStorage.getItem(dailyScoreKey(todayKey));
         console.log('Reconciliation: Raw local score data:', scoreData);
         if (scoreData) {
-          try {
-            const parsed = JSON.parse(scoreData);
-            console.log('Reconciliation: Parsed local score:', {
-              scoreId: parsed.scoreId,
-              odak: parsed.odak,
-              score: parsed.score,
-            });
-            // Only include if:
-            // 1. We have a scoreId (required for claiming)
-            // 2. The score was anonymous (odak === null) - don't claim another user's score
-            if (parsed.scoreId && parsed.odak === null) {
-              localScore = {
-                scoreId: parsed.scoreId,
-                score: parsed.score,
-                timeSeconds: parsed.timeSeconds,
-                mistakes: parsed.mistakes,
-                correctPlacements: parsed.correctPlacements,
-              };
-              console.log('Reconciliation: Will attempt to claim anonymous score');
-            } else if (!parsed.scoreId && parsed.odak === null && parsed.score !== undefined) {
-              // Score exists but scoreId is missing - the API submission might still be in progress
-              // Retry after a delay to give it time to complete
-              if (retryCount < MAX_RETRIES) {
-                console.log(`Reconciliation: Score found but no scoreId yet, retrying in ${RETRY_DELAY}ms (attempt ${retryCount + 1}/${MAX_RETRIES})`);
-                setTimeout(() => runReconciliation(retryCount + 1), RETRY_DELAY);
-                return;
-              } else {
-                console.log('Reconciliation: Max retries reached, scoreId still missing');
-              }
+          const parsed = safeJsonParse(scoreData);
+          const parsedOwnerId = getStoredLocalUserId(parsed) ?? null;
+
+          const claimable = extractClaimableAnonymousScore(parsed);
+          console.log('Reconciliation: Parsed local score:', {
+            scoreId: (parsed as any)?.scoreId,
+            localUserId: parsedOwnerId,
+            score: (parsed as any)?.score,
+          });
+
+          if (claimable) {
+            localScore = claimable;
+            console.log('Reconciliation: Will attempt to claim anonymous score');
+          } else if ((parsed as any)?.score !== undefined && parsedOwnerId === null && !(parsed as any)?.scoreId) {
+            // Score exists but scoreId is missing - the API submission might still be in progress
+            // Retry after a delay to give it time to complete
+            if (retryCount < MAX_RETRIES) {
+              console.log(`Reconciliation: Score found but no scoreId yet, retrying in ${RETRY_DELAY}ms (attempt ${retryCount + 1}/${MAX_RETRIES})`);
+              setTimeout(() => runReconciliation(retryCount + 1), RETRY_DELAY);
+              return;
             } else {
-              console.log('Reconciliation: Not claiming - scoreId:', !!parsed.scoreId, 'odak:', parsed.odak);
+              console.log('Reconciliation: Max retries reached, scoreId still missing');
             }
-          } catch (e) {
-            console.error('Error parsing local score:', e);
+          } else {
+            console.log('Reconciliation: Not claiming - scoreId:', !!(parsed as any)?.scoreId, 'localUserId:', parsedOwnerId);
           }
         } else {
           console.log('Reconciliation: No local score found');
@@ -313,9 +232,17 @@ export default function GameScreen() {
               });
               setDailyCompleted(true);
               if (result.rank) setUserRank(result.rank);
-              // Save to local storage for consistency, with odak set to this user
-              await AsyncStorage.setItem(`completed-${todayKey}`, 'true');
-              await AsyncStorage.setItem(`score-${todayKey}`, JSON.stringify({ ...result.score, odak: user.id }));
+              // Save to local storage for consistency, with localUserId set to this user
+              await AsyncStorage.setItem(dailyCompletedKey(todayKey), 'true');
+              await AsyncStorage.setItem(
+                dailyScoreKey(todayKey),
+                JSON.stringify(
+                  serializeStoredDailyScore(
+                    { ...(result.score as any), completed: result.score.correctPlacements === 16 } as GameScore,
+                    user.id
+                  )
+                )
+              );
             }
             break;
 
@@ -324,7 +251,15 @@ export default function GameScreen() {
             if (result.rank) setUserRank(result.rank);
             // Update local storage to mark this score as belonging to this user
             if (result.score) {
-              await AsyncStorage.setItem(`score-${todayKey}`, JSON.stringify({ ...result.score, odak: user.id }));
+              await AsyncStorage.setItem(
+                dailyScoreKey(todayKey),
+                JSON.stringify(
+                  serializeStoredDailyScore(
+                    { ...(result.score as any), completed: result.score.correctPlacements === 16 } as GameScore,
+                    user.id
+                  )
+                )
+              );
             }
             break;
 
@@ -514,19 +449,20 @@ export default function GameScreen() {
             }
           } else {
             // User hasn't played on their account today - check local storage
-            const scoreData = await AsyncStorage.getItem(`score-${todayKey}`);
+            const scoreData = await AsyncStorage.getItem(dailyScoreKey(todayKey));
             if (scoreData) {
-              const localScore = JSON.parse(scoreData);
-              const localOdak = localScore.odak; // Who played locally: null = anon, string = userId
+              const parsed = safeJsonParse(scoreData);
+              const localScore = normalizeStoredDailyScore(parsed) ?? (parsed as any);
+              const localUserId = getStoredLocalUserId(parsed) ?? null; // null = anon, string = userId
 
-              if (localOdak === null) {
+              if (localUserId === null) {
                 // Anonymous play on this device - can be claimed by this user
                 // Show as completed, reconciliation will claim the score
                 setDailyCompleted(true);
                 const freshPercentile = await getPercentile(localScore.score);
                 localScore.percentile = freshPercentile;
                 setSavedScore(localScore);
-              } else if (localOdak === user.id) {
+              } else if (localUserId === user.id) {
                 // This user played locally but DB doesn't have it (edge case, maybe offline)
                 setDailyCompleted(true);
                 const freshPercentile = await getPercentile(localScore.score);
@@ -551,21 +487,22 @@ export default function GameScreen() {
           }
         } else {
           // Not logged in - use local storage
-          const completed = await AsyncStorage.getItem(`completed-${todayKey}`);
+          const completed = await AsyncStorage.getItem(dailyCompletedKey(todayKey));
           setDailyCompleted(completed === 'true');
           
           // Load saved score and rank if completed
           if (completed === 'true') {
-            const scoreData = await AsyncStorage.getItem(`score-${todayKey}`);
+            const scoreData = await AsyncStorage.getItem(dailyScoreKey(todayKey));
             if (scoreData) {
-              const score = JSON.parse(scoreData) as GameScore;
+              const parsed = safeJsonParse(scoreData);
+              const score = normalizeStoredDailyScore(parsed) ?? (parsed as GameScore);
               // Fetch fresh percentile from database
               const freshPercentile = await getPercentile(score.score);
               score.percentile = freshPercentile;
               setSavedScore(score);
             }
             // Load saved rank for anonymous users
-            const savedRank = await AsyncStorage.getItem(`rank-${todayKey}`);
+            const savedRank = await AsyncStorage.getItem(dailyRankKey(todayKey));
             if (savedRank) {
               setUserRank(parseInt(savedRank, 10));
             }
@@ -633,18 +570,18 @@ export default function GameScreen() {
       const yesterdayDate = new Date(Date.now() - 86400000).toISOString().split('T')[0];
 
       // Always save to local storage with userId to track who played
-      await AsyncStorage.setItem(`completed-${todayKey}`, 'true');
-      // Store odak (userId) with the score so we know who played on this device
+      await AsyncStorage.setItem(dailyCompletedKey(todayKey), 'true');
+      // Store localUserId with the score so we know who played on this device
       // null = anonymous, string = specific user
-      const scoreWithUser = { ...score, odak: user?.id ?? null };
+      const scoreWithUser = serializeStoredDailyScore(score, user?.id ?? null);
       console.log('handleComplete: Saving score to AsyncStorage:', {
         scoreId: scoreWithUser.scoreId,
-        odak: scoreWithUser.odak,
+        localUserId: scoreWithUser.localUserId,
         score: scoreWithUser.score,
       });
-      await AsyncStorage.setItem(`score-${todayKey}`, JSON.stringify(scoreWithUser));
+      await AsyncStorage.setItem(dailyScoreKey(todayKey), JSON.stringify(scoreWithUser));
       if (rank) {
-        await AsyncStorage.setItem(`rank-${todayKey}`, rank.toString());
+        await AsyncStorage.setItem(dailyRankKey(todayKey), rank.toString());
       }
       setDailyCompleted(true);
       setSavedScore(score);
@@ -709,7 +646,7 @@ export default function GameScreen() {
           </TouchableOpacity>
           <View style={styles.leaderboardScreenTitleContainer}>
             <MaterialCommunityIcons name="trophy" size={24} color="#ffd700" />
-            <Text style={styles.leaderboardScreenTitle}>Today's Leaderboard</Text>
+            <Text style={styles.leaderboardScreenTitle}>Today&apos;s Leaderboard</Text>
           </View>
           <TouchableOpacity
             style={styles.leaderboardScreenRefreshButton}
@@ -1154,7 +1091,7 @@ export default function GameScreen() {
                     <View style={styles.completedHeaderContent}>
                       <View style={styles.completedHeaderTitleRow}>
                         <MaterialCommunityIcons name="trophy" size={20} color="#ffd700" />
-                        <Text style={styles.completedTitle}>Today's Leaderboard</Text>
+                        <Text style={styles.completedTitle}>Today&apos;s Leaderboard</Text>
                       </View>
                       {userRank && (
                         <Text style={styles.completedRankText}>#{userRank} in the world</Text>
@@ -1823,7 +1760,7 @@ function GameContent({ puzzle, onBack, onComplete, isReviewMode = false, savedSc
             <View style={styles.gameCompleteLeaderboardHeader}>
               <View style={styles.gameCompleteLeaderboardHeaderLeft}>
                 <MaterialCommunityIcons name="trophy" size={20} color="#ffd700" />
-                <Text style={styles.gameCompleteLeaderboardTitle}>Today's Leaderboard</Text>
+                <Text style={styles.gameCompleteLeaderboardTitle}>Today&apos;s Leaderboard</Text>
               </View>
             </View>
 

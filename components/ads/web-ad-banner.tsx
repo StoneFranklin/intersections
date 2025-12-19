@@ -16,12 +16,9 @@ interface WebAdBannerProps {
  * 4. Add your publisher ID to app/+html.tsx
  */
 export function WebAdBanner({ adSlot, style }: WebAdBannerProps) {
-  // Only render on web
-  if (Platform.OS !== 'web') {
-    return null;
-  }
-
   useEffect(() => {
+    if (Platform.OS !== 'web') return;
+
     // Push the ad to AdSense when component mounts
     try {
       if (typeof window !== 'undefined' && (window as any).adsbygoogle) {
@@ -30,7 +27,12 @@ export function WebAdBanner({ adSlot, style }: WebAdBannerProps) {
     } catch (e) {
       console.error('AdSense error:', e);
     }
-  }, []);
+  }, [adSlot]);
+
+  // Only render on web
+  if (Platform.OS !== 'web') {
+    return null;
+  }
 
   return (
     <View style={[styles.container, style]}>

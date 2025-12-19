@@ -31,16 +31,16 @@ export default function HowToPlayPage() {
           <Text style={styles.sectionTitle}>The Goal</Text>
           <Text style={styles.paragraph}>
             Your objective is simple: place all 16 words into the 4×4 grid correctly. 
-            Each word must be placed in a cell where it belongs to BOTH the row's category 
-            AND the column's category.
+            Each word must be placed in a cell where it belongs to BOTH the row&apos;s category 
+            AND the column&apos;s category.
           </Text>
           <View style={styles.exampleBox}>
             <Text style={styles.exampleTitle}>Example</Text>
             <Text style={styles.exampleText}>
-              If the row category is <Text style={styles.highlight}>"Fruits"</Text> and 
-              the column category is <Text style={styles.highlight}>"Red Things"</Text>, 
-              the correct word might be <Text style={styles.highlight}>"Apple"</Text> or 
-              <Text style={styles.highlight}> "Strawberry"</Text> — they're both fruits AND red!
+              If the row category is <Text style={styles.highlight}>{'"Fruits"'}</Text> and 
+              the column category is <Text style={styles.highlight}>{'"Red Things"'}</Text>, 
+              the correct word might be <Text style={styles.highlight}>{'"Apple"'}</Text> or 
+              <Text style={styles.highlight}>{'"Strawberry"'}</Text> - they&apos;re both fruits AND red!
             </Text>
           </View>
         </View>
@@ -95,7 +95,7 @@ export default function HowToPlayPage() {
             <View style={styles.stepContent}>
               <Text style={styles.stepTitle}>Check Your Answer</Text>
               <Text style={styles.stepDesc}>
-                Once placed, tap the "Check" button to verify if your placements are correct. 
+                Once placed, tap the <Text style={styles.highlight}>{'"Check"'}</Text> button to verify if your placements are correct. 
                 Correct words turn green, incorrect ones cost you a life.
               </Text>
             </View>
@@ -124,13 +124,13 @@ export default function HowToPlayPage() {
           </View>
           <Text style={styles.paragraph}>
             Each time you place a word incorrectly, you lose one life. If you lose all 
-            three lives, the game ends and you won't be able to complete that day's puzzle.
+            three lives, the game ends and you won&apos;t be able to complete that day&apos;s puzzle.
           </Text>
           <View style={styles.tipBox}>
             <Text style={styles.tipTitle}>💡 Pro Tip</Text>
             <Text style={styles.tipText}>
-              Don't guess randomly! Take your time to think through each placement. 
-              It's better to be slow and accurate than fast and wrong.
+              Don&apos;t guess randomly! Take your time to think through each placement. 
+              It&apos;s better to be slow and accurate than fast and wrong.
             </Text>
           </View>
         </View>
@@ -183,7 +183,7 @@ export default function HowToPlayPage() {
             <View style={styles.tipItem}>
               <Text style={styles.tipItemIcon}>🎯</Text>
               <Text style={styles.tipItemText}>
-                Start with the words you're most confident about — they'll help narrow 
+                Start with the words you&apos;re most confident about - they&apos;ll help narrow 
                 down the remaining options.
               </Text>
             </View>
@@ -216,7 +216,7 @@ export default function HowToPlayPage() {
           <Text style={styles.ctaText}>Ready to play?</Text>
           <Link href="/" asChild>
             <TouchableOpacity style={styles.ctaButton}>
-              <Text style={styles.ctaButtonText}>Play Today's Puzzle →</Text>
+              <Text style={styles.ctaButtonText}>Play Today&apos;s Puzzle →</Text>
             </TouchableOpacity>
           </Link>
         </View>
