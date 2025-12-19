@@ -120,11 +120,18 @@ export default function GameScreen() {
     } else {
       // User signed out - clear display name and refresh leaderboard
       setDisplayName(null);
+      setLeaderboard([]);
+      setLeaderboardLoaded(false);
+      setFullLeaderboard([]);
+      setFullLeaderboardLoaded(false);
+      setFullLeaderboardFrom(0);
+      setFullLeaderboardHasMore(true);
+      setUserRank(null);
+      setShowLeaderboardScreen(false);
 
       // If there was a previous user, refresh leaderboard to clear isCurrentUser flags
       if (prevUserForSignOutRef.current) {
-        logger.log('User signed out, refreshing leaderboard');
-        loadLeaderboard({ forceRefresh: true });
+        logger.log('User signed out, clearing leaderboard state');
         prevUserForSignOutRef.current = null;
       }
     }
@@ -290,6 +297,7 @@ export default function GameScreen() {
   // Load leaderboard data (for both preview and full modal)
   // This function loads all data atomically - leaderboard won't show until everything is ready
   const loadLeaderboard = async (opts?: { forceRefresh?: boolean }) => {
+    if (!user) return;
     if (loadingLeaderboard && !opts?.forceRefresh) return;
 
     // If force refresh, mark as refreshing but keep existing data visible
@@ -339,6 +347,7 @@ export default function GameScreen() {
 
   // Refresh leaderboard data (keeps existing data visible during refresh)
   const refreshLeaderboard = async () => {
+    if (!user) return;
     await loadLeaderboard({ forceRefresh: true });
     // Also refresh the full leaderboard if it was loaded
     if (fullLeaderboardLoaded) {
@@ -347,6 +356,7 @@ export default function GameScreen() {
   };
 
   const loadFullLeaderboard = async (opts?: { reset?: boolean }) => {
+    if (!user) return;
     if (loadingFullLeaderboard) return;
     if (!fullLeaderboardHasMore && !opts?.reset) return;
 
@@ -367,10 +377,10 @@ export default function GameScreen() {
 
   // Load leaderboard when puzzle is completed
   useEffect(() => {
-    if (dailyCompleted && !leaderboardLoaded && !loadingLeaderboard) {
+    if (user && dailyCompleted && !leaderboardLoaded && !loadingLeaderboard) {
       loadLeaderboard();
     }
-  }, [dailyCompleted, leaderboardLoaded]);
+  }, [dailyCompleted, leaderboardLoaded, loadingLeaderboard, user]);
 
   // Reload leaderboard when user changes (e.g., after login) to get correct "isCurrentUser" marking
   useEffect(() => {
@@ -387,7 +397,7 @@ export default function GameScreen() {
 
   // Auto-refresh leaderboard every 60 seconds when on home screen and puzzle is completed
   useEffect(() => {
-    if (!dailyCompleted || !leaderboardLoaded || isPlaying || showLeaderboardScreen) {
+    if (!user || !dailyCompleted || !leaderboardLoaded || isPlaying || showLeaderboardScreen) {
       return;
     }
 
@@ -401,9 +411,13 @@ export default function GameScreen() {
     }, REFRESH_INTERVAL);
 
     return () => clearInterval(intervalId);
-  }, [dailyCompleted, leaderboardLoaded, isPlaying, showLeaderboardScreen, lastLeaderboardRefresh]);
+  }, [dailyCompleted, leaderboardLoaded, isPlaying, showLeaderboardScreen, lastLeaderboardRefresh, user]);
 
   const openLeaderboard = async () => {
+    if (!user) {
+      setShowSignIn(true);
+      return;
+    }
     setShowLeaderboardScreen(true);
     if (!leaderboardLoaded) {
       await loadLeaderboard();
@@ -617,7 +631,9 @@ export default function GameScreen() {
       await scheduleDailyNotification();
 
       // Load leaderboard data for the results screen
-      loadLeaderboard();
+      if (user) {
+        loadLeaderboard();
+      }
     } catch (e) {
       logger.error('Error saving completion:', e);
     }

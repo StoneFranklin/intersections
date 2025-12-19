@@ -119,7 +119,7 @@ export function HomeMenu({
     <SafeAreaView style={styles.container}>
       <View style={styles.homeHeader}>
         <View style={styles.homeHeaderLeft}>
-          {streak > 0 && (
+          {user && streak > 0 && (
             <View style={styles.headerStreakBadge}>
               <Ionicons name="flame" size={14} color="#f59e0b" style={styles.headerStreakFlame} />
               <Text style={styles.headerStreakText}>{streak}</Text>
@@ -148,7 +148,7 @@ export function HomeMenu({
           <View style={styles.signInBannerContent}>
             <View style={styles.signInBannerText}>
               <Text style={styles.signInBannerTitle}>
-                Sign in to track stats, compete on leaderboards & sync across devices
+                Sign in to see your global ranking, compete on the leaderboard, and sync across devices
               </Text>
             </View>
             <TouchableOpacity style={styles.signInBannerButton} onPress={() => setShowSignIn(true)}>
@@ -216,123 +216,147 @@ export function HomeMenu({
               </TouchableOpacity>
             ) : (
               <>
-                <TouchableOpacity
-                  style={styles.completedContainer}
-                  onPress={onOpenLeaderboard}
-                  activeOpacity={0.8}
-                >
-                  <View style={styles.completedHeader}>
-                    <View style={styles.completedHeaderContent}>
-                      <View style={styles.completedHeaderTitleRow}>
-                        <MaterialCommunityIcons name="trophy" size={20} color="#ffd700" />
-                        <Text style={styles.completedTitle}>Today&apos;s Leaderboard</Text>
+                {user ? (
+                  <TouchableOpacity
+                    style={styles.completedContainer}
+                    onPress={onOpenLeaderboard}
+                    activeOpacity={0.8}
+                  >
+                    <View style={styles.completedHeader}>
+                      <View style={styles.completedHeaderContent}>
+                        <View style={styles.completedHeaderTitleRow}>
+                          <MaterialCommunityIcons name="trophy" size={20} color="#ffd700" />
+                          <Text style={styles.completedTitle}>Today&apos;s Leaderboard</Text>
+                        </View>
+                        {userRank && <Text style={styles.completedRankText}>#{userRank} in the world</Text>}
                       </View>
-                      {userRank && <Text style={styles.completedRankText}>#{userRank} in the world</Text>}
+                      <TouchableOpacity
+                        style={styles.refreshButton}
+                        onPress={(e) => {
+                          e.stopPropagation();
+                          onRefreshLeaderboard();
+                        }}
+                        disabled={isRefreshing || loadingLeaderboard}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                      >
+                        <Ionicons name="refresh" size={18} color={isRefreshing ? '#666' : '#6a9fff'} />
+                      </TouchableOpacity>
                     </View>
-                    <TouchableOpacity
-                      style={styles.refreshButton}
-                      onPress={(e) => {
-                        e.stopPropagation();
-                        onRefreshLeaderboard();
-                      }}
-                      disabled={isRefreshing || loadingLeaderboard}
-                      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                    >
-                      <Ionicons name="refresh" size={18} color={isRefreshing ? '#666' : '#6a9fff'} />
-                    </TouchableOpacity>
-                  </View>
 
-                  {(loadingLeaderboard && !leaderboardLoaded) ||
-                  (user && leaderboardLoaded && leaderboard.length > 0 && userRank === null) ? (
-                    <View style={styles.leaderboardLoadingContainer}>
-                      <ActivityIndicator size="small" color="#6a9fff" />
-                      <Text style={styles.leaderboardLoadingText}>Loading rankings...</Text>
-                    </View>
-                  ) : leaderboard.length === 0 ? (
-                    <Text style={styles.leaderboardEmptyText}>No scores yet</Text>
-                  ) : (
-                    <View style={styles.leaderboardCompact}>
-                      {isRefreshing && (
-                        <View style={styles.refreshingOverlay}>
-                          <ActivityIndicator size="small" color="#6a9fff" />
-                        </View>
-                      )}
-                      {leaderboard.slice(0, 3).map((entry, index) => (
-                        <View
-                          key={index}
-                          style={[
-                            styles.leaderboardCompactRow,
-                            isCurrentUserEntry(entry) && styles.leaderboardCompactRowCurrentUser,
-                          ]}
-                        >
-                          <View style={styles.leaderboardCompactRank}>
-                            {entry.rank === 1 ? (
-                              <MaterialCommunityIcons name="medal" size={20} color="#ffd700" />
-                            ) : entry.rank === 2 ? (
-                              <MaterialCommunityIcons name="medal" size={20} color="#c0c0c0" />
-                            ) : (
-                              <MaterialCommunityIcons name="medal" size={20} color="#cd7f32" />
-                            )}
+                    {(loadingLeaderboard && !leaderboardLoaded) ||
+                    (user && leaderboardLoaded && leaderboard.length > 0 && userRank === null) ? (
+                      <View style={styles.leaderboardLoadingContainer}>
+                        <ActivityIndicator size="small" color="#6a9fff" />
+                        <Text style={styles.leaderboardLoadingText}>Loading rankings...</Text>
+                      </View>
+                    ) : leaderboard.length === 0 ? (
+                      <Text style={styles.leaderboardEmptyText}>No scores yet</Text>
+                    ) : (
+                      <View style={styles.leaderboardCompact}>
+                        {isRefreshing && (
+                          <View style={styles.refreshingOverlay}>
+                            <ActivityIndicator size="small" color="#6a9fff" />
                           </View>
-                          <Text
+                        )}
+                        {leaderboard.slice(0, 3).map((entry, index) => (
+                          <View
+                            key={index}
                             style={[
-                              styles.leaderboardCompactName,
-                              isCurrentUserEntry(entry) && styles.leaderboardCompactNameCurrentUser,
-                            ]}
-                            numberOfLines={1}
-                          >
-                            {entry.displayName || 'Anonymous'}
-                            {isCurrentUserEntry(entry) && ' (you)'}
-                          </Text>
-                          <Text style={styles.leaderboardCompactCorrect}>{entry.correctPlacements}/16</Text>
-                          <Text
-                            style={[
-                              styles.leaderboardCompactScore,
-                              isCurrentUserEntry(entry) && styles.leaderboardCompactScoreCurrentUser,
+                              styles.leaderboardCompactRow,
+                              isCurrentUserEntry(entry) && styles.leaderboardCompactRowCurrentUser,
                             ]}
                           >
-                            {entry.score}
-                          </Text>
-                        </View>
-                      ))}
-
-                      {userRank && userRank > 3 && savedScore && (
-                        <>
-                          <View style={styles.leaderboardDivider}>
-                            <Text style={styles.leaderboardDividerText}>...</Text>
-                          </View>
-                          <View style={[styles.leaderboardCompactRow, styles.leaderboardCompactRowCurrentUser]}>
                             <View style={styles.leaderboardCompactRank}>
-                              <Text
-                                style={styles.leaderboardCompactRankText}
-                                numberOfLines={1}
-                                adjustsFontSizeToFit
-                                minimumFontScale={0.8}
-                              >
-                                #{userRank}
-                              </Text>
+                              {entry.rank === 1 ? (
+                                <MaterialCommunityIcons name="medal" size={20} color="#ffd700" />
+                              ) : entry.rank === 2 ? (
+                                <MaterialCommunityIcons name="medal" size={20} color="#c0c0c0" />
+                              ) : (
+                                <MaterialCommunityIcons name="medal" size={20} color="#cd7f32" />
+                              )}
                             </View>
                             <Text
-                              style={[styles.leaderboardCompactName, styles.leaderboardCompactNameCurrentUser]}
+                              style={[
+                                styles.leaderboardCompactName,
+                                isCurrentUserEntry(entry) && styles.leaderboardCompactNameCurrentUser,
+                              ]}
                               numberOfLines={1}
                             >
-                              {displayName || 'Anonymous'} (you)
+                              {entry.displayName || 'Anonymous'}
+                              {isCurrentUserEntry(entry) && ' (you)'}
                             </Text>
-                            <Text style={styles.leaderboardCompactCorrect}>{savedScore.correctPlacements}/16</Text>
-                            <Text style={[styles.leaderboardCompactScore, styles.leaderboardCompactScoreCurrentUser]}>
-                              {savedScore.score}
+                            <Text style={styles.leaderboardCompactCorrect}>{entry.correctPlacements}/16</Text>
+                            <Text
+                              style={[
+                                styles.leaderboardCompactScore,
+                                isCurrentUserEntry(entry) && styles.leaderboardCompactScoreCurrentUser,
+                              ]}
+                            >
+                              {entry.score}
                             </Text>
                           </View>
-                        </>
-                      )}
-                    </View>
-                  )}
+                        ))}
 
-                  <View style={styles.tapForDetailsHint}>
-                    <Text style={styles.tapForDetailsText}>Tap for details</Text>
-                    <Ionicons name="chevron-forward" size={14} color="#666" />
-                  </View>
-                </TouchableOpacity>
+                        {userRank && userRank > 3 && savedScore && (
+                          <>
+                            <View style={styles.leaderboardDivider}>
+                              <Text style={styles.leaderboardDividerText}>...</Text>
+                            </View>
+                            <View style={[styles.leaderboardCompactRow, styles.leaderboardCompactRowCurrentUser]}>
+                              <View style={styles.leaderboardCompactRank}>
+                                <Text
+                                  style={styles.leaderboardCompactRankText}
+                                  numberOfLines={1}
+                                  adjustsFontSizeToFit
+                                  minimumFontScale={0.8}
+                                >
+                                  #{userRank}
+                                </Text>
+                              </View>
+                              <Text
+                                style={[styles.leaderboardCompactName, styles.leaderboardCompactNameCurrentUser]}
+                                numberOfLines={1}
+                              >
+                                {displayName || 'Anonymous'} (you)
+                              </Text>
+                              <Text style={styles.leaderboardCompactCorrect}>{savedScore.correctPlacements}/16</Text>
+                              <Text style={[styles.leaderboardCompactScore, styles.leaderboardCompactScoreCurrentUser]}>
+                                {savedScore.score}
+                              </Text>
+                            </View>
+                          </>
+                        )}
+                      </View>
+                    )}
+
+                    <View style={styles.tapForDetailsHint}>
+                      <Text style={styles.tapForDetailsText}>Tap for details</Text>
+                      <Ionicons name="chevron-forward" size={14} color="#666" />
+                    </View>
+                  </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity
+                    style={styles.completedContainer}
+                    onPress={() => setShowSignIn(true)}
+                    activeOpacity={0.8}
+                  >
+                    <View style={styles.completedHeader}>
+                      <View style={styles.completedHeaderContent}>
+                        <View style={styles.completedHeaderTitleRow}>
+                          <MaterialCommunityIcons name="trophy" size={20} color="#ffd700" />
+                          <Text style={styles.completedTitle}>Today&apos;s Leaderboard</Text>
+                        </View>
+                      </View>
+                    </View>
+                    <Text style={styles.leaderboardEmptyText}>
+                      Sign in to see your global ranking and view today&apos;s leaderboard
+                    </Text>
+                    <View style={styles.tapForDetailsHint}>
+                      <Text style={styles.tapForDetailsText}>Sign in to continue</Text>
+                      <Ionicons name="chevron-forward" size={14} color="#666" />
+                    </View>
+                  </TouchableOpacity>
+                )}
 
                 <TouchableOpacity style={styles.viewAnswersMainButton} onPress={onShowAnswers} activeOpacity={0.85}>
                   <Ionicons name="grid-outline" size={20} color="#6a9fff" />
