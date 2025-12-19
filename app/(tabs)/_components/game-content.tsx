@@ -204,27 +204,30 @@ export function GameContent({
           showsVerticalScrollIndicator={false}
         >
           {savedScore ? (
-            <View style={styles.scoreCard}>
-              <View style={styles.scoreRow}>
-                <View style={styles.scoreItem}>
-                  <Text style={styles.scoreValue}>{savedScore.score}</Text>
-                  <Text style={styles.scoreLabel}>Score</Text>
+            <>
+              {!userId && <Text style={styles.reviewSubtitle}>Your score</Text>}
+              <View style={styles.scoreCard}>
+                <View style={styles.scoreRow}>
+                  <View style={styles.scoreItem}>
+                    <Text style={styles.scoreValue}>{savedScore.score}</Text>
+                    <Text style={styles.scoreLabel}>Score</Text>
+                  </View>
+                  <View style={styles.scoreItem}>
+                    <Text style={styles.scoreValue}>{savedScore.correctPlacements}/16</Text>
+                    <Text style={styles.scoreLabel}>Correct</Text>
+                  </View>
+                  <View style={styles.scoreItem}>
+                    <Text style={styles.scoreValue}>{formatTime(savedScore.timeSeconds)}</Text>
+                    <Text style={styles.scoreLabel}>Time</Text>
+                  </View>
                 </View>
-                <View style={styles.scoreItem}>
-                  <Text style={styles.scoreValue}>{savedScore.correctPlacements}/16</Text>
-                  <Text style={styles.scoreLabel}>Correct</Text>
-                </View>
-                <View style={styles.scoreItem}>
-                  <Text style={styles.scoreValue}>{formatTime(savedScore.timeSeconds)}</Text>
-                  <Text style={styles.scoreLabel}>Time</Text>
-                </View>
+                {userId && userRank && (
+                  <View style={styles.reviewPercentileRow}>
+                    <Text style={styles.reviewPercentileText}>Ranked #{userRank} today</Text>
+                  </View>
+                )}
               </View>
-              {userRank && (
-                <View style={styles.reviewPercentileRow}>
-                  <Text style={styles.reviewPercentileText}>Ranked #{userRank} today</Text>
-                </View>
-              )}
-            </View>
+            </>
           ) : (
             <View style={styles.scoreCard}>
               <Text style={styles.noScoreText}>Score data not available</Text>
@@ -233,9 +236,19 @@ export function GameContent({
           )}
 
           {savedScore && (
-            <TouchableOpacity style={styles.reviewShareButton} onPress={() => shareScore(savedScore, userRank ?? null)}>
+            <TouchableOpacity
+              style={styles.reviewShareButton}
+              onPress={() => shareScore(savedScore, userId ? userRank ?? null : null)}
+            >
               <Text style={styles.reviewShareButtonText}>Share</Text>
             </TouchableOpacity>
+          )}
+          {!userId && (
+            <View style={styles.reviewPercentileRow}>
+              <Text style={styles.reviewPercentileText}>
+                Sign in to see your global ranking and today&apos;s leaderboard
+              </Text>
+            </View>
           )}
 
           <Text style={styles.reviewSubtitle}>Correct Answers</Text>
@@ -396,6 +409,25 @@ export function GameContent({
                   <Text style={styles.gameCompleteLeaderboardTitle}>Today&apos;s Leaderboard</Text>
                 </View>
               </View>
+              {displayScore && (
+                <View style={styles.leaderboardCompact}>
+                  <View style={[styles.leaderboardCompactRow, styles.leaderboardCompactRowCurrentUser]}>
+                    <View style={styles.leaderboardCompactRank}>
+                      <Text style={styles.leaderboardCompactRankText}>?</Text>
+                    </View>
+                    <Text
+                      style={[styles.leaderboardCompactName, styles.leaderboardCompactNameCurrentUser]}
+                      numberOfLines={1}
+                    >
+                      You
+                    </Text>
+                    <Text style={styles.leaderboardCompactCorrect}>{displayScore.correctPlacements}/16</Text>
+                    <Text style={[styles.leaderboardCompactScore, styles.leaderboardCompactScoreCurrentUser]}>
+                      {displayScore.score}
+                    </Text>
+                  </View>
+                </View>
+              )}
               <Text style={styles.leaderboardEmptyText}>
                 Sign in to see your global ranking and view today&apos;s leaderboard
               </Text>

@@ -348,8 +348,27 @@ export function HomeMenu({
                         </View>
                       </View>
                     </View>
+                    {savedScore && (
+                      <View style={styles.leaderboardCompact}>
+                        <View style={[styles.leaderboardCompactRow, styles.leaderboardCompactRowCurrentUser]}>
+                          <View style={styles.leaderboardCompactRank}>
+                            <Text style={styles.leaderboardCompactRankText}>?</Text>
+                          </View>
+                          <Text
+                            style={[styles.leaderboardCompactName, styles.leaderboardCompactNameCurrentUser]}
+                            numberOfLines={1}
+                          >
+                            You
+                          </Text>
+                          <Text style={styles.leaderboardCompactCorrect}>{savedScore.correctPlacements}/16</Text>
+                          <Text style={[styles.leaderboardCompactScore, styles.leaderboardCompactScoreCurrentUser]}>
+                            {savedScore.score}
+                          </Text>
+                        </View>
+                      </View>
+                    )}
                     <Text style={styles.leaderboardEmptyText}>
-                      Sign in to see your global ranking and view today&apos;s leaderboard
+                      Sign in to see your global ranking and full leaderboard
                     </Text>
                     <View style={styles.tapForDetailsHint}>
                       <Text style={styles.tapForDetailsText}>Sign in to continue</Text>
@@ -583,3 +602,4 @@ export function HomeMenu({
     </SafeAreaView>
   );
 }
+
