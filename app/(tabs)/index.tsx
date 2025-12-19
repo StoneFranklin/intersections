@@ -16,6 +16,7 @@ import {
   safeJsonParse,
   serializeStoredDailyScore,
 } from '@/utils/dailyScoreStorage';
+import { validateDisplayName } from '@/utils/displayNameValidation';
 import { logger } from '@/utils/logger';
 import { areNotificationsEnabled, scheduleDailyNotification, setNotificationsEnabled } from '@/utils/notificationService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -69,6 +70,7 @@ export default function GameScreen() {
   const [showDisplayNameModal, setShowDisplayNameModal] = useState(false);
   const [displayNameInput, setDisplayNameInput] = useState('');
   const [savingDisplayName, setSavingDisplayName] = useState(false);
+  const [displayNameError, setDisplayNameError] = useState<string | null>(null);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [signInBannerDismissed, setSignInBannerDismissed] = useState(true); // Start hidden until we check
 
@@ -264,14 +266,23 @@ export default function GameScreen() {
   };
 
   const handleSaveDisplayName = async () => {
-    if (!user || !displayNameInput.trim()) return;
+    if (!user) return;
+
+    const validation = validateDisplayName(displayNameInput);
+    if (!validation.ok) {
+      setDisplayNameError(validation.error || 'Invalid display name.');
+      return;
+    }
     
     setSavingDisplayName(true);
-    const success = await updateDisplayName(user.id, displayNameInput.trim());
+    const success = await updateDisplayName(user.id, validation.normalized);
     if (success) {
-      setDisplayName(displayNameInput.trim());
+      setDisplayName(validation.normalized);
       setShowDisplayNameModal(false);
       setDisplayNameInput('');
+      setDisplayNameError(null);
+    } else {
+      setDisplayNameError('Unable to save that display name.');
     }
     setSavingDisplayName(false);
   };
@@ -676,7 +687,11 @@ export default function GameScreen() {
         showDisplayNameModal={showDisplayNameModal}
         setShowDisplayNameModal={setShowDisplayNameModal}
         displayNameInput={displayNameInput}
-        setDisplayNameInput={setDisplayNameInput}
+        setDisplayNameInput={(value) => {
+          setDisplayNameInput(value);
+          if (displayNameError) setDisplayNameError(null);
+        }}
+        displayNameError={displayNameError}
         savingDisplayName={savingDisplayName}
         onSaveDisplayName={handleSaveDisplayName}
         notificationsEnabled={notificationsEnabled}

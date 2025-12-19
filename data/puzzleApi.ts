@@ -1,6 +1,7 @@
 import { supabase } from "@/lib/supabase";
 import { IntersectionsDailyPuzzle, Puzzle, Word } from "@/types/game";
 import { logger } from "@/utils/logger";
+import { validateDisplayName } from "@/utils/displayNameValidation";
 
 const GRID_SIZE = 4;
 
@@ -702,11 +703,17 @@ export async function getOrCreateProfile(userId: string): Promise<{ displayName:
  */
 export async function updateDisplayName(userId: string, displayName: string): Promise<boolean> {
   try {
+    const validation = validateDisplayName(displayName);
+    if (!validation.ok) {
+      logger.warn('Invalid display name rejected by validation:', validation.error);
+      return false;
+    }
+
     const { error } = await supabase
       .from('profiles')
       .upsert({ 
         id: userId, 
-        display_name: displayName 
+        display_name: validation.normalized 
       }, { 
         onConflict: 'id' 
       });

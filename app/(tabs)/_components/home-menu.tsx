@@ -50,6 +50,7 @@ export interface HomeMenuProps {
   setShowDisplayNameModal: (show: boolean) => void;
   displayNameInput: string;
   setDisplayNameInput: (value: string) => void;
+  displayNameError: string | null;
   savingDisplayName: boolean;
   onSaveDisplayName: () => void;
 
@@ -97,6 +98,7 @@ export function HomeMenu({
   setShowDisplayNameModal,
   displayNameInput,
   setDisplayNameInput,
+  displayNameError,
   savingDisplayName,
   onSaveDisplayName,
   notificationsEnabled,
@@ -520,6 +522,10 @@ export function HomeMenu({
               accessibilityLabel="Display name input"
               accessibilityHint="Enter a name to show on the leaderboard"
             />
+
+            {!!displayNameError && (
+              <Text style={styles.displayNameErrorText}>{displayNameError}</Text>
+            )}
 
             <TouchableOpacity
               style={[

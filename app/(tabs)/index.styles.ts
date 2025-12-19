@@ -818,6 +818,12 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#3a3a6e',
   },
+  displayNameErrorText: {
+    color: '#f87171',
+    fontSize: 13,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
   displayNameSaveButton: {
     backgroundColor: '#4ade80',
     paddingVertical: 14,
