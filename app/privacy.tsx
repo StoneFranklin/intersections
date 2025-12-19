@@ -16,7 +16,7 @@ export default function PrivacyPolicyPage() {
         <View style={styles.header}>
           <Link href="/" asChild>
             <TouchableOpacity style={styles.backButton}>
-              <Text style={styles.backButtonText}>‹ Back to Game</Text>
+              <Text style={styles.backButtonText}>← Back to Game</Text>
             </TouchableOpacity>
           </Link>
         </View>
@@ -45,9 +45,9 @@ export default function PrivacyPolicyPage() {
             When you sign in with Google, we collect:
           </Text>
           <View style={styles.bulletList}>
-            <Text style={styles.bulletItem}>• Your email address</Text>
-            <Text style={styles.bulletItem}>• Your Google account ID (for authentication)</Text>
-            <Text style={styles.bulletItem}>• Display name (if you choose to set one)</Text>
+            <Text style={styles.bulletItem}>- Your email address</Text>
+            <Text style={styles.bulletItem}>- Your Google account ID (for authentication)</Text>
+            <Text style={styles.bulletItem}>- Display name (if you choose to set one)</Text>
           </View>
 
           <Text style={styles.paragraph}>
@@ -60,9 +60,9 @@ export default function PrivacyPolicyPage() {
             We collect information about your gameplay, including:
           </Text>
           <View style={styles.bulletList}>
-            <Text style={styles.bulletItem}>• Puzzle scores and completion times</Text>
-            <Text style={styles.bulletItem}>• Daily streak information</Text>
-            <Text style={styles.bulletItem}>• Number of correct and incorrect placements</Text>
+            <Text style={styles.bulletItem}>- Puzzle scores and completion times</Text>
+            <Text style={styles.bulletItem}>- Daily streak information</Text>
+            <Text style={styles.bulletItem}>- Number of correct and incorrect placements</Text>
           </View>
 
           <Text style={styles.subheading}>Automatically Collected Information</Text>
@@ -70,9 +70,9 @@ export default function PrivacyPolicyPage() {
             When you use Intersections, we may automatically collect:
           </Text>
           <View style={styles.bulletList}>
-            <Text style={styles.bulletItem}>• Device type and browser information</Text>
-            <Text style={styles.bulletItem}>• General location (country/region)</Text>
-            <Text style={styles.bulletItem}>• Usage patterns and preferences</Text>
+            <Text style={styles.bulletItem}>- Device type and browser information</Text>
+            <Text style={styles.bulletItem}>- General location (country/region)</Text>
+            <Text style={styles.bulletItem}>- Usage patterns and preferences</Text>
           </View>
 
           <Text style={styles.subheading}>Advertising and Analytics</Text>
@@ -83,10 +83,10 @@ export default function PrivacyPolicyPage() {
             applicable law). This may include:
           </Text>
           <View style={styles.bulletList}>
-            <Text style={styles.bulletItem}>• Advertising ID (a unique identifier for advertising purposes)</Text>
-            <Text style={styles.bulletItem}>• Device information (model, OS version)</Text>
-            <Text style={styles.bulletItem}>• App usage data and interactions with ads</Text>
-            <Text style={styles.bulletItem}>• IP address and general location information</Text>
+            <Text style={styles.bulletItem}>- Advertising ID (a unique identifier for advertising purposes)</Text>
+            <Text style={styles.bulletItem}>- Device information (model, OS version)</Text>
+            <Text style={styles.bulletItem}>- App usage data and interactions with ads</Text>
+            <Text style={styles.bulletItem}>- IP address and general location information</Text>
           </View>
           <Text style={styles.paragraph}>
             Google AdMob is operated by Google LLC and is subject to Google’s Privacy Policy.
@@ -110,14 +110,14 @@ export default function PrivacyPolicyPage() {
             We use the information we collect to:
           </Text>
           <View style={styles.bulletList}>
-            <Text style={styles.bulletItem}>• Provide and maintain the game service</Text>
-            <Text style={styles.bulletItem}>• Save your progress and sync across devices</Text>
-            <Text style={styles.bulletItem}>• Display leaderboards and rankings</Text>
-            <Text style={styles.bulletItem}>• Track your daily streak</Text>
-            <Text style={styles.bulletItem}>• Improve the game experience</Text>
-            <Text style={styles.bulletItem}>• Display relevant advertisements through Google AdMob</Text>
-            <Text style={styles.bulletItem}>• Analyze app usage and performance</Text>
-            <Text style={styles.bulletItem}>• Communicate important updates</Text>
+            <Text style={styles.bulletItem}>- Provide and maintain the game service</Text>
+            <Text style={styles.bulletItem}>- Save your progress and sync across devices</Text>
+            <Text style={styles.bulletItem}>- Display leaderboards and rankings</Text>
+            <Text style={styles.bulletItem}>- Track your daily streak</Text>
+            <Text style={styles.bulletItem}>- Improve the game experience</Text>
+            <Text style={styles.bulletItem}>- Display relevant advertisements through Google AdMob</Text>
+            <Text style={styles.bulletItem}>- Analyze app usage and performance</Text>
+            <Text style={styles.bulletItem}>- Communicate important updates</Text>
           </View>
         </View>
 
@@ -145,20 +145,20 @@ export default function PrivacyPolicyPage() {
           </Text>
           <View style={styles.bulletList}>
             <Text style={styles.bulletItem}>
-              • <Text style={styles.bold}>Leaderboards:</Text> Your display name (if set) and
+              - <Text style={styles.bold}>Leaderboards:</Text> Your display name (if set) and
               scores are visible to other players on the leaderboard
             </Text>
             <Text style={styles.bulletItem}>
-              • <Text style={styles.bold}>Advertising Partners:</Text> We share information with
+              - <Text style={styles.bold}>Advertising Partners:</Text> We share information with
               Google AdMob to display advertisements. AdMob may share data with advertising
-              partners as described in Google’s privacy policy
+              partners as described in Google's privacy policy
             </Text>
             <Text style={styles.bulletItem}>
-              • <Text style={styles.bold}>Service Providers:</Text> We use third-party services
+              - <Text style={styles.bold}>Service Providers:</Text> We use third-party services
               (Supabase, Google Authentication, Google AdMob) that process data on our behalf
             </Text>
             <Text style={styles.bulletItem}>
-              • <Text style={styles.bold}>Legal Requirements:</Text> We may disclose information
+              - <Text style={styles.bold}>Legal Requirements:</Text> We may disclose information
               if required by law
             </Text>
           </View>
@@ -171,9 +171,9 @@ export default function PrivacyPolicyPage() {
             We use local storage and cookies to:
           </Text>
           <View style={styles.bulletList}>
-            <Text style={styles.bulletItem}>• Remember your authentication status</Text>
-            <Text style={styles.bulletItem}>• Store game progress locally</Text>
-            <Text style={styles.bulletItem}>• Remember your preferences</Text>
+            <Text style={styles.bulletItem}>- Remember your authentication status</Text>
+            <Text style={styles.bulletItem}>- Store game progress locally</Text>
+            <Text style={styles.bulletItem}>- Remember your preferences</Text>
           </View>
           <Text style={styles.paragraph}>
             You can clear this data by clearing the app’s storage or your browser’s storage, though this may reset local
@@ -197,10 +197,10 @@ export default function PrivacyPolicyPage() {
             You have the right to:
           </Text>
           <View style={styles.bulletList}>
-            <Text style={styles.bulletItem}>• Access the personal data we hold about you</Text>
-            <Text style={styles.bulletItem}>• Request correction of inaccurate data</Text>
-            <Text style={styles.bulletItem}>• Request deletion of your account and data</Text>
-            <Text style={styles.bulletItem}>• Opt out of marketing communications</Text>
+            <Text style={styles.bulletItem}>- Access the personal data we hold about you</Text>
+            <Text style={styles.bulletItem}>- Request correction of inaccurate data</Text>
+            <Text style={styles.bulletItem}>- Request deletion of your account and data</Text>
+            <Text style={styles.bulletItem}>- Opt out of marketing communications</Text>
           </View>
           <Text style={styles.paragraph}>
             To exercise any of these rights, please contact us using the information below.
@@ -247,7 +247,7 @@ export default function PrivacyPolicyPage() {
               <Text style={styles.footerLink}>Terms of Service</Text>
             </TouchableOpacity>
           </Link>
-          <Text style={styles.footerDivider}>•</Text>
+          <Text style={styles.footerDivider}>|</Text>
           <Link href="/" asChild>
             <TouchableOpacity>
               <Text style={styles.footerLink}>Play Game</Text>

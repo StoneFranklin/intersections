@@ -16,7 +16,7 @@ export default function TermsOfServicePage() {
         <View style={styles.header}>
           <Link href="/" asChild>
             <TouchableOpacity style={styles.backButton}>
-              <Text style={styles.backButtonText}>‹ Back to Game</Text>
+              <Text style={styles.backButtonText}>← Back to Game</Text>
             </TouchableOpacity>
           </Link>
         </View>
@@ -43,9 +43,9 @@ export default function TermsOfServicePage() {
             By accessing or using Intersections, you confirm that you:
           </Text>
           <View style={styles.bulletList}>
-            <Text style={styles.bulletItem}>• Are at least 13 years of age</Text>
-            <Text style={styles.bulletItem}>• Have read and understood these Terms</Text>
-            <Text style={styles.bulletItem}>• Agree to be legally bound by these Terms</Text>
+            <Text style={styles.bulletItem}>- Are at least 13 years of age</Text>
+            <Text style={styles.bulletItem}>- Have read and understood these Terms</Text>
+            <Text style={styles.bulletItem}>- Agree to be legally bound by these Terms</Text>
           </View>
           <Text style={styles.paragraph}>
             If you do not agree with any part of these Terms, you must not use our Service.
@@ -60,11 +60,11 @@ export default function TermsOfServicePage() {
             words into a grid based on category intersections. The Service includes:
           </Text>
           <View style={styles.bulletList}>
-            <Text style={styles.bulletItem}>• Daily puzzles released at midnight</Text>
-            <Text style={styles.bulletItem}>• Score tracking and leaderboards</Text>
-            <Text style={styles.bulletItem}>• Optional user accounts for progress syncing</Text>
-            <Text style={styles.bulletItem}>• Streak tracking for consecutive daily play</Text>
-            <Text style={styles.bulletItem}>• Advertisement-supported gameplay</Text>
+            <Text style={styles.bulletItem}>- Daily puzzles released at midnight</Text>
+            <Text style={styles.bulletItem}>- Score tracking and leaderboards</Text>
+            <Text style={styles.bulletItem}>- Optional user accounts for progress syncing</Text>
+            <Text style={styles.bulletItem}>- Streak tracking for consecutive daily play</Text>
+            <Text style={styles.bulletItem}>- Advertisement-supported gameplay</Text>
           </View>
           <Text style={styles.paragraph}>
             The Service is free to use and is supported by advertisements (for example, Google AdMob on iOS/Android and,
@@ -85,10 +85,10 @@ export default function TermsOfServicePage() {
             When you create an account, you agree to:
           </Text>
           <View style={styles.bulletList}>
-            <Text style={styles.bulletItem}>• Provide accurate information</Text>
-            <Text style={styles.bulletItem}>• Maintain the security of your account</Text>
-            <Text style={styles.bulletItem}>• Accept responsibility for all activities under your account</Text>
-            <Text style={styles.bulletItem}>• Notify us of any unauthorized use</Text>
+            <Text style={styles.bulletItem}>- Provide accurate information</Text>
+            <Text style={styles.bulletItem}>- Maintain the security of your account</Text>
+            <Text style={styles.bulletItem}>- Accept responsibility for all activities under your account</Text>
+            <Text style={styles.bulletItem}>- Notify us of any unauthorized use</Text>
           </View>
         </View>
 
@@ -99,14 +99,14 @@ export default function TermsOfServicePage() {
             When using Intersections, you agree not to:
           </Text>
           <View style={styles.bulletList}>
-            <Text style={styles.bulletItem}>• Use automated systems or bots to play the game</Text>
-            <Text style={styles.bulletItem}>• Attempt to manipulate scores or leaderboards</Text>
-            <Text style={styles.bulletItem}>• Use offensive or inappropriate display names</Text>
-            <Text style={styles.bulletItem}>• Interfere with or disrupt the Service</Text>
-            <Text style={styles.bulletItem}>• Attempt to access other users’ accounts</Text>
-            <Text style={styles.bulletItem}>• Reverse engineer or decompile the game</Text>
-            <Text style={styles.bulletItem}>• Block, interfere with, or manipulate advertisements</Text>
-            <Text style={styles.bulletItem}>• Use ad-blocking software or techniques to avoid viewing ads</Text>
+            <Text style={styles.bulletItem}>- Use automated systems or bots to play the game</Text>
+            <Text style={styles.bulletItem}>- Attempt to manipulate scores or leaderboards</Text>
+            <Text style={styles.bulletItem}>- Use offensive or inappropriate display names</Text>
+            <Text style={styles.bulletItem}>- Interfere with or disrupt the Service</Text>
+            <Text style={styles.bulletItem}>- Attempt to access other users' accounts</Text>
+            <Text style={styles.bulletItem}>- Reverse engineer or decompile the game</Text>
+            <Text style={styles.bulletItem}>- Block, interfere with, or manipulate advertisements</Text>
+            <Text style={styles.bulletItem}>- Use ad-blocking software or techniques to avoid viewing ads</Text>
           </View>
           <Text style={styles.paragraph}>
             We reserve the right to suspend or terminate accounts that violate these rules.
@@ -143,16 +143,16 @@ export default function TermsOfServicePage() {
           </Text>
           <View style={styles.bulletList}>
             <Text style={styles.bulletItem}>
-              • We do not control the content of third-party advertisements
+              - We do not control the content of third-party advertisements
             </Text>
             <Text style={styles.bulletItem}>
-              • We are not responsible for the content, accuracy, or practices of advertisers
+              - We are not responsible for the content, accuracy, or practices of advertisers
             </Text>
             <Text style={styles.bulletItem}>
-              • Third-party advertisers may collect data as described in their own privacy policies
+              - Third-party advertisers may collect data as described in their own privacy policies
             </Text>
             <Text style={styles.bulletItem}>
-              • Your interaction with advertisements is governed by the advertiser’s terms
+              - Your interaction with advertisements is governed by the advertiser's terms
             </Text>
           </View>
           <Text style={styles.paragraph}>
@@ -170,9 +170,9 @@ export default function TermsOfServicePage() {
             KIND, EITHER EXPRESS OR IMPLIED. WE DO NOT GUARANTEE THAT:
           </Text>
           <View style={styles.bulletList}>
-            <Text style={styles.bulletItem}>• The Service will be uninterrupted or error-free</Text>
-            <Text style={styles.bulletItem}>• Defects will be corrected</Text>
-            <Text style={styles.bulletItem}>• The Service is free of viruses or harmful components</Text>
+            <Text style={styles.bulletItem}>- The Service will be uninterrupted or error-free</Text>
+            <Text style={styles.bulletItem}>- Defects will be corrected</Text>
+            <Text style={styles.bulletItem}>- The Service is free of viruses or harmful components</Text>
           </View>
         </View>
 
@@ -236,7 +236,7 @@ export default function TermsOfServicePage() {
               <Text style={styles.footerLink}>Privacy Policy</Text>
             </TouchableOpacity>
           </Link>
-          <Text style={styles.footerDivider}>•</Text>
+          <Text style={styles.footerDivider}>|</Text>
           <Link href="/" asChild>
             <TouchableOpacity>
               <Text style={styles.footerLink}>Play Game</Text>

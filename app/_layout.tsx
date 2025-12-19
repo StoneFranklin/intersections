@@ -1,3 +1,4 @@
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { AuthProvider } from '@/contexts/auth-context';
 import { requestNotificationPermissions, scheduleNotificationForToday } from '@/utils/notificationService';
 import { DarkTheme, ThemeProvider } from '@react-navigation/native';
@@ -66,22 +67,24 @@ export default function RootLayout() {
   }
 
   return (
-    <AuthProvider>
-      <SafeAreaProvider>
-        <View style={styles.container}>
-          <ThemeProvider value={customDarkTheme}>
-            <Stack screenOptions={{ contentStyle: { backgroundColor: '#0f0f1a' } }}>
-              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-              <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-              <Stack.Screen name="how-to-play" options={{ headerShown: false, title: 'How to Play' }} />
-              <Stack.Screen name="privacy" options={{ headerShown: false, title: 'Privacy Policy' }} />
-              <Stack.Screen name="terms" options={{ headerShown: false, title: 'Terms of Service' }} />
-            </Stack>
-            <StatusBar style="light" />
-          </ThemeProvider>
-        </View>
-      </SafeAreaProvider>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <SafeAreaProvider>
+          <View style={styles.container}>
+            <ThemeProvider value={customDarkTheme}>
+              <Stack screenOptions={{ contentStyle: { backgroundColor: '#0f0f1a' } }}>
+                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+                <Stack.Screen name="how-to-play" options={{ headerShown: false, title: 'How to Play' }} />
+                <Stack.Screen name="privacy" options={{ headerShown: false, title: 'Privacy Policy' }} />
+                <Stack.Screen name="terms" options={{ headerShown: false, title: 'Terms of Service' }} />
+              </Stack>
+              <StatusBar style="light" />
+            </ThemeProvider>
+          </View>
+        </SafeAreaProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
 

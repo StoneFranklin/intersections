@@ -1,5 +1,5 @@
 import { CellPosition, Word } from '@/types/game';
-import React, { useEffect, useRef } from 'react';
+import React, { memo, useEffect, useRef } from 'react';
 import { Animated, StyleSheet, Text, TouchableOpacity } from 'react-native';
 
 interface GameCellProps {
@@ -12,7 +12,8 @@ interface GameCellProps {
   size: number;
 }
 
-export function GameCell({
+export const GameCell = memo(function GameCell({
+  position,
   word,
   isCorrect,
   isSelected,
@@ -89,6 +90,16 @@ export function GameCell({
     outputRange: ['transparent', 'rgba(74, 222, 128, 0.4)'],
   });
 
+  // Generate accessibility label
+  const getAccessibilityLabel = () => {
+    const cellPosition = `Row ${position.rowIndex + 1}, Column ${position.colIndex + 1}`;
+    if (!word) {
+      return `${cellPosition}. Empty cell. ${isSelected ? 'Ready to place word.' : 'Tap to place selected word.'}`;
+    }
+    const status = isCorrect === true ? 'Correct' : isCorrect === false ? 'Incorrect' : 'Placed';
+    return `${cellPosition}. ${word.text}. ${status}. ${isCorrect !== true ? 'Long press to remove.' : ''}`;
+  };
+
   return (
     <Animated.View
       style={{
@@ -100,14 +111,20 @@ export function GameCell({
     >
       <TouchableOpacity
         style={[
-          styles.cell, 
-          getCellStyle(), 
+          styles.cell,
+          getCellStyle(),
           isSelected && styles.cellHighlight,
           { width: size, height: size }
         ]}
         onPress={onPress}
         onLongPress={onLongPress}
         activeOpacity={0.7}
+        accessibilityRole="button"
+        accessibilityLabel={getAccessibilityLabel()}
+        accessibilityState={{
+          selected: isSelected,
+          disabled: isCorrect === true,
+        }}
       >
         <Animated.View 
           style={[
@@ -129,7 +146,7 @@ export function GameCell({
       </TouchableOpacity>
     </Animated.View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   cell: {

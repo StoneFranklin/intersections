@@ -1,5 +1,5 @@
 import { Word } from '@/types/game';
-import React from 'react';
+import React, { memo } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface WordTrayProps {
@@ -8,7 +8,7 @@ interface WordTrayProps {
   onWordSelect: (wordId: string | null) => void;
 }
 
-export function WordTray({ words, selectedWordId, onWordSelect }: WordTrayProps) {
+export const WordTray = memo(function WordTray({ words, selectedWordId, onWordSelect }: WordTrayProps) {
   if (words.length === 0) {
     return (
       <View style={styles.container}>
@@ -34,6 +34,9 @@ export function WordTray({ words, selectedWordId, onWordSelect }: WordTrayProps)
               style={[styles.wordChip, isSelected && styles.wordChipSelected]}
               onPress={() => onWordSelect(isSelected ? null : word.id)}
               activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel={`${word.text}. ${isSelected ? 'Selected. Tap to deselect.' : 'Tap to select and place on grid.'}`}
+              accessibilityState={{ selected: isSelected }}
             >
               <Text style={[styles.wordText, isSelected && styles.wordTextSelected]}>
                 {word.text}
@@ -44,7 +47,7 @@ export function WordTray({ words, selectedWordId, onWordSelect }: WordTrayProps)
       </ScrollView>
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {

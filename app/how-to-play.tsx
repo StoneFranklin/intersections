@@ -15,7 +15,7 @@ export default function HowToPlayPage() {
         <View style={styles.header}>
           <Link href="/" asChild>
             <TouchableOpacity style={styles.backButton}>
-              <Text style={styles.backButtonText}>‹ Back to Game</Text>
+              <Text style={styles.backButtonText}>← Back to Game</Text>
             </TouchableOpacity>
           </Link>
         </View>
@@ -30,7 +30,7 @@ export default function HowToPlayPage() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>The Goal</Text>
           <Text style={styles.paragraph}>
-            Your objective is simple: place all 16 words into the 4×4 grid correctly. 
+            Your objective is simple: place all 16 words into the 4x4 grid correctly. 
             Each word must be placed in a cell where it belongs to BOTH the row&apos;s category 
             AND the column&apos;s category.
           </Text>
@@ -119,7 +119,7 @@ export default function HowToPlayPage() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Lives System</Text>
           <View style={styles.livesBox}>
-            <Text style={styles.livesIcons}>❤️ ❤️ ❤️</Text>
+            <Text style={styles.livesIcons}>♥ ♥ ♥</Text>
             <Text style={styles.livesText}>You start with 3 lives</Text>
           </View>
           <Text style={styles.paragraph}>
@@ -127,9 +127,9 @@ export default function HowToPlayPage() {
             three lives, the game ends and you won&apos;t be able to complete that day&apos;s puzzle.
           </Text>
           <View style={styles.tipBox}>
-            <Text style={styles.tipTitle}>💡 Pro Tip</Text>
+            <Text style={styles.tipTitle}>Pro Tip</Text>
             <Text style={styles.tipText}>
-              Don&apos;t guess randomly! Take your time to think through each placement. 
+              Don&apos;t guess randomly! Take your time to think through each placement.
               It&apos;s better to be slow and accurate than fast and wrong.
             </Text>
           </View>
@@ -143,14 +143,14 @@ export default function HowToPlayPage() {
           </Text>
           <View style={styles.scoreFactors}>
             <View style={styles.scoreFactor}>
-              <Text style={styles.scoreFactorIcon}>⏱️</Text>
+              <Text style={styles.scoreFactorIcon}>TIME</Text>
               <View>
                 <Text style={styles.scoreFactorTitle}>Time</Text>
                 <Text style={styles.scoreFactorDesc}>Faster completion = higher score</Text>
               </View>
             </View>
             <View style={styles.scoreFactor}>
-              <Text style={styles.scoreFactorIcon}>✓</Text>
+              <Text style={styles.scoreFactorIcon}>ACC</Text>
               <View>
                 <Text style={styles.scoreFactorTitle}>Accuracy</Text>
                 <Text style={styles.scoreFactorDesc}>Fewer mistakes = higher score</Text>
@@ -165,7 +165,7 @@ export default function HowToPlayPage() {
 
         {/* Streaks */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Daily Streaks 🔥</Text>
+          <Text style={styles.sectionTitle}>Daily Streaks</Text>
           <Text style={styles.paragraph}>
             Play every day to build your streak! Your streak increases each consecutive 
             day you complete (or attempt) the puzzle. Miss a day and your streak resets to zero.
@@ -181,30 +181,30 @@ export default function HowToPlayPage() {
           <Text style={styles.sectionTitle}>Tips & Strategies</Text>
           <View style={styles.tipsList}>
             <View style={styles.tipItem}>
-              <Text style={styles.tipItemIcon}>🎯</Text>
+              <Text style={styles.tipItemIcon}>•</Text>
               <Text style={styles.tipItemText}>
-                Start with the words you&apos;re most confident about - they&apos;ll help narrow 
+                Start with the words you&apos;re most confident about - they&apos;ll help narrow
                 down the remaining options.
               </Text>
             </View>
             <View style={styles.tipItem}>
-              <Text style={styles.tipItemIcon}>🔍</Text>
+              <Text style={styles.tipItemIcon}>•</Text>
               <Text style={styles.tipItemText}>
-                Look for unique intersections — some category combinations only have 
+                Look for unique intersections - some category combinations only have
                 one possible answer.
               </Text>
             </View>
             <View style={styles.tipItem}>
-              <Text style={styles.tipItemIcon}>🧠</Text>
+              <Text style={styles.tipItemIcon}>•</Text>
               <Text style={styles.tipItemText}>
-                Think about all the categories a word could belong to, not just the 
+                Think about all the categories a word could belong to, not just the
                 obvious ones.
               </Text>
             </View>
             <View style={styles.tipItem}>
-              <Text style={styles.tipItemIcon}>↩️</Text>
+              <Text style={styles.tipItemIcon}>•</Text>
               <Text style={styles.tipItemText}>
-                You can remove a placed word by tapping it again — rearrange freely 
+                You can remove a placed word by tapping it again - rearrange freely
                 before checking!
               </Text>
             </View>
@@ -216,7 +216,7 @@ export default function HowToPlayPage() {
           <Text style={styles.ctaText}>Ready to play?</Text>
           <Link href="/" asChild>
             <TouchableOpacity style={styles.ctaButton}>
-              <Text style={styles.ctaButtonText}>Play Today&apos;s Puzzle →</Text>
+              <Text style={styles.ctaButtonText}>Play Today&apos;s Puzzle</Text>
             </TouchableOpacity>
           </Link>
         </View>
@@ -228,7 +228,7 @@ export default function HowToPlayPage() {
               <Text style={styles.footerLink}>Privacy Policy</Text>
             </TouchableOpacity>
           </Link>
-          <Text style={styles.footerDivider}>•</Text>
+          <Text style={styles.footerDivider}>|</Text>
           <Link href={"/terms" as any} asChild>
             <TouchableOpacity>
               <Text style={styles.footerLink}>Terms of Service</Text>
