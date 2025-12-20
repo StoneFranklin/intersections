@@ -354,7 +354,7 @@ export function HomeMenu({
                               ]}
                               numberOfLines={1}
                             >
-                              {entry.displayName || 'Anonymous'}
+                              {(isCurrentUserEntry(entry) && displayName) ? displayName : (entry.displayName || 'Anonymous')}
                               {isCurrentUserEntry(entry) && ' (you)'}
                             </Text>
                             <Text style={styles.leaderboardCompactCorrect}>{entry.correctPlacements}/16</Text>

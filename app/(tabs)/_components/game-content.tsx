@@ -21,6 +21,7 @@ export interface GameContentProps {
   onComplete: (score: GameScore, rank: number | null) => void;
   isReviewMode?: boolean;
   savedScore?: GameScore | null;
+  displayName?: string | null;
   userId?: string;
   userRank?: number | null;
   leaderboard: LeaderboardEntry[];
@@ -38,6 +39,7 @@ export function GameContent({
   onComplete,
   isReviewMode = false,
   savedScore,
+  displayName,
   userId,
   userRank,
   leaderboard,
@@ -79,6 +81,9 @@ export function GameContent({
     }
     return false;
   };
+
+  const getDisplayName = (entry: LeaderboardEntry) =>
+    (isCurrentUserEntry(entry) && displayName) ? displayName : (entry.displayName || 'Anonymous');
 
   useEffect(() => {
     if (isGameOver && !hasShownAdOffer && !isReviewMode) {
@@ -352,7 +357,7 @@ export function GameContent({
                         ]}
                         numberOfLines={1}
                       >
-                        {entry.displayName || 'Anonymous'}
+                        {getDisplayName(entry)}
                         {isCurrentUserEntry(entry) && ' (you)'}
                       </Text>
                       <Text style={styles.leaderboardCompactCorrect}>{entry.correctPlacements}/16</Text>
@@ -384,7 +389,7 @@ export function GameContent({
                           </Text>
                         </View>
                         <Text style={[styles.leaderboardCompactName, styles.leaderboardCompactNameCurrentUser]} numberOfLines={1}>
-                          Anonymous (you)
+                          {displayName || 'Anonymous'} (you)
                         </Text>
                         <Text style={styles.leaderboardCompactCorrect}>{displayScore.correctPlacements}/16</Text>
                         <Text style={[styles.leaderboardCompactScore, styles.leaderboardCompactScoreCurrentUser]}>

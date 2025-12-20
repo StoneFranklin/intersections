@@ -766,6 +766,7 @@ export default function GameScreen() {
       onComplete={handleComplete}
       isReviewMode={isReviewMode}
       savedScore={savedScore}
+      displayName={displayName}
       userId={user?.id}
       userRank={userRank}
       leaderboard={leaderboard}
