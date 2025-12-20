@@ -83,7 +83,43 @@ export const GameCell = memo(function GameCell({
     return styles.cellFilled;
   };
 
-  const fontSize = Math.max(12, Math.min(size / 5, 18));
+  // Calculate font size based on text length and cell size
+  const calculateFontSize = () => {
+    if (!word) return size / 3;
+
+    const baseSize = Math.max(12, Math.min(size / 5, 18));
+    const textLength = word.text.length;
+
+    // Find the longest word to ensure it fits on a single line
+    const words = word.text.split(/\s+/);
+    const longestWord = Math.max(...words.map(w => w.length));
+
+    // Estimate how much space we need
+    // Approximate characters per line based on cell width (accounting for padding)
+    const availableWidth = size - 8; // subtract padding
+    const charsPerLine = Math.floor(availableWidth / (baseSize * 0.6)); // rough estimate
+
+    // If the longest word is too long for one line, scale down to fit it
+    let adjustedFontSize = baseSize;
+    if (longestWord > charsPerLine) {
+      const wordScaleFactor = Math.max(0.3, charsPerLine / longestWord);
+      adjustedFontSize = baseSize * wordScaleFactor;
+    }
+
+    // Recalculate with adjusted font size
+    const adjustedCharsPerLine = Math.floor(availableWidth / (adjustedFontSize * 0.6));
+    const estimatedLines = Math.ceil(textLength / adjustedCharsPerLine);
+
+    // If text would overflow 3 lines, scale down further
+    if (estimatedLines > 3) {
+      const scaleFactor = Math.max(0.3, 3 / estimatedLines);
+      adjustedFontSize = adjustedFontSize * scaleFactor;
+    }
+
+    return Math.max(adjustedFontSize, baseSize * 0.3); // minimum 30% of base
+  };
+
+  const fontSize = calculateFontSize();
 
   const flashBackgroundColor = flashAnim.interpolate({
     inputRange: [0, 1],
@@ -133,10 +169,13 @@ export const GameCell = memo(function GameCell({
           ]} 
         />
         {word ? (
-          <Text 
-            style={[styles.cellText, { fontSize }]} 
-            numberOfLines={1} 
+          <Text
+            style={[styles.cellText, { fontSize }]}
+            numberOfLines={3}
             adjustsFontSizeToFit
+            minimumFontScale={0.3}
+            allowFontScaling={false}
+            ellipsizeMode="tail"
           >
             {word.text}
           </Text>
@@ -180,6 +219,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '600',
     textAlign: 'center',
+    flexWrap: 'wrap',
   },
   emptyText: {
     color: '#666',
