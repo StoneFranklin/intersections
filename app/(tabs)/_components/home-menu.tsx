@@ -4,7 +4,7 @@ import { logger } from '@/utils/logger';
 import { AntDesign, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { User } from '@supabase/supabase-js';
 import { Link } from 'expo-router';
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -117,6 +117,71 @@ export function HomeMenu({
   signInWithApple,
   signOut,
 }: HomeMenuProps) {
+  const displayNameInputRef = useRef<TextInput>(null);
+
+  useEffect(() => {
+    if (!showDisplayNameModal) return;
+    const focusTimer = setTimeout(() => {
+      displayNameInputRef.current?.focus();
+    }, 150);
+    return () => clearTimeout(focusTimer);
+  }, [showDisplayNameModal]);
+
+  const displayNameModalContent = (
+    <View style={styles.displayNameModal}>
+      <Text style={styles.displayNameTitle}>
+        {displayName ? 'Edit Display Name' : 'Set Your Display Name'}
+      </Text>
+      <Text style={styles.displayNameSubtitle}>This name will appear on the leaderboard</Text>
+
+      <TextInput
+        ref={displayNameInputRef}
+        style={styles.displayNameInput}
+        value={displayNameInput}
+        onChangeText={setDisplayNameInput}
+        placeholder="Enter display name"
+        placeholderTextColor="#666"
+        maxLength={20}
+        autoFocus
+        returnKeyType="done"
+        onSubmitEditing={onSaveDisplayName}
+        accessibilityLabel="Display name input"
+        accessibilityHint="Enter a name to show on the leaderboard"
+      />
+
+      {!!displayNameError && (
+        <Text style={styles.displayNameErrorText}>{displayNameError}</Text>
+      )}
+
+      <TouchableOpacity
+        style={[
+          styles.displayNameSaveButton,
+          (!displayNameInput.trim() || savingDisplayName) && styles.displayNameSaveButtonDisabled,
+        ]}
+        onPress={onSaveDisplayName}
+        disabled={!displayNameInput.trim() || savingDisplayName}
+        accessibilityRole="button"
+        accessibilityLabel={savingDisplayName ? 'Saving display name' : 'Save display name'}
+      >
+        <Text style={styles.displayNameSaveText}>{savingDisplayName ? 'Saving...' : 'Save'}</Text>
+      </TouchableOpacity>
+
+      {displayName && (
+        <TouchableOpacity
+          style={styles.displayNameCancelButton}
+          onPress={() => {
+            setShowDisplayNameModal(false);
+            setDisplayNameInput('');
+          }}
+          accessibilityRole="button"
+          accessibilityLabel="Cancel editing display name"
+        >
+          <Text style={styles.displayNameCancelText}>Cancel</Text>
+        </TouchableOpacity>
+      )}
+    </View>
+  );
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.homeHeader}>
@@ -546,66 +611,24 @@ export function HomeMenu({
         </TouchableOpacity>
       </Modal>
 
-      <Modal
-        visible={showDisplayNameModal}
-        animationType="fade"
-        transparent={true}
-        onRequestClose={() => setShowDisplayNameModal(false)}
-      >
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalOverlay}>
-          <View style={styles.displayNameModal}>
-            <Text style={styles.displayNameTitle}>
-              {displayName ? 'Edit Display Name' : 'Set Your Display Name'}
-            </Text>
-            <Text style={styles.displayNameSubtitle}>This name will appear on the leaderboard</Text>
-
-            <TextInput
-              style={styles.displayNameInput}
-              value={displayNameInput}
-              onChangeText={setDisplayNameInput}
-              placeholder="Enter display name"
-              placeholderTextColor="#666"
-              maxLength={20}
-              autoFocus
-              returnKeyType="done"
-              onSubmitEditing={onSaveDisplayName}
-              accessibilityLabel="Display name input"
-              accessibilityHint="Enter a name to show on the leaderboard"
-            />
-
-            {!!displayNameError && (
-              <Text style={styles.displayNameErrorText}>{displayNameError}</Text>
-            )}
-
-            <TouchableOpacity
-              style={[
-                styles.displayNameSaveButton,
-                (!displayNameInput.trim() || savingDisplayName) && styles.displayNameSaveButtonDisabled,
-              ]}
-              onPress={onSaveDisplayName}
-              disabled={!displayNameInput.trim() || savingDisplayName}
-              accessibilityRole="button"
-              accessibilityLabel={savingDisplayName ? 'Saving display name' : 'Save display name'}
-            >
-              <Text style={styles.displayNameSaveText}>{savingDisplayName ? 'Saving...' : 'Save'}</Text>
-            </TouchableOpacity>
-
-            {displayName && (
-              <TouchableOpacity
-                style={styles.displayNameCancelButton}
-                onPress={() => {
-                  setShowDisplayNameModal(false);
-                  setDisplayNameInput('');
-                }}
-                accessibilityRole="button"
-                accessibilityLabel="Cancel editing display name"
-              >
-                <Text style={styles.displayNameCancelText}>Cancel</Text>
-              </TouchableOpacity>
-            )}
+      {Platform.OS === 'web' ? (
+        showDisplayNameModal ? (
+          <View style={[styles.modalOverlay, styles.modalOverlayWeb]}>
+            {displayNameModalContent}
           </View>
-        </KeyboardAvoidingView>
-      </Modal>
+        ) : null
+      ) : (
+        <Modal
+          visible={showDisplayNameModal}
+          animationType="fade"
+          transparent={true}
+          onRequestClose={() => setShowDisplayNameModal(false)}
+        >
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalOverlay}>
+            {displayNameModalContent}
+          </KeyboardAvoidingView>
+        </Modal>
+      )}
     </SafeAreaView>
   );
 }

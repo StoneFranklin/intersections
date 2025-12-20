@@ -73,6 +73,7 @@ export default function GameScreen() {
   const [displayNameError, setDisplayNameError] = useState<string | null>(null);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [signInBannerDismissed, setSignInBannerDismissed] = useState(true); // Start hidden until we check
+  const displayNameRef = useRef<string | null>(null);
 
   // Notification settings state
   const [notificationsEnabled, setNotificationsEnabledState] = useState(true);
@@ -109,9 +110,12 @@ export default function GameScreen() {
     if (user) {
       getOrCreateProfile(user.id).then(profile => {
         if (profile) {
-          setDisplayName(profile.displayName);
-          // Show modal if no display name set
-          if (!profile.displayName) {
+          if (profile.displayName) {
+            setDisplayName(profile.displayName);
+            setShowDisplayNameModal(false);
+            displayNameRef.current = profile.displayName;
+          } else if (!displayNameRef.current) {
+            // Show modal only if we don't already have a local display name
             setShowDisplayNameModal(true);
           }
         }
@@ -120,6 +124,7 @@ export default function GameScreen() {
     } else {
       // User signed out - clear display name and refresh leaderboard
       setDisplayName(null);
+      displayNameRef.current = null;
       setLeaderboard([]);
       setLeaderboardLoaded(false);
       setFullLeaderboard([]);
@@ -282,16 +287,25 @@ export default function GameScreen() {
     }
     
     setSavingDisplayName(true);
-    const success = await updateDisplayName(user.id, validation.normalized);
-    if (success) {
-      setDisplayName(validation.normalized);
-      setShowDisplayNameModal(false);
-      setDisplayNameInput('');
-      setDisplayNameError(null);
-    } else {
-      setDisplayNameError('Unable to save that display name.');
+    try {
+      const success = await updateDisplayName(user.id, validation.normalized);
+      if (success) {
+        setDisplayName(validation.normalized);
+        displayNameRef.current = validation.normalized;
+        setShowDisplayNameModal(false);
+        setDisplayNameInput('');
+        setDisplayNameError(null);
+        const refreshedProfile = await getOrCreateProfile(user.id);
+        if (refreshedProfile?.displayName) {
+          setDisplayName(refreshedProfile.displayName);
+          displayNameRef.current = refreshedProfile.displayName;
+        }
+      } else {
+        setDisplayNameError('Unable to save that display name.');
+      }
+    } finally {
+      setSavingDisplayName(false);
     }
-    setSavingDisplayName(false);
   };
 
   // Load leaderboard data (for both preview and full modal)
@@ -437,20 +451,31 @@ export default function GameScreen() {
           logger.log('Checking completion for user:', user.id, user.email);
           const dbCompleted = await hasUserCompletedToday(user.id);
           logger.log('DB completed:', dbCompleted);
+          let hasAppliedCompletion = false;
           if (dbCompleted) {
-            setDailyCompleted(true);
             // Get score from database
             const dbScore = await getUserTodayScore(user.id);
             if (dbScore) {
-              const freshPercentile = await getPercentile(dbScore.score);
-              setSavedScore({
-                score: dbScore.score,
-                timeSeconds: dbScore.timeSeconds,
-                mistakes: dbScore.mistakes,
-                correctPlacements: dbScore.correctPlacements,
-                completed: dbScore.correctPlacements === 16,
-                percentile: freshPercentile,
-              });
+              const hasScoreActivity =
+                dbScore.score > 0 ||
+                dbScore.timeSeconds > 0 ||
+                dbScore.mistakes > 0 ||
+                dbScore.correctPlacements > 0;
+              if (!hasScoreActivity) {
+                logger.warn('DB score is empty; treating as not completed.');
+              } else {
+                setDailyCompleted(true);
+                const freshPercentile = await getPercentile(dbScore.score);
+                setSavedScore({
+                  score: dbScore.score,
+                  timeSeconds: dbScore.timeSeconds,
+                  mistakes: dbScore.mistakes,
+                  correctPlacements: dbScore.correctPlacements,
+                  completed: dbScore.correctPlacements === 16,
+                  percentile: freshPercentile,
+                });
+                hasAppliedCompletion = true;
+              }
             }
           } else {
             // User hasn't played on their account today - check local storage
@@ -467,15 +492,23 @@ export default function GameScreen() {
                 const freshPercentile = await getPercentile(localScore.score);
                 localScore.percentile = freshPercentile;
                 setSavedScore(localScore);
+                hasAppliedCompletion = true;
               } else if (localUserId === user.id) {
                 // This user played locally but DB doesn't have it (edge case, maybe offline)
                 setDailyCompleted(true);
                 const freshPercentile = await getPercentile(localScore.score);
                 localScore.percentile = freshPercentile;
                 setSavedScore(localScore);
+                hasAppliedCompletion = true;
               }
               // else: Different user played locally - current user can play fresh
             }
+          }
+
+          if (!hasAppliedCompletion) {
+            setDailyCompleted(false);
+            setSavedScore(null);
+            setUserRank(null);
           }
 
           // Get streak from database

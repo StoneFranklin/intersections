@@ -1242,6 +1242,14 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
   },
+  modalOverlayWeb: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    zIndex: 1000,
+  },
   tutorialModal: {
     backgroundColor: '#1a1a2e',
     borderRadius: 16,
