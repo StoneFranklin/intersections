@@ -196,11 +196,12 @@ export async function getScorePercentile(
   score: number
 ): Promise<number> {
   try {
-    // Get count of scores lower than this score
+    // Get count of scores lower than this score (only signed-in users)
     const { count: lowerCount, error: lowerError } = await supabase
       .from('puzzle_scores')
       .select('*', { count: 'exact', head: true })
       .eq('puzzle_date', puzzleDate)
+      .not('user_id', 'is', null)
       .lt('score', score);
 
     if (lowerError) {
@@ -208,11 +209,12 @@ export async function getScorePercentile(
       return 50; // Default to 50th percentile on error
     }
 
-    // Get total count of scores for today
+    // Get total count of scores for today (only signed-in users)
     const { count: totalCount, error: totalError } = await supabase
       .from('puzzle_scores')
       .select('*', { count: 'exact', head: true })
-      .eq('puzzle_date', puzzleDate);
+      .eq('puzzle_date', puzzleDate)
+      .not('user_id', 'is', null);
 
     if (totalError || !totalCount) {
       logger.error('Error getting total scores:', totalError);
@@ -239,10 +241,12 @@ export async function getScoreRank(
 ): Promise<number> {
   try {
     // Get count of scores better than this score (higher score, or same score with faster time)
+    // Only count signed-in users
     const { count: betterCount, error } = await supabase
       .from('puzzle_scores')
       .select('*', { count: 'exact', head: true })
       .eq('puzzle_date', puzzleDate)
+      .not('user_id', 'is', null)
       .or(`score.gt.${score},and(score.eq.${score},time_seconds.lt.${timeSeconds})`);
 
     if (error) {
@@ -266,12 +270,13 @@ export async function getTodayStats(): Promise<{
   topScore: number;
 } | null> {
   const puzzleDate = getTodayDateString();
-  
+
   try {
     const { data, error } = await supabase
       .from('puzzle_scores')
       .select('score')
-      .eq('puzzle_date', puzzleDate);
+      .eq('puzzle_date', puzzleDate)
+      .not('user_id', 'is', null);
 
     if (error || !data || data.length === 0) {
       return null;
@@ -495,6 +500,7 @@ export async function getTodayLeaderboardPage(params?: {
       .from('puzzle_scores')
       .select('score, time_seconds, correct_placements, user_id')
       .eq('puzzle_date', puzzleDate)
+      .not('user_id', 'is', null)
       .order('score', { ascending: false })
       .order('time_seconds', { ascending: true })
       .range(from, from + pageSize);
@@ -535,13 +541,14 @@ export async function getTodayLeaderboardPage(params?: {
  */
 export async function getTodayLeaderboard(currentUserId?: string): Promise<LeaderboardEntry[]> {
   const puzzleDate = getTodayDateString();
-  
+
   try {
     // Get top scores - don't join profiles, fetch separately
     const { data, error } = await supabase
       .from('puzzle_scores')
       .select('score, time_seconds, correct_placements, user_id')
       .eq('puzzle_date', puzzleDate)
+      .not('user_id', 'is', null)
       .order('score', { ascending: false })
       .order('time_seconds', { ascending: true })
       .limit(50);
