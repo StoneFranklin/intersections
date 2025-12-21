@@ -4,7 +4,8 @@ import { logger } from '@/utils/logger';
 import { AntDesign, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { User } from '@supabase/supabase-js';
 import { Link } from 'expo-router';
-import React, { useEffect, useRef } from 'react';
+import LottieView from 'lottie-react-native';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -118,6 +119,9 @@ export function HomeMenu({
   signOut,
 }: HomeMenuProps) {
   const displayNameInputRef = useRef<TextInput>(null);
+  const lottieRef = useRef<LottieView>(null);
+  const [animationPhase, setAnimationPhase] = useState<'intro' | 'loop' | 'tap'>('intro');
+  const hasStarted = useRef(false);
 
   useEffect(() => {
     if (!showDisplayNameModal) return;
@@ -126,6 +130,74 @@ export function HomeMenu({
     }, 150);
     return () => clearTimeout(focusTimer);
   }, [showDisplayNameModal]);
+
+  // Start intro animation on mount
+  useEffect(() => {
+    if (hasStarted.current) return;
+
+    const timer = setTimeout(() => {
+      if (lottieRef.current) {
+        hasStarted.current = true;
+        // On web, play() with segments calls setSegment but doesn't play
+        // So we need to call play() separately
+        lottieRef.current.play(0, 78);
+        setTimeout(() => {
+          lottieRef.current?.play();
+        }, 50);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Play the appropriate segment when phase changes (except intro which plays on mount)
+  useEffect(() => {
+    if (animationPhase === 'intro' || !hasStarted.current) return;
+
+    const timer = setTimeout(() => {
+      if (lottieRef.current) {
+        if (animationPhase === 'loop') {
+          lottieRef.current.play(79, 148);
+          setTimeout(() => {
+            lottieRef.current?.play();
+          }, 50);
+        } else if (animationPhase === 'tap') {
+          lottieRef.current.play(149, 182);
+          setTimeout(() => {
+            lottieRef.current?.play();
+          }, 50);
+        }
+      }
+    }, 50);
+
+    return () => clearTimeout(timer);
+  }, [animationPhase]);
+
+  const handleAnimationFinish = () => {
+    if (animationPhase === 'intro') {
+      setAnimationPhase('loop');
+    } else if (animationPhase === 'tap') {
+      setAnimationPhase('loop');
+    } else if (animationPhase === 'loop') {
+      // Loop keeps replaying
+      setTimeout(() => {
+        if (lottieRef.current) {
+          lottieRef.current.play(79, 148);
+          setTimeout(() => {
+            lottieRef.current?.play();
+          }, 50);
+        }
+      }, 50);
+    }
+  };
+
+  const handleLogoPress = () => {
+    if (animationPhase === 'loop' && lottieRef.current) {
+      // Pause current animation and reset before playing tap animation
+      lottieRef.current.pause();
+      setAnimationPhase('tap');
+    }
+  };
 
   const displayNameModalContent = (
     <View style={styles.displayNameModal}>
@@ -235,11 +307,16 @@ export function HomeMenu({
         bounces={false}
       >
         <View style={styles.mainMenu}>
-          <Image
-            source={require('@/assets/images/intersections-logo-v2.png')}
-            style={styles.menuLogo}
-            resizeMode="contain"
-          />
+          <TouchableOpacity onPress={handleLogoPress} activeOpacity={0.8}>
+            <LottieView
+              ref={lottieRef}
+              source={require('@/assets/lottie/anim_full_intersections.json')}
+              style={styles.menuLogo}
+              autoPlay={false}
+              loop={false}
+              onAnimationFinish={handleAnimationFinish}
+            />
+          </TouchableOpacity>
           <Text style={styles.menuSubtitle}>A Daily Word Puzzle</Text>
           {!loading && (
             <View style={styles.dateRow}>
