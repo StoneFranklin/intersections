@@ -29,15 +29,17 @@ export default function AuthCallback() {
           const accessToken = hashParams.get('access_token');
           const refreshToken = hashParams.get('refresh_token');
 
-          if (accessToken) {
+          if (accessToken && refreshToken) {
             const { error } = await supabase.auth.setSession({
               access_token: accessToken,
-              refresh_token: refreshToken || '',
+              refresh_token: refreshToken,
             });
 
             if (error) {
               console.error('Error setting session:', error);
             }
+          } else if (accessToken) {
+            console.warn('Access token received without refresh token');
           }
         }
 

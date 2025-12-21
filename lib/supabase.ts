@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
@@ -10,21 +11,16 @@ if (!supabaseUrl || !supabaseAnonKey) {
   );
 }
 
-// Check if we're in a browser environment (window exists)
-const isBrowser = typeof window !== 'undefined';
-
-// No-op storage for SSR/static generation
-const noopStorage = {
-  getItem: (_key: string) => Promise.resolve(null),
-  setItem: (_key: string, _value: string) => Promise.resolve(),
-  removeItem: (_key: string) => Promise.resolve(),
-};
+// Check if we're in a client environment where we can persist sessions
+// For React Native (iOS/Android), always use AsyncStorage
+// For web, check if window exists (not SSR)
+const canPersistSession = Platform.OS !== 'web' || typeof window !== 'undefined';
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    storage: isBrowser ? AsyncStorage : noopStorage,
-    autoRefreshToken: isBrowser,
-    persistSession: isBrowser,
+    storage: AsyncStorage,
+    autoRefreshToken: true,
+    persistSession: canPersistSession,
     detectSessionInUrl: false,
   },
 });
