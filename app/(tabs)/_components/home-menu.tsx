@@ -4,6 +4,7 @@ import { logger } from '@/utils/logger';
 import { AntDesign, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { User } from '@supabase/supabase-js';
 import { Link } from 'expo-router';
+import LottieView from 'lottie-react-native';
 import React, { useEffect, useRef } from 'react';
 import {
   ActivityIndicator,
@@ -235,10 +236,11 @@ export function HomeMenu({
         bounces={false}
       >
         <View style={styles.mainMenu}>
-          <Image
-            source={require('@/assets/images/intersections-logo-v2.png')}
+          <LottieView
+            source={require('@/assets/lottie/logo-animation.json')}
             style={styles.menuLogo}
-            resizeMode="contain"
+            autoPlay
+            loop
           />
           <Text style={styles.menuSubtitle}>A Daily Word Puzzle</Text>
           {!loading && (
