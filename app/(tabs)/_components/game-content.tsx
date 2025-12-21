@@ -328,7 +328,7 @@ export function GameContent({
               </View>
 
               {loadingLeaderboard && !leaderboardLoaded ? (
-                <ActivityIndicator size="small" color="#6a9fff" style={{ marginVertical: 16 }} />
+                <ActivityIndicator size="small" color="#A855F7" style={{ marginVertical: 16 }} />
               ) : leaderboard.length === 0 ? (
                 <Text style={styles.leaderboardEmptyText}>No scores yet</Text>
               ) : (
@@ -441,7 +441,7 @@ export function GameContent({
 
           <View style={styles.gameCompleteActions}>
             <TouchableOpacity style={styles.gameCompleteActionButton} onPress={onShowAnswersModal}>
-              <Ionicons name="grid-outline" size={20} color="#6a9fff" />
+              <Ionicons name="grid-outline" size={20} color="#A855F7" />
               <Text style={styles.gameCompleteActionButtonText}>View Correct Answers</Text>
             </TouchableOpacity>
 

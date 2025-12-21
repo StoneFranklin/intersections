@@ -1,3 +1,4 @@
+import { colorScheme } from '@/constants/theme';
 import { CellPosition, Word } from '@/types/game';
 import React, { memo, useEffect, useRef } from 'react';
 import { Animated, StyleSheet, Text, TouchableOpacity } from 'react-native';
@@ -196,32 +197,32 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   cellEmpty: {
-    backgroundColor: '#2a2a3e',
+    backgroundColor: colorScheme.cellEmpty,
     borderWidth: 2,
-    borderColor: '#3a3a5e',
+    borderColor: colorScheme.borderSecondary,
     borderStyle: 'dashed',
   },
   cellFilled: {
-    backgroundColor: '#4a4a6e',
+    backgroundColor: colorScheme.cellFilled,
   },
   cellCorrect: {
-    backgroundColor: '#2d5a3d',
+    backgroundColor: colorScheme.cellCorrect,
   },
   cellIncorrect: {
-    backgroundColor: '#5a2d2d',
+    backgroundColor: colorScheme.cellIncorrect,
   },
   cellHighlight: {
-    borderColor: '#6a9fff',
+    borderColor: colorScheme.borderAccent,
     borderWidth: 2,
     borderStyle: 'solid',
   },
   cellText: {
-    color: '#fff',
+    color: colorScheme.textPrimary,
     fontWeight: '600',
     textAlign: 'center',
     flexWrap: 'wrap',
   },
   emptyText: {
-    color: '#666',
+    color: colorScheme.textMuted,
   },
 });

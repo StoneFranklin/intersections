@@ -52,14 +52,14 @@ export function LeaderboardScreen({
           <Ionicons
             name="refresh"
             size={22}
-            color={isRefreshing || loadingFullLeaderboard ? '#666' : '#6a9fff'}
+            color={isRefreshing || loadingFullLeaderboard ? '#666' : '#A855F7'}
           />
         </TouchableOpacity>
       </View>
 
       {loadingFullLeaderboard && !fullLeaderboardLoaded && fullLeaderboard.length === 0 && (
         <View style={styles.leaderboardScreenLoadingOverlay}>
-          <ActivityIndicator size="large" color="#6a9fff" />
+          <ActivityIndicator size="large" color="#A855F7" />
           <Text style={styles.leaderboardScreenLoadingText}>Loading rankings...</Text>
         </View>
       )}
@@ -67,7 +67,7 @@ export function LeaderboardScreen({
       <View style={{ flex: 1 }}>
         {isRefreshing && fullLeaderboard.length > 0 && (
           <View style={styles.leaderboardScreenRefreshingOverlay}>
-            <ActivityIndicator size="small" color="#6a9fff" />
+            <ActivityIndicator size="small" color="#A855F7" />
           </View>
         )}
 
@@ -113,7 +113,7 @@ export function LeaderboardScreen({
           }
           ListEmptyComponent={
             loadingFullLeaderboard ? (
-              <ActivityIndicator size="large" color="#6a9fff" style={{ marginVertical: 40 }} />
+              <ActivityIndicator size="large" color="#A855F7" style={{ marginVertical: 40 }} />
             ) : (
               <Text style={styles.leaderboardEmpty}>No scores yet today. Be the first!</Text>
             )
@@ -170,7 +170,7 @@ export function LeaderboardScreen({
           )}
           ListFooterComponent={
             loadingFullLeaderboard && fullLeaderboardLoaded ? (
-              <ActivityIndicator size="small" color="#6a9fff" style={{ marginVertical: 16 }} />
+              <ActivityIndicator size="small" color="#A855F7" style={{ marginVertical: 16 }} />
             ) : fullLeaderboardHasMore && fullLeaderboardLoaded ? (
               <TouchableOpacity
                 style={styles.leaderboardCloseButton}

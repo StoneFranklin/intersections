@@ -263,7 +263,7 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 16,
-    color: '#6a9fff',
+    color: '#A855F7',
   },
   titleSection: {
     marginBottom: 40,
@@ -327,7 +327,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#4a4a8e',
+    backgroundColor: '#7C3AED',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -394,7 +394,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 16,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: '#1a2a3e',
     borderRadius: 12,
     padding: 16,
   },
@@ -428,13 +428,13 @@ const styles = StyleSheet.create({
     color: '#ccc',
   },
   ctaSection: {
-    backgroundColor: '#1a2a2a',
+    backgroundColor: '#1a2a3e',
     borderRadius: 16,
     padding: 32,
     alignItems: 'center',
     marginBottom: 40,
     borderWidth: 1,
-    borderColor: '#2a4a4a',
+    borderColor: '#2a2a4e',
   },
   ctaText: {
     fontSize: 20,
@@ -443,7 +443,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   ctaButton: {
-    backgroundColor: '#4ade80',
+    backgroundColor: '#A855F7',
     paddingVertical: 14,
     paddingHorizontal: 28,
     borderRadius: 10,
@@ -451,7 +451,7 @@ const styles = StyleSheet.create({
   ctaButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#0f0f1a',
+    color: '#fff',
   },
   footer: {
     flexDirection: 'row',
@@ -464,7 +464,7 @@ const styles = StyleSheet.create({
   },
   footerLink: {
     fontSize: 14,
-    color: '#6a9fff',
+    color: '#A855F7',
   },
   footerDivider: {
     fontSize: 14,

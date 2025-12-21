@@ -1,10 +1,10 @@
 import { StyleSheet } from 'react-native';
-import { Fonts } from '@/constants/theme';
+import { Fonts, colorScheme } from '@/constants/theme';
 
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f0f1a',
+    backgroundColor: colorScheme.backgroundPrimary,
   },
   // Home header styles
   homeHeader: {
@@ -14,7 +14,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#2a2a4e',
+    borderBottomColor: colorScheme.borderPrimary,
   },
   homeHeaderLeft: {
     flex: 1,
@@ -28,12 +28,12 @@ export const styles = StyleSheet.create({
   headerStreakBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#2a1a0a',
+    backgroundColor: colorScheme.warningBg,
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#f59e0b',
+    borderColor: colorScheme.warning,
   },
   headerStreakFlame: {
     marginRight: 4,
@@ -41,7 +41,7 @@ export const styles = StyleSheet.create({
   headerStreakText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#f59e0b',
+    color: colorScheme.warning,
   },
   headerProfileButton: {
     padding: 4,
@@ -50,17 +50,17 @@ export const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#4a4a8e',
+    backgroundColor: colorScheme.brandSecondary,
     justifyContent: 'center',
     alignItems: 'center',
   },
   headerProfileInitial: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#fff',
+    color: colorScheme.textPrimary,
   },
   headerSignInButton: {
-    backgroundColor: '#2a3f5f',
+    backgroundColor: colorScheme.backgroundTertiary,
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 8,
@@ -68,7 +68,7 @@ export const styles = StyleSheet.create({
   headerSignInText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#6a9fff',
+    color: colorScheme.brandPrimary,
   },
   // Main menu styles
   mainMenuScroll: {
@@ -90,12 +90,12 @@ export const styles = StyleSheet.create({
   menuTitle: {
     fontSize: 48,
     fontWeight: 'bold',
-    color: '#fff',
+    color: colorScheme.textPrimary,
     marginBottom: 8,
   },
   menuSubtitle: {
     fontSize: 18,
-    color: '#888',
+    color: colorScheme.textTertiary,
     marginBottom: 24,
   },
   menuButtons: {
@@ -104,7 +104,7 @@ export const styles = StyleSheet.create({
     gap: 16,
   },
   playButton: {
-    backgroundColor: '#2d5a3d',
+    backgroundColor: colorScheme.brandSecondary,
     padding: 24,
     borderRadius: 16,
     alignItems: 'center',
@@ -115,32 +115,32 @@ export const styles = StyleSheet.create({
     marginBottom: 4,
   },
   completedButton: {
-    backgroundColor: '#1a3d2d',
+    backgroundColor: colorScheme.successBg,
     borderWidth: 2,
-    borderColor: '#4ade80',
+    borderColor: colorScheme.success,
   },
   playButtonLabel: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#fff',
+    color: colorScheme.textPrimary,
     marginBottom: 4,
   },
   playButtonDesc: {
     fontSize: 14,
-    color: '#aaa',
+    color: colorScheme.textSecondary,
   },
   playButtonError: {
     fontSize: 13,
-    color: '#f87171',
+    color: colorScheme.errorText,
     textAlign: 'center',
   },
   // Completed container styles (condensed leaderboard)
   completedContainer: {
-    backgroundColor: '#1a2a3e',
+    backgroundColor: colorScheme.backgroundSecondary,
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#2a4a6e',
+    borderColor: colorScheme.borderPrimary,
   },
   completedHeader: {
     position: 'relative',
@@ -168,7 +168,7 @@ export const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(26, 42, 58, 0.5)',
+    backgroundColor: colorScheme.overlayMedium,
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 8,
@@ -183,17 +183,17 @@ export const styles = StyleSheet.create({
   },
   leaderboardLoadingText: {
     fontSize: 14,
-    color: '#888',
+    color: colorScheme.textTertiary,
   },
   completedTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#fff',
+    color: colorScheme.textPrimary,
   },
   completedRankText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#ffd700',
+    color: colorScheme.gold,
   },
   tapForDetailsHint: {
     flexDirection: 'row',
@@ -204,17 +204,17 @@ export const styles = StyleSheet.create({
   },
   tapForDetailsText: {
     fontSize: 12,
-    color: '#666',
+    color: colorScheme.textMuted,
   },
   leaderboardSectionTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#888',
+    color: colorScheme.textTertiary,
     textTransform: 'uppercase',
   },
   leaderboardEmptyText: {
     fontSize: 14,
-    color: '#666',
+    color: colorScheme.textMuted,
     textAlign: 'center',
     paddingVertical: 12,
   },
@@ -229,7 +229,7 @@ export const styles = StyleSheet.create({
     borderRadius: 8,
   },
   leaderboardCompactRowCurrentUser: {
-    backgroundColor: 'rgba(106, 159, 255, 0.15)',
+    backgroundColor: colorScheme.overlayLight,
   },
   leaderboardCompactRank: {
     width: 32,
@@ -238,30 +238,30 @@ export const styles = StyleSheet.create({
   leaderboardCompactRankText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#888',
+    color: colorScheme.textTertiary,
   },
   leaderboardCompactName: {
     flex: 1,
     fontSize: 14,
-    color: '#ccc',
+    color: colorScheme.textSecondary,
     marginLeft: 8,
   },
   leaderboardCompactNameCurrentUser: {
-    color: '#6a9fff',
+    color: colorScheme.brandPrimary,
     fontWeight: '600',
   },
   leaderboardCompactCorrect: {
     fontSize: 12,
-    color: '#888',
+    color: colorScheme.textTertiary,
     marginRight: 8,
   },
   leaderboardCompactScore: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#4ade80',
+    color: colorScheme.success,
   },
   leaderboardCompactScoreCurrentUser: {
-    color: '#6a9fff',
+    color: colorScheme.brandPrimary,
   },
   leaderboardDivider: {
     alignItems: 'center',
@@ -269,7 +269,7 @@ export const styles = StyleSheet.create({
   },
   leaderboardDividerText: {
     fontSize: 12,
-    color: '#444',
+    color: colorScheme.textMuted,
   },
   viewFullLeaderboardButton: {
     flexDirection: 'row',
@@ -278,11 +278,11 @@ export const styles = StyleSheet.create({
     paddingVertical: 10,
     marginTop: 8,
     borderTopWidth: 1,
-    borderTopColor: '#1a2a3a',
+    borderTopColor: colorScheme.borderPrimary,
   },
   viewFullLeaderboardText: {
     fontSize: 13,
-    color: '#6a9fff',
+    color: colorScheme.brandPrimary,
     marginRight: 4,
   },
   viewAnswersMainButton: {
@@ -291,22 +291,22 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#2a4a6e',
-    backgroundColor: '#0f1a2a',
+    borderColor: colorScheme.borderPrimary,
+    backgroundColor: colorScheme.backgroundSecondary,
     paddingVertical: 14,
     gap: 8,
   },
   viewAnswersMainText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#6a9fff',
+    color: colorScheme.brandPrimary,
   },
   // Answers toggle and container
   answersToggle: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#0f1a2a',
+    backgroundColor: colorScheme.backgroundSecondary,
     borderRadius: 12,
     padding: 14,
     marginBottom: 12,
@@ -319,7 +319,7 @@ export const styles = StyleSheet.create({
   answersToggleText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#6a9fff',
+    color: colorScheme.brandPrimary,
   },
   answersContainer: {
     alignItems: 'center',
@@ -329,7 +329,7 @@ export const styles = StyleSheet.create({
   // Answers Modal styles
   answersModalContainer: {
     flex: 1,
-    backgroundColor: '#0f0f1a',
+    backgroundColor: colorScheme.backgroundPrimary,
   },
   answersModalHeader: {
     flexDirection: 'row',
@@ -338,7 +338,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#2a2a4e',
+    borderBottomColor: colorScheme.borderPrimary,
   },
   answersModalBackButton: {
     padding: 8,
@@ -349,7 +349,7 @@ export const styles = StyleSheet.create({
   answersModalTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#fff',
+    color: colorScheme.textPrimary,
   },
   answersModalContent: {
     alignItems: 'center',
@@ -361,12 +361,12 @@ export const styles = StyleSheet.create({
   },
   answersEmptyText: {
     fontSize: 16,
-    color: '#888',
+    color: colorScheme.textTertiary,
     textAlign: 'center',
   },
   answersEmptyButton: {
     borderWidth: 1,
-    borderColor: '#6a9fff',
+    borderColor: colorScheme.borderAccent,
     borderRadius: 10,
     paddingVertical: 10,
     paddingHorizontal: 16,
@@ -374,7 +374,7 @@ export const styles = StyleSheet.create({
   answersEmptyButtonText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#6a9fff',
+    color: colorScheme.brandPrimary,
   },
   tutorialScreenContent: {
     paddingHorizontal: 20,
@@ -389,7 +389,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#2a2a4e',
+    borderBottomColor: colorScheme.borderPrimary,
   },
   leaderboardScreenBackButton: {
     padding: 8,
@@ -402,7 +402,7 @@ export const styles = StyleSheet.create({
   leaderboardScreenTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#fff',
+    color: colorScheme.textPrimary,
   },
   leaderboardScreenRefreshButton: {
     padding: 8,
@@ -423,7 +423,7 @@ export const styles = StyleSheet.create({
   },
   leaderboardScreenLoadingText: {
     fontSize: 16,
-    color: '#a0a0d0',
+    color: colorScheme.info,
     fontFamily: Fonts.rounded,
   },
   leaderboardScreenRefreshingOverlay: {
@@ -432,28 +432,28 @@ export const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(26, 42, 58, 0.5)',
+    backgroundColor: colorScheme.overlayMedium,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 1,
   },
   userRankBanner: {
-    backgroundColor: '#1a3d2d',
+    backgroundColor: colorScheme.successBg,
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#2a5a3d',
+    borderColor: colorScheme.successDark,
   },
   userRankBannerText: {
     fontSize: 14,
-    color: '#a0d0b0',
+    color: colorScheme.successText,
   },
   userRankBannerValue: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#ffd700',
+    color: colorScheme.gold,
     marginTop: 4,
   },
   leaderboardFullList: {
@@ -462,15 +462,15 @@ export const styles = StyleSheet.create({
   leaderboardFullRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1a2a3e',
+    backgroundColor: colorScheme.backgroundSecondary,
     borderRadius: 12,
     padding: 12,
     marginBottom: 8,
   },
   leaderboardFullRowCurrentUser: {
-    backgroundColor: 'rgba(106, 159, 255, 0.15)',
+    backgroundColor: colorScheme.overlayLight,
     borderWidth: 1,
-    borderColor: '#6a9fff',
+    borderColor: colorScheme.borderAccent,
   },
   leaderboardFullRank: {
     width: 44,
@@ -480,7 +480,7 @@ export const styles = StyleSheet.create({
   leaderboardFullRankText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#888',
+    color: colorScheme.textTertiary,
   },
   leaderboardFullInfo: {
     flex: 1,
@@ -488,25 +488,25 @@ export const styles = StyleSheet.create({
   },
   leaderboardFullName: {
     fontSize: 16,
-    color: '#fff',
+    color: colorScheme.textPrimary,
     fontWeight: '500',
   },
   leaderboardFullNameCurrentUser: {
-    color: '#6a9fff',
+    color: colorScheme.brandPrimary,
   },
   leaderboardFullMeta: {
     fontSize: 13,
-    color: '#888',
+    color: colorScheme.textTertiary,
     marginTop: 2,
   },
   leaderboardFullScore: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#4ade80',
+    color: colorScheme.success,
     marginLeft: 12,
   },
   leaderboardFullScoreCurrentUser: {
-    color: '#6a9fff',
+    color: colorScheme.brandPrimary,
   },
   leaderboardScreenActions: {
     marginTop: 24,
@@ -518,7 +518,7 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: '#6a9fff',
+    borderColor: colorScheme.borderAccent,
     borderRadius: 12,
     paddingVertical: 14,
     gap: 8,
@@ -526,7 +526,7 @@ export const styles = StyleSheet.create({
   leaderboardScreenActionText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#6a9fff',
+    color: colorScheme.brandPrimary,
   },
   leaderboardScreenShareButton: {
     flexDirection: 'row',
@@ -534,7 +534,7 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: '#4ade80',
+    borderColor: colorScheme.success,
     borderRadius: 12,
     paddingVertical: 14,
     marginBottom: 16,
@@ -543,7 +543,7 @@ export const styles = StyleSheet.create({
   leaderboardScreenShareText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#4ade80',
+    color: colorScheme.success,
   },
   // Share score button
   shareScoreButton: {
@@ -552,7 +552,7 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: '#4ade80',
+    borderColor: colorScheme.success,
     borderRadius: 8,
     paddingVertical: 12,
     gap: 8,
@@ -560,18 +560,18 @@ export const styles = StyleSheet.create({
   shareScoreButtonText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#4ade80',
+    color: colorScheme.success,
   },
   // Leaderboard card styles
   leaderboardCard: {
-    backgroundColor: '#1a2a3e',
+    backgroundColor: colorScheme.backgroundSecondary,
     borderRadius: 12,
     padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     borderWidth: 1,
-    borderColor: '#2a4a6e',
+    borderColor: colorScheme.borderPrimary,
   },
   leaderboardCardLeft: {
     flexDirection: 'row',
@@ -584,11 +584,11 @@ export const styles = StyleSheet.create({
   leaderboardCardTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#fff',
+    color: colorScheme.textPrimary,
   },
   leaderboardCardDesc: {
     fontSize: 13,
-    color: '#888',
+    color: colorScheme.textTertiary,
     marginTop: 2,
   },
   // Leaderboard preview styles (on card)
@@ -604,11 +604,11 @@ export const styles = StyleSheet.create({
   },
   leaderboardPreviewScore: {
     fontSize: 12,
-    color: '#888',
+    color: colorScheme.textTertiary,
     fontWeight: '600',
   },
   leaderboardPreviewScoreCurrentUser: {
-    color: '#6a9fff',
+    color: colorScheme.brandPrimary,
   },
   // How to play button
   howToPlayButton: {
@@ -620,21 +620,21 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#2a4a6e',
-    backgroundColor: '#0f1a2a',
+    borderColor: colorScheme.borderPrimary,
+    backgroundColor: colorScheme.backgroundSecondary,
     paddingVertical: 14,
     gap: 8,
   },
   howToPlayText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#6a9fff',
+    color: colorScheme.brandPrimary,
   },
   // Sign in banner styles
   signInBanner: {
-    backgroundColor: '#1a2a3e',
+    backgroundColor: colorScheme.backgroundSecondary,
     borderBottomWidth: 1,
-    borderBottomColor: '#2a4a6e',
+    borderBottomColor: colorScheme.borderPrimary,
     paddingVertical: 12,
     paddingHorizontal: 16,
     flexDirection: 'row',
@@ -651,11 +651,11 @@ export const styles = StyleSheet.create({
   },
   signInBannerTitle: {
     fontSize: 13,
-    color: '#ccc',
+    color: colorScheme.textSecondary,
     lineHeight: 18,
   },
   signInBannerButton: {
-    backgroundColor: '#4285f4',
+    backgroundColor: colorScheme.authButton,
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 6,
@@ -663,7 +663,7 @@ export const styles = StyleSheet.create({
   signInBannerButtonText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#fff',
+    color: colorScheme.textPrimary,
   },
   signInBannerDismiss: {
     padding: 8,
@@ -671,7 +671,7 @@ export const styles = StyleSheet.create({
   },
   signInBannerDismissText: {
     fontSize: 20,
-    color: '#666',
+    color: colorScheme.textMuted,
     fontWeight: '300',
   },
   // Account section (for signed in users)
@@ -682,11 +682,11 @@ export const styles = StyleSheet.create({
   },
   accountSectionEmail: {
     fontSize: 13,
-    color: '#666',
+    color: colorScheme.textMuted,
   },
   accountSectionSignOut: {
     fontSize: 14,
-    color: '#888',
+    color: colorScheme.textTertiary,
     marginTop: 4,
   },
   scoreSummary: {
@@ -706,18 +706,18 @@ export const styles = StyleSheet.create({
   },
   playButtonLoadingText: {
     fontSize: 18,
-    color: '#fff',
+    color: colorScheme.textPrimary,
     fontWeight: '500',
   },
   scoreSummaryText: {
     fontSize: 16,
-    color: '#4ade80',
+    color: colorScheme.success,
     fontWeight: '600',
     marginBottom: 4,
   },
   percentileText: {
     fontSize: 14,
-    color: '#f59e0b',
+    color: colorScheme.warning,
     fontWeight: '500',
     marginBottom: 4,
   },
@@ -730,20 +730,20 @@ export const styles = StyleSheet.create({
   },
   dateText: {
     fontSize: 16,
-    color: '#666',
+    color: colorScheme.textMuted,
   },
   completedBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#1a3d2d',
+    backgroundColor: colorScheme.successBg,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
   },
   completedBadgeText: {
     fontSize: 13,
-    color: '#4ade80',
+    color: colorScheme.success,
     fontWeight: '600',
   },
   footerLinks: {
@@ -756,11 +756,11 @@ export const styles = StyleSheet.create({
   },
   footerLinkText: {
     fontSize: 13,
-    color: '#555',
+    color: colorScheme.textDisabled,
   },
   footerLinkDivider: {
     fontSize: 13,
-    color: '#333',
+    color: colorScheme.googleButtonText,
   },
   streakContainer: {
     flexDirection: 'row',
@@ -768,10 +768,10 @@ export const styles = StyleSheet.create({
     marginTop: 24,
     paddingVertical: 8,
     paddingHorizontal: 16,
-    backgroundColor: '#2a1a0a',
+    backgroundColor: colorScheme.warningBg,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#f59e0b',
+    borderColor: colorScheme.warning,
   },
   streakFlame: {
     fontSize: 18,
@@ -780,7 +780,7 @@ export const styles = StyleSheet.create({
   streakText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#f59e0b',
+    color: colorScheme.warning,
   },
   // Sign in styles
   signInButton: {
@@ -790,7 +790,7 @@ export const styles = StyleSheet.create({
   },
   signInText: {
     fontSize: 14,
-    color: '#6a9fff',
+    color: colorScheme.brandPrimary,
   },
   accountContainer: {
     marginTop: 16,
@@ -800,21 +800,21 @@ export const styles = StyleSheet.create({
   accountDisplayName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#6a9fff',
+    color: colorScheme.brandPrimary,
     marginBottom: 2,
   },
   accountEmail: {
     fontSize: 13,
-    color: '#666',
+    color: colorScheme.textMuted,
   },
   signOutText: {
     fontSize: 14,
-    color: '#888',
+    color: colorScheme.textTertiary,
     marginTop: 4,
   },
   // Display name modal styles
   displayNameModal: {
-    backgroundColor: '#1a1a2e',
+    backgroundColor: colorScheme.backgroundSecondary,
     borderRadius: 16,
     padding: 24,
     maxWidth: 360,
@@ -824,34 +824,34 @@ export const styles = StyleSheet.create({
   displayNameTitle: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#fff',
+    color: colorScheme.textPrimary,
     marginBottom: 8,
   },
   displayNameSubtitle: {
     fontSize: 14,
-    color: '#888',
+    color: colorScheme.textTertiary,
     textAlign: 'center',
     marginBottom: 20,
   },
   displayNameInput: {
-    backgroundColor: '#2a2a4e',
+    backgroundColor: colorScheme.backgroundTertiary,
     borderRadius: 8,
     padding: 14,
     fontSize: 16,
-    color: '#fff',
+    color: colorScheme.textPrimary,
     width: '100%',
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#3a3a6e',
+    borderColor: colorScheme.borderSecondary,
   },
   displayNameErrorText: {
-    color: '#f87171',
+    color: colorScheme.errorText,
     fontSize: 13,
     marginBottom: 12,
     textAlign: 'center',
   },
   displayNameSaveButton: {
-    backgroundColor: '#4ade80',
+    backgroundColor: colorScheme.success,
     paddingVertical: 14,
     paddingHorizontal: 24,
     borderRadius: 8,
@@ -859,12 +859,12 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
   },
   displayNameSaveButtonDisabled: {
-    backgroundColor: '#2a4a3a',
+    backgroundColor: colorScheme.successDark,
   },
   displayNameSaveText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#fff',
+    color: colorScheme.textPrimary,
   },
   displayNameCancelButton: {
     marginTop: 12,
@@ -872,10 +872,10 @@ export const styles = StyleSheet.create({
   },
   displayNameCancelText: {
     fontSize: 15,
-    color: '#888',
+    color: colorScheme.textTertiary,
   },
   signInModal: {
-    backgroundColor: '#1a1a2e',
+    backgroundColor: colorScheme.backgroundSecondary,
     borderRadius: 16,
     padding: 24,
     maxWidth: 360,
@@ -885,17 +885,17 @@ export const styles = StyleSheet.create({
   signInModalTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#fff',
+    color: colorScheme.textPrimary,
     marginBottom: 8,
   },
   signInModalSubtitle: {
     fontSize: 14,
-    color: '#888',
+    color: colorScheme.textTertiary,
     textAlign: 'center',
     marginBottom: 24,
   },
   googleButton: {
-    backgroundColor: '#fff',
+    backgroundColor: colorScheme.googleButton,
     paddingVertical: 14,
     paddingHorizontal: 24,
     borderRadius: 8,
@@ -910,13 +910,13 @@ export const styles = StyleSheet.create({
   googleButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
+    color: colorScheme.googleButtonText,
   },
   appleButton: {
     width: '100%',
     height: 48,
     marginBottom: 16,
-    backgroundColor: '#000',
+    backgroundColor: colorScheme.appleButton,
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
@@ -928,18 +928,18 @@ export const styles = StyleSheet.create({
   appleButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#fff',
+    color: colorScheme.textPrimary,
   },
   signInCancelButton: {
     paddingVertical: 12,
   },
   signInCancelText: {
     fontSize: 16,
-    color: '#888',
+    color: colorScheme.textTertiary,
   },
   // Profile menu modal styles
   profileMenuModal: {
-    backgroundColor: '#1a1a2e',
+    backgroundColor: colorScheme.backgroundSecondary,
     borderRadius: 16,
     padding: 16,
     maxWidth: 320,
@@ -955,14 +955,14 @@ export const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#4a4a8e',
+    backgroundColor: colorScheme.brandSecondary,
     justifyContent: 'center',
     alignItems: 'center',
   },
   profileMenuAvatarText: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#fff',
+    color: colorScheme.textPrimary,
   },
   profileMenuInfo: {
     flex: 1,
@@ -970,16 +970,16 @@ export const styles = StyleSheet.create({
   profileMenuName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#fff',
+    color: colorScheme.textPrimary,
   },
   profileMenuEmail: {
     fontSize: 13,
-    color: '#888',
+    color: colorScheme.textTertiary,
     marginTop: 2,
   },
   profileMenuDivider: {
     height: 1,
-    backgroundColor: '#2a2a4e',
+    backgroundColor: colorScheme.backgroundTertiary,
     marginVertical: 8,
   },
   profileMenuItem: {
@@ -994,31 +994,31 @@ export const styles = StyleSheet.create({
   },
   profileMenuItemText: {
     fontSize: 15,
-    color: '#fff',
+    color: colorScheme.textPrimary,
     flex: 1,
   },
   profileMenuItemTextDanger: {
     fontSize: 15,
-    color: '#ef4444',
+    color: colorScheme.error,
   },
   // Toggle switch styles
   toggle: {
     width: 50,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#3a3a5e',
+    backgroundColor: colorScheme.backgroundTertiary,
     padding: 2,
     justifyContent: 'center',
   },
   toggleOn: {
-    backgroundColor: '#4ade80',
+    backgroundColor: colorScheme.success,
   },
   toggleThumb: {
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: '#fff',
-    shadowColor: '#000',
+    backgroundColor: colorScheme.googleButton,
+    shadowColor: colorScheme.appleButton,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 2,
@@ -1040,16 +1040,16 @@ export const styles = StyleSheet.create({
   },
   menuLinkText: {
     fontSize: 16,
-    color: '#888',
+    color: colorScheme.textTertiary,
     textDecorationLine: 'underline',
   },
   menuLinkDivider: {
     fontSize: 16,
-    color: '#555',
+    color: colorScheme.textDisabled,
   },
   // Leaderboard modal styles
   leaderboardModal: {
-    backgroundColor: '#1a1a2e',
+    backgroundColor: colorScheme.backgroundSecondary,
     borderRadius: 16,
     padding: 24,
     maxWidth: 400,
@@ -1065,11 +1065,11 @@ export const styles = StyleSheet.create({
   leaderboardTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#fff',
+    color: colorScheme.textPrimary,
   },
   leaderboardEmpty: {
     fontSize: 16,
-    color: '#888',
+    color: colorScheme.textTertiary,
     textAlign: 'center',
     marginVertical: 40,
   },
@@ -1082,16 +1082,16 @@ export const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#2a2a4e',
+    borderBottomColor: colorScheme.borderPrimary,
   },
   leaderboardRowCurrentUser: {
-    backgroundColor: 'rgba(106, 159, 255, 0.15)',
+    backgroundColor: colorScheme.overlayLight,
     borderRadius: 8,
   },
   leaderboardRowSeparated: {
     marginTop: 16,
     borderTopWidth: 1,
-    borderTopColor: '#2a2a4e',
+    borderTopColor: colorScheme.borderPrimary,
     borderStyle: 'dashed',
   },
   leaderboardRank: {
@@ -1102,7 +1102,7 @@ export const styles = StyleSheet.create({
   leaderboardRankText: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#888',
+    color: colorScheme.textTertiary,
     textAlign: 'center',
   },
   leaderboardInfo: {
@@ -1111,49 +1111,49 @@ export const styles = StyleSheet.create({
   },
   leaderboardName: {
     fontSize: 16,
-    color: '#fff',
+    color: colorScheme.textPrimary,
     fontWeight: '500',
   },
   leaderboardNameCurrentUser: {
-    color: '#6a9fff',
+    color: colorScheme.brandPrimary,
   },
   leaderboardTime: {
     fontSize: 13,
-    color: '#888',
+    color: colorScheme.textTertiary,
     marginTop: 2,
   },
   leaderboardScore: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#4ade80',
+    color: colorScheme.success,
     marginLeft: 12,
   },
   leaderboardScoreCurrentUser: {
-    color: '#6a9fff',
+    color: colorScheme.brandPrimary,
   },
   leaderboardCloseButton: {
     marginTop: 16,
     paddingVertical: 14,
-    backgroundColor: '#2a3a5a',
+    backgroundColor: colorScheme.backgroundTertiary,
     borderRadius: 8,
     alignItems: 'center',
   },
   leaderboardCloseText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#fff',
+    color: colorScheme.textPrimary,
   },
   // Enhanced leaderboard modal styles
   leaderboardScrollView: {
     maxHeight: '100%',
   },
   leaderboardUserScore: {
-    backgroundColor: '#1a2e1f',
+    backgroundColor: colorScheme.successBg,
     borderRadius: 12,
     padding: 16,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#2a4a3a',
+    borderColor: colorScheme.successDark,
   },
   leaderboardUserScoreHeader: {
     flexDirection: 'row',
@@ -1164,10 +1164,10 @@ export const styles = StyleSheet.create({
   leaderboardUserScoreTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#4ade80',
+    color: colorScheme.success,
   },
   leaderboardUserRankBadge: {
-    backgroundColor: '#2a4a3a',
+    backgroundColor: colorScheme.successDark,
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 12,
@@ -1175,7 +1175,7 @@ export const styles = StyleSheet.create({
   leaderboardUserRankText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#4ade80',
+    color: colorScheme.success,
   },
   leaderboardUserScoreRow: {
     flexDirection: 'row',
@@ -1187,17 +1187,17 @@ export const styles = StyleSheet.create({
   leaderboardUserScoreValue: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#fff',
+    color: colorScheme.textPrimary,
   },
   leaderboardUserScoreLabel: {
     fontSize: 11,
-    color: '#888',
+    color: colorScheme.textTertiary,
     marginTop: 2,
     textTransform: 'uppercase',
   },
   leaderboardUserPercentile: {
     fontSize: 14,
-    color: '#f59e0b',
+    color: colorScheme.warning,
     fontWeight: '500',
     textAlign: 'center',
     marginTop: 12,
@@ -1208,7 +1208,7 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: '#4ade80',
+    borderColor: colorScheme.success,
     borderRadius: 8,
     paddingVertical: 10,
     marginTop: 16,
@@ -1216,7 +1216,7 @@ export const styles = StyleSheet.create({
   leaderboardShareButtonText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#4ade80',
+    color: colorScheme.success,
   },
   leaderboardViewAnswersButton: {
     flexDirection: 'row',
@@ -1224,7 +1224,7 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: '#6a9fff',
+    borderColor: colorScheme.borderAccent,
     borderRadius: 8,
     paddingVertical: 12,
     marginTop: 20,
@@ -1232,12 +1232,12 @@ export const styles = StyleSheet.create({
   leaderboardViewAnswersText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#6a9fff',
+    color: colorScheme.brandPrimary,
   },
   // Tutorial modal styles
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    backgroundColor: colorScheme.overlayDark,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
@@ -1251,7 +1251,7 @@ export const styles = StyleSheet.create({
     zIndex: 1000,
   },
   tutorialModal: {
-    backgroundColor: '#1a1a2e',
+    backgroundColor: colorScheme.backgroundSecondary,
     borderRadius: 16,
     padding: 24,
     maxWidth: 400,
@@ -1261,36 +1261,36 @@ export const styles = StyleSheet.create({
   tutorialTitle: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#fff',
+    color: colorScheme.textPrimary,
     textAlign: 'center',
     marginBottom: 24,
   },
   tutorialHeading: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#4ade80',
+    color: colorScheme.success,
     marginTop: 16,
     marginBottom: 8,
   },
   tutorialText: {
     fontSize: 15,
-    color: '#ccc',
+    color: colorScheme.textSecondary,
     lineHeight: 22,
   },
   tutorialCloseButton: {
-    backgroundColor: '#2d5a3d',
+    backgroundColor: colorScheme.brandSecondary,
     borderRadius: 12,
     paddingVertical: 14,
     paddingHorizontal: 32,
     alignItems: 'center',
     marginTop: 20,
     borderTopWidth: 1,
-    borderTopColor: '#2a2a4e',
+    borderTopColor: colorScheme.borderPrimary,
   },
   tutorialCloseText: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#fff',
+    color: colorScheme.textPrimary,
   },
   // Header styles
   header: {
@@ -1299,9 +1299,9 @@ export const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 12,
     paddingHorizontal: 16,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: colorScheme.backgroundSecondary,
     borderBottomWidth: 1,
-    borderBottomColor: '#2a2a4e',
+    borderBottomColor: colorScheme.borderPrimary,
     minHeight: 44,
   },
   headerBackButton: {
@@ -1326,19 +1326,19 @@ export const styles = StyleSheet.create({
     height: 24,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: '#888',
+    borderColor: colorScheme.textTertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerHelpIcon: {
-    color: '#888',
+    color: colorScheme.textTertiary,
     fontSize: 14,
     fontWeight: '700',
   },
   timerText: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#fff',
+    color: colorScheme.textPrimary,
     fontVariant: ['tabular-nums'],
   },
   headerBackIcon: {
@@ -1354,7 +1354,7 @@ export const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   livesLabel: {
-    color: '#888',
+    color: colorScheme.textTertiary,
     fontSize: 13,
     fontWeight: '600',
     marginRight: 4,
@@ -1365,16 +1365,16 @@ export const styles = StyleSheet.create({
     borderRadius: 8,
   },
   heartFilled: {
-    backgroundColor: '#ef4444',
-    shadowColor: '#ef4444',
+    backgroundColor: colorScheme.error,
+    shadowColor: colorScheme.error,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.5,
     shadowRadius: 4,
   },
   heartEmpty: {
-    backgroundColor: '#3a3a5e',
+    backgroundColor: colorScheme.backgroundTertiary,
     borderWidth: 1,
-    borderColor: '#4a4a6e',
+    borderColor: colorScheme.borderSecondary,
   },
   instructions: {
     fontSize: 14,
@@ -1400,11 +1400,11 @@ export const styles = StyleSheet.create({
   gameOverText: {
     fontSize: 36,
     fontWeight: 'bold',
-    color: '#ff6b6b',
+    color: colorScheme.errorLight,
     marginBottom: 24,
   },
   percentileCardGameOver: {
-    backgroundColor: '#3d2d2d',
+    backgroundColor: colorScheme.errorBg,
     borderRadius: 12,
     paddingVertical: 16,
     paddingHorizontal: 32,
@@ -1414,11 +1414,11 @@ export const styles = StyleSheet.create({
   percentileValueGameOver: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#ff6b6b',
+    color: colorScheme.errorLight,
   },
   percentileLabelGameOver: {
     fontSize: 14,
-    color: '#d0a0a0',
+    color: colorScheme.errorText,
     marginTop: 4,
   },
   buttonRow: {
@@ -1428,24 +1428,24 @@ export const styles = StyleSheet.create({
   shareButton: {
     backgroundColor: 'transparent',
     borderWidth: 2,
-    borderColor: '#ff6b6b',
+    borderColor: colorScheme.errorLight,
     paddingHorizontal: 28,
     paddingVertical: 12,
     borderRadius: 25,
   },
   shareButtonText: {
-    color: '#ff6b6b',
+    color: colorScheme.errorLight,
     fontWeight: '600',
     fontSize: 18,
   },
   tryAgainButton: {
-    backgroundColor: '#ff6b6b',
+    backgroundColor: colorScheme.errorLight,
     paddingHorizontal: 28,
     paddingVertical: 14,
     borderRadius: 25,
   },
   tryAgainText: {
-    color: '#0f0f1a',
+    color: colorScheme.backgroundPrimary,
     fontWeight: '600',
     fontSize: 18,
   },
@@ -1453,11 +1453,11 @@ export const styles = StyleSheet.create({
   winOverlayTitle: {
     fontSize: 36,
     fontWeight: 'bold',
-    color: '#4ade80',
+    color: colorScheme.success,
     marginBottom: 32,
   },
   scoreCard: {
-    backgroundColor: '#1a2e1f',
+    backgroundColor: colorScheme.successBg,
     borderRadius: 16,
     padding: 24,
     width: '100%',
@@ -1475,28 +1475,28 @@ export const styles = StyleSheet.create({
   scoreValue: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#fff',
+    color: colorScheme.textPrimary,
   },
   scoreLabel: {
     fontSize: 12,
-    color: '#888',
+    color: colorScheme.textTertiary,
     marginTop: 4,
     textTransform: 'uppercase',
   },
   noScoreText: {
     fontSize: 16,
-    color: '#fff',
+    color: colorScheme.textPrimary,
     textAlign: 'center',
   },
   noScoreSubtext: {
     fontSize: 12,
-    color: '#888',
+    color: colorScheme.textTertiary,
     textAlign: 'center',
     marginTop: 4,
   },
   calculatingText: {
     fontSize: 16,
-    color: '#888',
+    color: colorScheme.textTertiary,
     marginBottom: 16,
   },
   // Loading result screen styles
@@ -1513,11 +1513,11 @@ export const styles = StyleSheet.create({
   },
   loadingResultText: {
     fontSize: 16,
-    color: '#888',
+    color: colorScheme.textTertiary,
     marginTop: 16,
   },
   percentileCard: {
-    backgroundColor: '#2d5a3d',
+    backgroundColor: colorScheme.brandSecondary,
     borderRadius: 12,
     paddingVertical: 16,
     paddingHorizontal: 32,
@@ -1527,16 +1527,16 @@ export const styles = StyleSheet.create({
   percentileValue: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#4ade80',
+    color: colorScheme.success,
   },
   percentileLabel: {
     fontSize: 14,
-    color: '#a0d0b0',
+    color: colorScheme.successText,
     marginTop: 4,
   },
   // Rank card styles (win screen)
   rankCardWin: {
-    backgroundColor: '#2d5a3d',
+    backgroundColor: colorScheme.brandSecondary,
     borderRadius: 12,
     paddingVertical: 16,
     paddingHorizontal: 32,
@@ -1546,16 +1546,16 @@ export const styles = StyleSheet.create({
   rankValueWin: {
     fontSize: 36,
     fontWeight: 'bold',
-    color: '#ffd700',
+    color: colorScheme.gold,
   },
   rankLabelWin: {
     fontSize: 14,
-    color: '#a0d0b0',
+    color: colorScheme.successText,
     marginTop: 4,
   },
   // Rank card styles (game over screen)
   rankCard: {
-    backgroundColor: '#3d2d2d',
+    backgroundColor: colorScheme.errorBg,
     borderRadius: 12,
     paddingVertical: 16,
     paddingHorizontal: 32,
@@ -1565,34 +1565,34 @@ export const styles = StyleSheet.create({
   rankValue: {
     fontSize: 36,
     fontWeight: 'bold',
-    color: '#ffd700',
+    color: colorScheme.gold,
   },
   rankLabel: {
     fontSize: 14,
-    color: '#d0a0a0',
+    color: colorScheme.errorText,
     marginTop: 4,
   },
   shareButtonWin: {
     backgroundColor: 'transparent',
     borderWidth: 2,
-    borderColor: '#4ade80',
+    borderColor: colorScheme.success,
     paddingHorizontal: 28,
     paddingVertical: 12,
     borderRadius: 25,
   },
   shareButtonWinText: {
-    color: '#4ade80',
+    color: colorScheme.success,
     fontWeight: '600',
     fontSize: 18,
   },
   menuButton: {
-    backgroundColor: '#4ade80',
+    backgroundColor: colorScheme.success,
     paddingHorizontal: 28,
     paddingVertical: 14,
     borderRadius: 25,
   },
   menuButtonText: {
-    color: '#0f0f1a',
+    color: colorScheme.backgroundPrimary,
     fontWeight: '600',
     fontSize: 18,
   },
@@ -1606,21 +1606,21 @@ export const styles = StyleSheet.create({
   reviewShareButton: {
     backgroundColor: 'transparent',
     borderWidth: 2,
-    borderColor: '#4ade80',
+    borderColor: colorScheme.success,
     paddingHorizontal: 32,
     paddingVertical: 12,
     borderRadius: 25,
     marginTop: 16,
   },
   reviewShareButtonText: {
-    color: '#4ade80',
+    color: colorScheme.success,
     fontWeight: '600',
     fontSize: 16,
   },
   reviewHeaderTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#fff',
+    color: colorScheme.textPrimary,
   },
   headerPlaceholder: {
     width: 44,
@@ -1629,17 +1629,17 @@ export const styles = StyleSheet.create({
     marginTop: 16,
     paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: '#2a3a4a',
+    borderTopColor: colorScheme.borderPrimary,
     alignItems: 'center',
   },
   reviewPercentileText: {
     fontSize: 18,
-    color: '#f59e0b',
+    color: colorScheme.warning,
     fontWeight: '600',
   },
   reviewSubtitle: {
     fontSize: 16,
-    color: '#888',
+    color: colorScheme.textTertiary,
     marginTop: 24,
     marginBottom: 12,
   },
@@ -1670,12 +1670,12 @@ export const styles = StyleSheet.create({
   },
   gameCompleteRankText: {
     fontSize: 18,
-    color: '#ffd700',
+    color: colorScheme.gold,
     fontWeight: '600',
     marginTop: 8,
   },
   gameCompleteScoreCard: {
-    backgroundColor: '#1a2a3e',
+    backgroundColor: colorScheme.backgroundSecondary,
     borderRadius: 12,
     padding: 16,
     width: '100%',
@@ -1692,22 +1692,22 @@ export const styles = StyleSheet.create({
   gameCompleteScoreValue: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#fff',
+    color: colorScheme.textPrimary,
   },
   gameCompleteScoreLabel: {
     fontSize: 12,
-    color: '#888',
+    color: colorScheme.textTertiary,
     marginTop: 4,
   },
   gameCompleteLeaderboardCard: {
-    backgroundColor: '#1a2a3e',
+    backgroundColor: colorScheme.backgroundSecondary,
     borderRadius: 12,
     padding: 16,
     width: '100%',
     maxWidth: 400,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#2a4a6e',
+    borderColor: colorScheme.borderPrimary,
   },
   gameCompleteLeaderboardHeader: {
     flexDirection: 'row',
@@ -1723,7 +1723,7 @@ export const styles = StyleSheet.create({
   gameCompleteLeaderboardTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#fff',
+    color: colorScheme.textPrimary,
   },
   gameCompleteActions: {
     flexDirection: 'row',
@@ -1738,15 +1738,15 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: '#1a2a3e',
+    backgroundColor: colorScheme.backgroundSecondary,
     paddingVertical: 14,
     paddingHorizontal: 16,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#2a4a6e',
+    borderColor: colorScheme.borderPrimary,
   },
   gameCompleteActionButtonText: {
-    color: '#6a9fff',
+    color: colorScheme.brandPrimary,
     fontWeight: '600',
     fontSize: 14,
   },
@@ -1756,15 +1756,15 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: '#1a3d2d',
+    backgroundColor: colorScheme.successBg,
     paddingVertical: 14,
     paddingHorizontal: 16,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#2d5a3d',
+    borderColor: colorScheme.successDark,
   },
   gameCompleteShareButtonText: {
-    color: '#4ade80',
+    color: colorScheme.success,
     fontWeight: '600',
     fontSize: 14,
   },
@@ -1773,7 +1773,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   gameCompleteBackButtonText: {
-    color: '#888',
+    color: colorScheme.textTertiary,
     fontSize: 14,
   },
 });

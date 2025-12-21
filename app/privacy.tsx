@@ -282,7 +282,7 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 16,
-    color: '#6a9fff',
+    color: '#A855F7',
   },
   titleSection: {
     marginBottom: 32,
@@ -335,7 +335,7 @@ const styles = StyleSheet.create({
     color: '#ccc',
   },
   link: {
-    color: '#6a9fff',
+    color: '#A855F7',
     textDecorationLine: 'underline',
   },
   contactBox: {
@@ -346,7 +346,7 @@ const styles = StyleSheet.create({
   },
   contactText: {
     fontSize: 16,
-    color: '#6a9fff',
+    color: '#A855F7',
   },
   footer: {
     flexDirection: 'row',
@@ -360,7 +360,7 @@ const styles = StyleSheet.create({
   },
   footerLink: {
     fontSize: 14,
-    color: '#6a9fff',
+    color: '#A855F7',
   },
   footerDivider: {
     fontSize: 14,

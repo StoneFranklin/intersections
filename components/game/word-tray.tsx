@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
   },
   wordChipSelected: {
     backgroundColor: '#3a5a8a',
-    borderColor: '#6a9fff',
+    borderColor: '#A855F7',
   },
   wordText: {
     color: '#ddd',
@@ -95,7 +95,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   emptyText: {
-    color: '#6a9fff',
+    color: '#A855F7',
     fontSize: 16,
     fontWeight: '600',
     textAlign: 'center',

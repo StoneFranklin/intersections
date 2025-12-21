@@ -1,3 +1,4 @@
+import { GradientButton } from '@/components/ui/gradient-button';
 import { LeaderboardEntry } from '@/data/puzzleApi';
 import { GameScore } from '@/types/game';
 import { logger } from '@/utils/logger';
@@ -8,7 +9,6 @@ import LottieView from 'lottie-react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Image,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -339,25 +339,14 @@ export function HomeMenu({
           <View style={styles.menuButtons}>
             {!dailyCompleted ? (
               <>
-                <TouchableOpacity
-                  style={styles.playButton}
+                <GradientButton
                   onPress={onPlayDaily}
+                  label={loading ? 'Loading...' : fetchingPuzzle ? 'Loading...' : "Today's Puzzle"}
+                  description={loading ? '' : fetchingPuzzle ? 'Fetching puzzle' : 'New puzzle every day'}
                   disabled={fetchingPuzzle || loading}
-                >
-                  {loading ? (
-                    <View style={styles.playButtonLoading}>
-                      <ActivityIndicator size="small" color="#fff" />
-                      <Text style={styles.playButtonLoadingText}>Loading...</Text>
-                    </View>
-                  ) : (
-                    <>
-                      <Text style={styles.playButtonLabel}>{fetchingPuzzle ? 'Loading...' : "Today's Puzzle"}</Text>
-                      <Text style={styles.playButtonDesc}>
-                        {fetchingPuzzle ? 'Fetching puzzle' : 'New puzzle every day'}
-                      </Text>
-                    </>
-                  )}
-                </TouchableOpacity>
+                  loading={loading}
+                  variant="primary"
+                />
                 {!!puzzleFetchError && (
                   <Text style={styles.playButtonError}>{puzzleFetchError}</Text>
                 )}
