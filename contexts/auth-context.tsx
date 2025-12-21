@@ -134,14 +134,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       logger.log('Deep link received:', event.url);
       if (event.url.includes('auth/callback') || event.url.includes('access_token')) {
         const { accessToken, refreshToken } = extractSessionFromUrl(event.url);
-        if (accessToken && refreshToken) {
+        if (accessToken) {
           logger.log('Setting session from deep link...');
           await supabase.auth.setSession({
             access_token: accessToken,
-            refresh_token: refreshToken,
+            refresh_token: refreshToken || '',
           });
-        } else if (accessToken) {
-          logger.warn('Access token received without refresh token - session may not persist');
         }
       }
     };
@@ -215,11 +213,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // Extract tokens from the redirect URL
           const { accessToken, refreshToken } = extractSessionFromUrl(result.url);
 
-          if (accessToken && refreshToken) {
-            logger.log('Found access token and refresh token, setting session...');
+          if (accessToken) {
+            logger.log('Found access token, setting session...');
             const { error: sessionError } = await supabase.auth.setSession({
               access_token: accessToken,
-              refresh_token: refreshToken,
+              refresh_token: refreshToken || '',
             });
 
             if (sessionError) {
@@ -228,11 +226,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             } else {
               logger.log('Session set successfully!');
             }
-          } else if (accessToken) {
-            logger.warn('Access token received without refresh token - falling back to code exchange');
-          }
-
-          if (!accessToken || !refreshToken) {
+          } else {
             // Try to get code for PKCE flow
             const url = new URL(result.url);
             const code = url.searchParams.get('code');
