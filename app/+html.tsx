@@ -17,7 +17,7 @@ export default function Root({ children }: PropsWithChildren) {
         />
 
         {/* Favicon */}
-        <link rel="icon" type="image/png" href="/intersections/assets/images/intersections-logo.png" />
+        <link rel="icon" type="image/png" href="/intersections/assets/images/intersections-logo-v2.png" />
 
         {/* Google AdSense */}
         <script

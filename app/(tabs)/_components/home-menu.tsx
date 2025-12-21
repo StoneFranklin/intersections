@@ -236,11 +236,10 @@ export function HomeMenu({
       >
         <View style={styles.mainMenu}>
           <Image
-            source={require('@/assets/images/intersections-logo.png')}
+            source={require('@/assets/images/intersections-logo-v2.png')}
             style={styles.menuLogo}
             resizeMode="contain"
           />
-          <Text style={styles.menuTitle}>Intersections</Text>
           <Text style={styles.menuSubtitle}>A Daily Word Puzzle</Text>
           {!loading && (
             <View style={styles.dateRow}>

@@ -4,7 +4,7 @@
     "slug": "intersections",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/intersections-logo.png",
+    "icon": "./assets/images/intersections-logo-v2.png",
     "scheme": "intersections",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -23,7 +23,7 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#0f0f1a",
-        "foregroundImage": "./assets/images/intersections-logo.png"
+        "foregroundImage": "./assets/images/intersections-logo-v2.png"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
@@ -54,7 +54,7 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/images/intersections-logo.png",
+          "icon": "./assets/images/intersections-logo-v2.png",
           "color": "#0f0f1a",
           "sounds": []
         }

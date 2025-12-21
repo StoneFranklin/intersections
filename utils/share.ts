@@ -12,15 +12,31 @@ export function formatTime(seconds: number): string {
 export function generateShareText(score: GameScore, rank: number | null): string {
   const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
-  let text = `Intersections - ${today}\n\n`;
-  text += `My score today: ${score.score}\n`;
-  text += `${score.correctPlacements}/16 correct in ${formatTime(score.timeSeconds)}\n`;
-
-  if (rank !== null) {
-    text += `Ranked #${rank} today\n`;
+  // Choose emoji based on correct placements
+  let emoji = '💀'; // 0-4 correct - dead
+  if (score.correctPlacements >= 16) {
+    emoji = '🤩'; // Perfect!
+  } else if (score.correctPlacements >= 14) {
+    emoji = '😎'; // Excellent
+  } else if (score.correctPlacements >= 12) {
+    emoji = '😊'; // Very good
+  } else if (score.correctPlacements >= 10) {
+    emoji = '🙂'; // Good
+  } else if (score.correctPlacements >= 8) {
+    emoji = '😅'; // Meh
+  } else if (score.correctPlacements >= 5) {
+    emoji = '😬'; // Yikes
   }
 
-  text += `\nPlay at: stonefranklin.github.io/intersections`;
+  let text = `✴️ 𝗜𝗡𝗧𝗘𝗥𝗦𝗘𝗖𝗧𝗜𝗢𝗡𝗦 — ${today}\n\n`;
+  text += `📈 My score: ${score.score}\n`;
+  text += `${emoji} ${score.correctPlacements}/16 correct in ${formatTime(score.timeSeconds)}\n`;
+
+  if (rank !== null) {
+    text += `🏆 Ranked #${rank} today\n`;
+  }
+
+  text += `\n➡️ Play at: stonefranklin.github.io/intersections`;
 
   return text;
 }

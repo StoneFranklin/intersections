@@ -24,8 +24,8 @@ if (fs.existsSync(fontsSourcePath)) {
 }
 
   // Ensure important images from the repo are copied into the exported `dist`.
-  // This preserves files like `intersections-logo.png` and any hashed variants
-  // the exporter referenced (e.g. intersections-logo.<hash>.png).
+  // This preserves files like `intersections-logo-v2.png` and any hashed variants
+  // the exporter referenced (e.g. intersections-logo-v2.<hash>.png).
   const imagesSourceDir = path.join(__dirname, '..', 'assets', 'images');
   const imagesDestDir = path.join(distDir, 'assets', 'images');
 

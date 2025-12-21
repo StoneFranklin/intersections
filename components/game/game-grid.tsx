@@ -78,8 +78,8 @@ export const GameGrid = memo(function GameGrid({
       {/* Column headers (top) */}
       <View style={styles.headerRow}>
         <View style={[styles.cornerCell, { width: headerWidth, height: cellSize * 0.8 }]}>
-          <Image 
-            source={require('@/assets/images/intersections-logo.png')} 
+          <Image
+            source={require('@/assets/images/intersections-logo-v2.png')}
             style={{ width: logoSize, height: logoSize }}
             resizeMode="contain"
           />
