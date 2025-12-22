@@ -663,7 +663,7 @@ export type ColorSchemeName = keyof typeof colorSchemes;
 export type ColorScheme = typeof colorSchemes[ColorSchemeName];
 
 // Change this to swap the active color scheme (default startup theme)
-export const DEFAULT_SCHEME: ColorSchemeName = 'sunshine';
+export const DEFAULT_SCHEME: ColorSchemeName = 'ocean';
 export const ACTIVE_SCHEME: ColorSchemeName = DEFAULT_SCHEME;
 
 // Export the active color scheme

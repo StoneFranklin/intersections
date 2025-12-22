@@ -9,6 +9,7 @@ import LottieView from 'lottie-react-native';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Animated,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -20,7 +21,6 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { getColorScheme } from '@/constants/theme';
 import { useThemeScheme } from '@/contexts/theme-context';
 
 import { createStyles } from '../index.styles';
@@ -76,6 +76,8 @@ export interface HomeMenuProps {
   signInWithGoogle: () => Promise<void>;
   signInWithApple: () => Promise<void>;
   signOut: () => Promise<void>;
+
+  showEntranceAnimations?: boolean;
 }
 
 export function HomeMenu({
@@ -120,13 +122,25 @@ export function HomeMenu({
   signInWithGoogle,
   signInWithApple,
   signOut,
+  showEntranceAnimations = false,
 }: HomeMenuProps) {
   const displayNameInputRef = useRef<TextInput>(null);
   const lottieRef = useRef<LottieView>(null);
   const [animationPhase, setAnimationPhase] = useState<'intro' | 'loop' | 'tap'>('intro');
   const hasStarted = useRef(false);
-  const { colorScheme, schemeName, setSchemeName, schemeNames } = useThemeScheme();
+  const { colorScheme } = useThemeScheme();
   const styles = useMemo(() => createStyles(colorScheme), [colorScheme]);
+
+  // Entrance animations
+  const logoOpacity = useRef(new Animated.Value(showEntranceAnimations ? 0 : 1)).current;
+  const logoScale = useRef(new Animated.Value(showEntranceAnimations ? 0.8 : 1)).current;
+  const subtitleOpacity = useRef(new Animated.Value(showEntranceAnimations ? 0 : 1)).current;
+  const subtitleTranslateY = useRef(new Animated.Value(showEntranceAnimations ? 20 : 0)).current;
+  const dateRowOpacity = useRef(new Animated.Value(showEntranceAnimations ? 0 : 1)).current;
+  const dateRowTranslateY = useRef(new Animated.Value(showEntranceAnimations ? 20 : 0)).current;
+  const buttonsOpacity = useRef(new Animated.Value(showEntranceAnimations ? 0 : 1)).current;
+  const buttonsTranslateY = useRef(new Animated.Value(showEntranceAnimations ? 30 : 0)).current;
+  const footerOpacity = useRef(new Animated.Value(showEntranceAnimations ? 0 : 1)).current;
 
   useEffect(() => {
     if (!showDisplayNameModal) return;
@@ -136,23 +150,85 @@ export function HomeMenu({
     return () => clearTimeout(focusTimer);
   }, [showDisplayNameModal]);
 
-  // Start intro animation on mount
+  // Entrance animations effect
+  useEffect(() => {
+    if (showEntranceAnimations) {
+      // Stagger the entrance animations
+      const animations = Animated.stagger(100, [
+        Animated.parallel([
+          Animated.timing(logoOpacity, {
+            toValue: 1,
+            duration: 600,
+            useNativeDriver: true,
+          }),
+          Animated.spring(logoScale, {
+            toValue: 1,
+            tension: 50,
+            friction: 7,
+            useNativeDriver: true,
+          }),
+        ]),
+        Animated.parallel([
+          Animated.timing(subtitleOpacity, {
+            toValue: 1,
+            duration: 400,
+            useNativeDriver: true,
+          }),
+          Animated.timing(subtitleTranslateY, {
+            toValue: 0,
+            duration: 400,
+            useNativeDriver: true,
+          }),
+        ]),
+        Animated.parallel([
+          Animated.timing(dateRowOpacity, {
+            toValue: 1,
+            duration: 400,
+            useNativeDriver: true,
+          }),
+          Animated.timing(dateRowTranslateY, {
+            toValue: 0,
+            duration: 400,
+            useNativeDriver: true,
+          }),
+        ]),
+        Animated.parallel([
+          Animated.timing(buttonsOpacity, {
+            toValue: 1,
+            duration: 400,
+            useNativeDriver: true,
+          }),
+          Animated.timing(buttonsTranslateY, {
+            toValue: 0,
+            duration: 400,
+            useNativeDriver: true,
+          }),
+        ]),
+        Animated.timing(footerOpacity, {
+          toValue: 1,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+      ]);
+
+      animations.start();
+    }
+  }, [showEntranceAnimations]);
+
+  // Start loop animation on mount (skip the intro animation)
   useEffect(() => {
     if (hasStarted.current) return;
 
-    const timer = setTimeout(() => {
-      if (lottieRef.current) {
-        hasStarted.current = true;
-        // On web, play() with segments calls setSegment but doesn't play
-        // So we need to call play() separately
-        lottieRef.current.play(0, 78);
-        setTimeout(() => {
-          lottieRef.current?.play();
-        }, 50);
-      }
-    }, 300);
-
-    return () => clearTimeout(timer);
+    // Start immediately to avoid showing frame 0
+    if (lottieRef.current) {
+      hasStarted.current = true;
+      setAnimationPhase('loop');
+      // Start with the loop animation immediately
+      lottieRef.current.play(79, 148);
+      setTimeout(() => {
+        lottieRef.current?.play();
+      }, 50);
+    }
   }, []);
 
   // Play the appropriate segment when phase changes (except intro which plays on mount)
@@ -259,8 +335,6 @@ export function HomeMenu({
     </View>
   );
 
-  const formatThemeLabel = (name: string) => name.charAt(0).toUpperCase() + name.slice(1);
-
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.homeHeader}>
@@ -314,19 +388,44 @@ export function HomeMenu({
         bounces={false}
       >
         <View style={styles.mainMenu}>
-          <TouchableOpacity onPress={handleLogoPress} activeOpacity={0.8}>
-            <LottieView
-              ref={lottieRef}
-              source={require('@/assets/lottie/anim_full_intersections.json')}
-              style={styles.menuLogo}
-              autoPlay={false}
-              loop={false}
-              onAnimationFinish={handleAnimationFinish}
-            />
-          </TouchableOpacity>
-          <Text style={styles.menuSubtitle}>A Daily Word Puzzle</Text>
+          <Animated.View
+            style={{
+              opacity: logoOpacity,
+              transform: [{ scale: logoScale }],
+            }}
+          >
+            <TouchableOpacity onPress={handleLogoPress} activeOpacity={0.8}>
+              <LottieView
+                ref={lottieRef}
+                source={require('@/assets/lottie/anim_full_intersections.json')}
+                style={styles.menuLogo}
+                autoPlay={false}
+                loop={false}
+                onAnimationFinish={handleAnimationFinish}
+              />
+            </TouchableOpacity>
+          </Animated.View>
+          <Animated.Text
+            style={[
+              styles.menuSubtitle,
+              {
+                opacity: subtitleOpacity,
+                transform: [{ translateY: subtitleTranslateY }],
+              },
+            ]}
+          >
+            A Daily Word Puzzle
+          </Animated.Text>
           {!loading && (
-            <View style={styles.dateRow}>
+            <Animated.View
+              style={[
+                styles.dateRow,
+                {
+                  opacity: dateRowOpacity,
+                  transform: [{ translateY: dateRowTranslateY }],
+                },
+              ]}
+            >
               <Text style={styles.dateText}>
                 {new Date().toLocaleDateString('en-US', {
                   weekday: 'long',
@@ -340,10 +439,18 @@ export function HomeMenu({
                   <Text style={styles.completedBadgeText}>Completed</Text>
                 </View>
               )}
-            </View>
+            </Animated.View>
           )}
 
-          <View style={styles.menuButtons}>
+          <Animated.View
+            style={[
+              styles.menuButtons,
+              {
+                opacity: buttonsOpacity,
+                transform: [{ translateY: buttonsTranslateY }],
+              },
+            ]}
+          >
             {!dailyCompleted ? (
               <>
                 <GradientButton
@@ -527,14 +634,14 @@ export function HomeMenu({
                 </TouchableOpacity>
               </>
             )}
-          </View>
+          </Animated.View>
 
           <TouchableOpacity style={styles.howToPlayButton} onPress={onShowTutorial}>
             <Ionicons name="help-circle-outline" size={20} color="#6a9fff" />
             <Text style={styles.howToPlayText}>How to Play</Text>
           </TouchableOpacity>
 
-          <View style={styles.footerLinks}>
+          <Animated.View style={[styles.footerLinks, { opacity: footerOpacity }]}>
             <Link href={'/privacy' as any} asChild>
               <TouchableOpacity>
                 <Text style={styles.footerLinkText}>Privacy</Text>
@@ -546,7 +653,7 @@ export function HomeMenu({
                 <Text style={styles.footerLinkText}>Terms</Text>
               </TouchableOpacity>
             </Link>
-          </View>
+          </Animated.View>
         </View>
       </ScrollView>
 
@@ -648,32 +755,6 @@ export function HomeMenu({
               <Ionicons name="pencil" size={18} color="#6a9fff" style={styles.profileMenuItemIcon} />
               <Text style={styles.profileMenuItemText}>Edit Display Name</Text>
             </TouchableOpacity>
-
-            <View style={styles.profileMenuDivider} />
-
-            <View style={styles.profileMenuSection}>
-              <Text style={styles.profileMenuSectionTitle}>Theme</Text>
-              <View style={styles.themeOptions}>
-                {schemeNames.map((name) => {
-                  const scheme = getColorScheme(name);
-                  const isActive = name === schemeName;
-                  return (
-                    <TouchableOpacity
-                      key={name}
-                      style={[styles.themeOption, isActive && styles.themeOptionActive]}
-                      onPress={() => setSchemeName(name)}
-                      accessibilityRole="button"
-                      accessibilityLabel={`Select ${formatThemeLabel(name)} theme`}
-                    >
-                      <View style={[styles.themeSwatch, { backgroundColor: scheme.brandPrimary }]} />
-                      <Text style={[styles.themeOptionText, isActive && styles.themeOptionTextActive]}>
-                        {formatThemeLabel(name)}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            </View>
 
             <View style={styles.profileMenuDivider} />
 

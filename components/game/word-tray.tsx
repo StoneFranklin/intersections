@@ -1,5 +1,7 @@
+import { ColorScheme } from '@/constants/theme';
+import { useThemeScheme } from '@/contexts/theme-context';
 import { Word } from '@/types/game';
-import React, { memo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface WordTrayProps {
@@ -9,6 +11,8 @@ interface WordTrayProps {
 }
 
 export const WordTray = memo(function WordTray({ words, selectedWordId, onWordSelect }: WordTrayProps) {
+  const { colorScheme } = useThemeScheme();
+  const styles = useMemo(() => createStyles(colorScheme), [colorScheme]);
   if (words.length === 0) {
     return (
       <View style={styles.container}>
@@ -49,19 +53,19 @@ export const WordTray = memo(function WordTray({ words, selectedWordId, onWordSe
   );
 });
 
-const styles = StyleSheet.create({
+const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
   container: {
     padding: 12,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: colorScheme.backgroundSecondary,
     borderTopWidth: 1,
-    borderTopColor: '#2a2a4e',
+    borderTopColor: colorScheme.borderPrimary,
     flex: 1,
   },
   scrollView: {
     flex: 1,
   },
   title: {
-    color: '#888',
+    color: colorScheme.textTertiary,
     fontSize: 12,
     marginBottom: 8,
     textAlign: 'center',
@@ -74,7 +78,7 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
   },
   wordChip: {
-    backgroundColor: '#2a3a5a',
+    backgroundColor: colorScheme.backgroundTertiary,
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 20,
@@ -82,20 +86,20 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   wordChipSelected: {
-    backgroundColor: '#3a5a8a',
-    borderColor: '#A855F7',
+    backgroundColor: colorScheme.cellSelected,
+    borderColor: colorScheme.borderAccent,
   },
   wordText: {
-    color: '#ddd',
+    color: colorScheme.textSecondary,
     fontSize: 15,
     fontWeight: '500',
   },
   wordTextSelected: {
-    color: '#fff',
+    color: colorScheme.textPrimary,
     fontWeight: '700',
   },
   emptyText: {
-    color: '#A855F7',
+    color: colorScheme.brandPrimary,
     fontSize: 16,
     fontWeight: '600',
     textAlign: 'center',

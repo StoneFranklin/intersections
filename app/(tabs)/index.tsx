@@ -1,6 +1,7 @@
 import { LeaderboardScreen } from '@/components/leaderboard/leaderboard-screen';
 import { CorrectAnswersScreen } from '@/components/screens/correct-answers-screen';
 import { HowToPlayScreen } from '@/components/screens/how-to-play-screen';
+import { LoadingScreen } from '@/components/screens/loading-screen';
 import { useAuth } from '@/contexts/auth-context';
 import { fetchTodaysPuzzle, getOrCreateProfile, getPercentile, getTodayLeaderboard, getTodayLeaderboardPage, getUserStreak, getUserTodayScore, hasUserCompletedToday, LeaderboardEntry, reconcileScoreOnSignIn, updateDisplayName, updateUserStreak } from '@/data/puzzleApi';
 import { GameScore, Puzzle } from '@/types/game';
@@ -53,6 +54,11 @@ export default function GameScreen() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [currentGameEnded, setCurrentGameEnded] = useState(false);
   const [puzzleFetchError, setPuzzleFetchError] = useState<string | null>(null);
+
+  // Loading screen state
+  const [showLoadingScreen, setShowLoadingScreen] = useState(true);
+  const [dataReady, setDataReady] = useState(false);
+  const [loadingComplete, setLoadingComplete] = useState(false);
 
   // Helper to determine if a leaderboard entry is the current user
   // For logged-in users, this uses isCurrentUser from the API
@@ -569,6 +575,13 @@ export default function GameScreen() {
     checkCompletion();
   }, [user]);
 
+  // Mark data as ready when loading completes
+  useEffect(() => {
+    if (!loading) {
+      setDataReady(true);
+    }
+  }, [loading]);
+
   const [fetchingPuzzle, setFetchingPuzzle] = useState(false);
 
   const handlePlayDaily = async () => {
@@ -668,6 +681,20 @@ export default function GameScreen() {
     setIsPlaying(false);
     setIsReviewMode(false);
   };
+
+  // Show loading screen during initial load
+  if (showLoadingScreen && !loadingComplete) {
+    return (
+      <LoadingScreen
+        isDataReady={dataReady}
+        onLoadingComplete={() => {
+          setLoadingComplete(true);
+          setShowLoadingScreen(false);
+        }}
+      />
+    );
+  }
+
   // Show full-screen leaderboard
   if (showLeaderboardScreen) {
     return (
@@ -755,6 +782,7 @@ export default function GameScreen() {
         signInWithGoogle={signInWithGoogle}
         signInWithApple={signInWithApple}
         signOut={signOut}
+        showEntranceAnimations={loadingComplete}
       />
     );
   }

@@ -199,7 +199,7 @@ export function GameContent({
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity onPress={onBack} style={styles.headerBackButton}>
-            <Ionicons name="chevron-back" size={28} color="#fff" />
+            <Ionicons name="chevron-back" size={28} color={colorScheme.textPrimary} />
           </TouchableOpacity>
           <View style={styles.headerCenter}>
             <Text style={styles.reviewHeaderTitle}>Your Results</Text>
@@ -291,15 +291,15 @@ export function GameContent({
     const displayRank = userId ? (resultRank || userRank) : null;
 
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isWin ? '#0a1a0f' : '#1a0a0a' }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: isWin ? colorScheme.successBg : colorScheme.errorBg }]}>
         <ScrollView contentContainerStyle={styles.gameCompleteScrollContent}>
           <View style={styles.gameCompleteHeader}>
             {isWin ? (
-              <MaterialCommunityIcons name="party-popper" size={64} color="#4ade80" style={{ marginBottom: 12 }} />
+              <MaterialCommunityIcons name="party-popper" size={64} color={colorScheme.success} style={{ marginBottom: 12 }} />
             ) : (
-              <MaterialCommunityIcons name="heart-broken" size={64} color="#ff6b6b" style={{ marginBottom: 12 }} />
+              <MaterialCommunityIcons name="heart-broken" size={64} color={colorScheme.errorLight} style={{ marginBottom: 12 }} />
             )}
-            <Text style={[styles.gameCompleteTitle, { color: isWin ? '#4ade80' : '#ff6b6b' }]}>
+            <Text style={[styles.gameCompleteTitle, { color: isWin ? colorScheme.success : colorScheme.errorLight }]}>
               {isWin ? 'Puzzle Solved!' : 'Game Over'}
             </Text>
             {displayRank && <Text style={styles.gameCompleteRankText}>#{displayRank} in the world</Text>}
@@ -326,13 +326,13 @@ export function GameContent({
             <TouchableOpacity style={styles.gameCompleteLeaderboardCard} onPress={onOpenLeaderboard} activeOpacity={0.8}>
               <View style={styles.gameCompleteLeaderboardHeader}>
                 <View style={styles.gameCompleteLeaderboardHeaderLeft}>
-                  <MaterialCommunityIcons name="trophy" size={20} color="#ffd700" />
+                  <MaterialCommunityIcons name="trophy" size={20} color={colorScheme.gold} />
                   <Text style={styles.gameCompleteLeaderboardTitle}>Today&apos;s Leaderboard</Text>
                 </View>
               </View>
 
               {loadingLeaderboard && !leaderboardLoaded ? (
-                <ActivityIndicator size="small" color="#A855F7" style={{ marginVertical: 16 }} />
+                <ActivityIndicator size="small" color={colorScheme.brandPrimary} style={{ marginVertical: 16 }} />
               ) : leaderboard.length === 0 ? (
                 <Text style={styles.leaderboardEmptyText}>No scores yet</Text>
               ) : (
@@ -347,11 +347,11 @@ export function GameContent({
                     >
                       <View style={styles.leaderboardCompactRank}>
                         {entry.rank === 1 ? (
-                          <MaterialCommunityIcons name="medal" size={20} color="#ffd700" />
+                          <MaterialCommunityIcons name="medal" size={20} color={colorScheme.gold} />
                         ) : entry.rank === 2 ? (
-                          <MaterialCommunityIcons name="medal" size={20} color="#c0c0c0" />
+                          <MaterialCommunityIcons name="medal" size={20} color={colorScheme.textSecondary} />
                         ) : (
-                          <MaterialCommunityIcons name="medal" size={20} color="#cd7f32" />
+                          <MaterialCommunityIcons name="medal" size={20} color={colorScheme.warning} />
                         )}
                       </View>
                       <Text
@@ -407,14 +407,14 @@ export function GameContent({
 
               <View style={styles.tapForDetailsHint}>
                 <Text style={styles.tapForDetailsText}>Tap for full leaderboard</Text>
-                <Ionicons name="chevron-forward" size={14} color="#666" />
+                <Ionicons name="chevron-forward" size={14} color={colorScheme.textMuted} />
               </View>
             </TouchableOpacity>
           ) : (
             <View style={styles.gameCompleteLeaderboardCard}>
               <View style={styles.gameCompleteLeaderboardHeader}>
                 <View style={styles.gameCompleteLeaderboardHeaderLeft}>
-                  <MaterialCommunityIcons name="trophy" size={20} color="#ffd700" />
+                  <MaterialCommunityIcons name="trophy" size={20} color={colorScheme.gold} />
                   <Text style={styles.gameCompleteLeaderboardTitle}>Today&apos;s Leaderboard</Text>
                 </View>
               </View>
@@ -445,7 +445,7 @@ export function GameContent({
 
           <View style={styles.gameCompleteActions}>
             <TouchableOpacity style={styles.gameCompleteActionButton} onPress={onShowAnswersModal}>
-              <Ionicons name="grid-outline" size={20} color="#A855F7" />
+              <Ionicons name="grid-outline" size={20} color={colorScheme.brandPrimary} />
               <Text style={styles.gameCompleteActionButtonText}>View Correct Answers</Text>
             </TouchableOpacity>
 
@@ -454,7 +454,7 @@ export function GameContent({
                 style={styles.gameCompleteShareButton}
                 onPress={() => shareScore(displayScore, displayRank ?? null)}
               >
-                <Ionicons name="share-outline" size={20} color="#4ade80" />
+                <Ionicons name="share-outline" size={20} color={colorScheme.success} />
                 <Text style={styles.gameCompleteShareButtonText}>Share Score</Text>
               </TouchableOpacity>
             )}
@@ -472,7 +472,7 @@ export function GameContent({
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={onBack} style={styles.headerBackButton}>
-          <Ionicons name="chevron-back" size={28} color="#fff" />
+          <Ionicons name="chevron-back" size={28} color={colorScheme.textPrimary} />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
           <Text style={styles.timerText}>{formatTime(elapsedTime)}</Text>
