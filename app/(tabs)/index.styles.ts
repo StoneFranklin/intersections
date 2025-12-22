@@ -1,7 +1,7 @@
 import { StyleSheet } from 'react-native';
-import { Fonts, colorScheme } from '@/constants/theme';
+import { ColorScheme, Fonts } from '@/constants/theme';
 
-export const styles = StyleSheet.create({
+export const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colorScheme.backgroundPrimary,
@@ -1000,6 +1000,50 @@ export const styles = StyleSheet.create({
   profileMenuItemTextDanger: {
     fontSize: 15,
     color: colorScheme.error,
+  },
+  profileMenuSection: {
+    paddingHorizontal: 4,
+    paddingVertical: 4,
+  },
+  profileMenuSectionTitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colorScheme.textTertiary,
+    marginBottom: 10,
+    letterSpacing: 0.5,
+  },
+  themeOptions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  themeOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 14,
+    backgroundColor: colorScheme.backgroundTertiary,
+    borderWidth: 1,
+    borderColor: colorScheme.borderPrimary,
+  },
+  themeOptionActive: {
+    backgroundColor: colorScheme.brandSecondary,
+    borderColor: colorScheme.borderAccent,
+  },
+  themeSwatch: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginRight: 6,
+  },
+  themeOptionText: {
+    fontSize: 13,
+    color: colorScheme.textSecondary,
+  },
+  themeOptionTextActive: {
+    color: colorScheme.textPrimary,
+    fontWeight: '600',
   },
   // Toggle switch styles
   toggle: {

@@ -9,11 +9,13 @@ import { logger } from '@/utils/logger';
 import { formatTime, shareScore } from '@/utils/share';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { styles } from '../index.styles';
+import { useThemeScheme } from '@/contexts/theme-context';
+
+import { createStyles } from '../index.styles';
 
 export interface GameContentProps {
   puzzle: Puzzle;
@@ -50,6 +52,8 @@ export function GameContent({
   onShowTutorial,
   gameEnded,
 }: GameContentProps) {
+  const { colorScheme } = useThemeScheme();
+  const styles = useMemo(() => createStyles(colorScheme), [colorScheme]);
   const {
     gameState,
     unplacedWords,

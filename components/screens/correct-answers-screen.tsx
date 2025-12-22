@@ -1,7 +1,8 @@
-import { styles } from '@/app/(tabs)/index.styles';
+import { createStyles } from '@/app/(tabs)/index.styles';
+import { useThemeScheme } from '@/contexts/theme-context';
 import type { Puzzle } from '@/types/game';
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { GameGrid } from '../game/game-grid';
@@ -13,6 +14,8 @@ interface CorrectAnswersScreenProps {
 }
 
 export function CorrectAnswersScreen({ puzzle, onBack, onRetry }: CorrectAnswersScreenProps) {
+  const { colorScheme } = useThemeScheme();
+  const styles = useMemo(() => createStyles(colorScheme), [colorScheme]);
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.leaderboardScreenHeader}>

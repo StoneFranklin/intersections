@@ -6,7 +6,7 @@ import { AntDesign, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons'
 import { User } from '@supabase/supabase-js';
 import { Link } from 'expo-router';
 import LottieView from 'lottie-react-native';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -20,7 +20,10 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { styles } from '../index.styles';
+import { getColorScheme } from '@/constants/theme';
+import { useThemeScheme } from '@/contexts/theme-context';
+
+import { createStyles } from '../index.styles';
 
 export interface HomeMenuProps {
   user: User | null;
@@ -122,6 +125,8 @@ export function HomeMenu({
   const lottieRef = useRef<LottieView>(null);
   const [animationPhase, setAnimationPhase] = useState<'intro' | 'loop' | 'tap'>('intro');
   const hasStarted = useRef(false);
+  const { colorScheme, schemeName, setSchemeName, schemeNames } = useThemeScheme();
+  const styles = useMemo(() => createStyles(colorScheme), [colorScheme]);
 
   useEffect(() => {
     if (!showDisplayNameModal) return;
@@ -253,6 +258,8 @@ export function HomeMenu({
       )}
     </View>
   );
+
+  const formatThemeLabel = (name: string) => name.charAt(0).toUpperCase() + name.slice(1);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -641,6 +648,32 @@ export function HomeMenu({
               <Ionicons name="pencil" size={18} color="#6a9fff" style={styles.profileMenuItemIcon} />
               <Text style={styles.profileMenuItemText}>Edit Display Name</Text>
             </TouchableOpacity>
+
+            <View style={styles.profileMenuDivider} />
+
+            <View style={styles.profileMenuSection}>
+              <Text style={styles.profileMenuSectionTitle}>Theme</Text>
+              <View style={styles.themeOptions}>
+                {schemeNames.map((name) => {
+                  const scheme = getColorScheme(name);
+                  const isActive = name === schemeName;
+                  return (
+                    <TouchableOpacity
+                      key={name}
+                      style={[styles.themeOption, isActive && styles.themeOptionActive]}
+                      onPress={() => setSchemeName(name)}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Select ${formatThemeLabel(name)} theme`}
+                    >
+                      <View style={[styles.themeSwatch, { backgroundColor: scheme.brandPrimary }]} />
+                      <Text style={[styles.themeOptionText, isActive && styles.themeOptionTextActive]}>
+                        {formatThemeLabel(name)}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
 
             <View style={styles.profileMenuDivider} />
 

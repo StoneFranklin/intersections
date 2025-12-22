@@ -1,12 +1,12 @@
 /**
  * Centralized color scheme system for the app.
- * To swap color schemes, simply change the ACTIVE_SCHEME variable below.
+ * Change DEFAULT_SCHEME for the startup default; runtime switching is handled elsewhere.
  */
 
 import { Platform } from 'react-native';
 
 // Color scheme definitions
-const colorSchemes = {
+export const colorSchemes = {
   // Default purple/warm theme
   default: {
     // Background colors
@@ -51,6 +51,10 @@ const colorSchemes = {
     borderPrimary: '#2a2a4e',
     borderSecondary: '#3a3a6e',
     borderAccent: '#A855F7',
+
+    // Grid header colors
+    gridHeaderColBg: '#1d3557',
+    gridHeaderRowBg: '#3b1d2f',
 
     // Game cell colors
     cellEmpty: '#1a1a2e',
@@ -117,6 +121,9 @@ const colorSchemes = {
     borderSecondary: '#2e4a7f',
     borderAccent: '#3b82f6',
 
+    gridHeaderColBg: '#1e3a8a',
+    gridHeaderRowBg: '#7c2d12',
+
     cellEmpty: '#132a46',
     cellFilled: '#1e3a5f',
     cellCorrect: '#064e3b',
@@ -177,6 +184,9 @@ const colorSchemes = {
     borderPrimary: '#2a4a2a',
     borderSecondary: '#3a6a3a',
     borderAccent: '#22c55e',
+
+    gridHeaderColBg: '#1e40af',
+    gridHeaderRowBg: '#9a3412',
 
     cellEmpty: '#1a2e1a',
     cellFilled: '#2a4a2a',
@@ -239,6 +249,9 @@ const colorSchemes = {
     borderSecondary: '#6a3a2a',
     borderAccent: '#f97316',
 
+    gridHeaderColBg: '#9a3412',
+    gridHeaderRowBg: '#4c1d95',
+
     cellEmpty: '#2e1a0f',
     cellFilled: '#4a2a1a',
     cellCorrect: '#064e3b',
@@ -299,6 +312,9 @@ const colorSchemes = {
     borderPrimary: '#3a3a18',
     borderSecondary: '#4a4a28',
     borderAccent: '#FFE31A',
+
+    gridHeaderColBg: '#1e40af',
+    gridHeaderRowBg: '#92400e',
 
     cellEmpty: '#2a2a10',
     cellFilled: '#3a3a18',
@@ -361,6 +377,9 @@ const colorSchemes = {
     borderSecondary: '#4a3a25',
     borderAccent: '#FFB800',
 
+    gridHeaderColBg: '#1d4ed8',
+    gridHeaderRowBg: '#9a3412',
+
     cellEmpty: '#2a1e0f',
     cellFilled: '#3a2a15',
     cellCorrect: '#1a3d2d',
@@ -421,6 +440,9 @@ const colorSchemes = {
     borderPrimary: '#2a153a',
     borderSecondary: '#3a254a',
     borderAccent: '#C84DFF',
+
+    gridHeaderColBg: '#7c3aed',
+    gridHeaderRowBg: '#b45309',
 
     cellEmpty: '#1e0f2a',
     cellFilled: '#2a153a',
@@ -483,6 +505,9 @@ const colorSchemes = {
     borderSecondary: '#35254a',
     borderAccent: '#D946EF',
 
+    gridHeaderColBg: '#9333ea',
+    gridHeaderRowBg: '#b45309',
+
     cellEmpty: '#1a0f2a',
     cellFilled: '#25153a',
     cellCorrect: '#1a3d2d',
@@ -543,6 +568,9 @@ const colorSchemes = {
     borderPrimary: '#3a152e',
     borderSecondary: '#4a253e',
     borderAccent: '#EC4899',
+
+    gridHeaderColBg: '#db2777',
+    gridHeaderRowBg: '#c2410c',
 
     cellEmpty: '#2a0f1e',
     cellFilled: '#3a152e',
@@ -605,6 +633,9 @@ const colorSchemes = {
     borderSecondary: '#2a2a4a',
     borderAccent: '#FFE31A',
 
+    gridHeaderColBg: '#7c3aed',
+    gridHeaderRowBg: '#b45309',
+
     cellEmpty: '#0f0f1a',
     cellFilled: '#1a1a2a',
     cellCorrect: '#002211',
@@ -628,48 +659,50 @@ const colorSchemes = {
   },
 };
 
-// Change this to swap the active color scheme
-type ColorSchemeName = keyof typeof colorSchemes;
-export const ACTIVE_SCHEME: ColorSchemeName = 'sunshine';
+export type ColorSchemeName = keyof typeof colorSchemes;
+export type ColorScheme = typeof colorSchemes[ColorSchemeName];
+
+// Change this to swap the active color scheme (default startup theme)
+export const DEFAULT_SCHEME: ColorSchemeName = 'sunshine';
+export const ACTIVE_SCHEME: ColorSchemeName = DEFAULT_SCHEME;
 
 // Export the active color scheme
 export const colorScheme = colorSchemes[ACTIVE_SCHEME];
+export const getColorScheme = (schemeName: ColorSchemeName) => colorSchemes[schemeName];
 
-// Legacy Colors object for backwards compatibility
-const tintColorLight = colorScheme.brandPrimary;
-const tintColorDark = colorScheme.brandPrimary;
-
-export const Colors = {
+export const getThemeColors = (scheme: ColorScheme) => ({
   light: {
-    text: colorScheme.warmBlack,
-    background: colorScheme.warmWhite,
-    tint: tintColorLight,
+    text: scheme.warmBlack,
+    background: scheme.warmWhite,
+    tint: scheme.brandPrimary,
     icon: '#8B7355',
     tabIconDefault: '#8B7355',
-    tabIconSelected: tintColorLight,
+    tabIconSelected: scheme.brandPrimary,
   },
   dark: {
-    text: colorScheme.warmWhite,
-    background: colorScheme.warmBlack,
-    tint: tintColorDark,
+    text: scheme.warmWhite,
+    background: scheme.warmBlack,
+    tint: scheme.brandPrimary,
     icon: '#B8956E',
     tabIconDefault: '#B8956E',
-    tabIconSelected: tintColorDark,
+    tabIconSelected: scheme.brandPrimary,
   },
   // Brand colors for easy access (legacy - use colorScheme instead)
   brand: {
-    yellow: colorScheme.yellow,
-    orange: colorScheme.orange,
-    purple: colorScheme.brandPrimary,
-    purpleLight: colorScheme.brandLight,
-    purpleDark: colorScheme.brandSecondary,
-    gold: colorScheme.gold,
-    warmWhite: colorScheme.warmWhite,
-    warmBlack: colorScheme.warmBlack,
-    warmGray: colorScheme.warmGray,
-    warmBorder: colorScheme.warmBorder,
+    yellow: scheme.yellow,
+    orange: scheme.orange,
+    purple: scheme.brandPrimary,
+    purpleLight: scheme.brandLight,
+    purpleDark: scheme.brandSecondary,
+    gold: scheme.gold,
+    warmWhite: scheme.warmWhite,
+    warmBlack: scheme.warmBlack,
+    warmGray: scheme.warmGray,
+    warmBorder: scheme.warmBorder,
   },
-};
+});
+
+export const Colors = getThemeColors(colorScheme);
 
 export const Fonts = Platform.select({
   ios: {

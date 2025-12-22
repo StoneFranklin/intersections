@@ -1,6 +1,7 @@
-import { colorScheme } from '@/constants/theme';
+import { ColorScheme } from '@/constants/theme';
+import { useThemeScheme } from '@/contexts/theme-context';
 import { CellPosition, Word } from '@/types/game';
-import React, { memo, useEffect, useRef } from 'react';
+import React, { memo, useEffect, useMemo, useRef } from 'react';
 import { Animated, StyleSheet, Text, TouchableOpacity } from 'react-native';
 
 interface GameCellProps {
@@ -22,6 +23,8 @@ export const GameCell = memo(function GameCell({
   onLongPress,
   size,
 }: GameCellProps) {
+  const { colorScheme } = useThemeScheme();
+  const styles = useMemo(() => createStyles(colorScheme), [colorScheme]);
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const shakeAnim = useRef(new Animated.Value(0)).current;
   const flashAnim = useRef(new Animated.Value(0)).current;
@@ -188,7 +191,7 @@ export const GameCell = memo(function GameCell({
   );
 });
 
-const styles = StyleSheet.create({
+const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
   cell: {
     margin: 2,
     borderRadius: 8,

@@ -1,6 +1,7 @@
-import { styles } from '@/app/(tabs)/index.styles';
+import { createStyles } from '@/app/(tabs)/index.styles';
+import { useThemeScheme } from '@/contexts/theme-context';
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -9,6 +10,8 @@ interface HowToPlayScreenProps {
 }
 
 export function HowToPlayScreen({ onBack }: HowToPlayScreenProps) {
+  const { colorScheme } = useThemeScheme();
+  const styles = useMemo(() => createStyles(colorScheme), [colorScheme]);
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.leaderboardScreenHeader}>

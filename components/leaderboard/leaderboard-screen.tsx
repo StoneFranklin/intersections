@@ -1,9 +1,10 @@
-import { styles } from '@/app/(tabs)/index.styles';
+import { createStyles } from '@/app/(tabs)/index.styles';
+import { useThemeScheme } from '@/contexts/theme-context';
 import type { LeaderboardEntry } from '@/data/puzzleApi';
 import type { GameScore } from '@/types/game';
 import { formatTime, shareScore } from '@/utils/share';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { ActivityIndicator, FlatList, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -34,6 +35,8 @@ export function LeaderboardScreen({
   onLoadMore,
   isCurrentUserEntry,
 }: LeaderboardScreenProps) {
+  const { colorScheme } = useThemeScheme();
+  const styles = useMemo(() => createStyles(colorScheme), [colorScheme]);
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.leaderboardScreenHeader}>

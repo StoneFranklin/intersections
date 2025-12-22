@@ -1,5 +1,7 @@
+import { ColorScheme } from '@/constants/theme';
+import { useThemeScheme } from '@/contexts/theme-context';
 import { CellPosition, Puzzle, Word } from '@/types/game';
-import React, { memo, useCallback, useEffect, useState } from 'react';
+import React, { memo, useEffect, useMemo, useState } from 'react';
 import { Dimensions, Image, Platform, StyleSheet, Text, View } from 'react-native';
 import { GameCell } from './game-cell';
 
@@ -20,6 +22,8 @@ export const GameGrid = memo(function GameGrid({
   onCellPress,
   onCellLongPress,
 }: GameGridProps) {
+  const { colorScheme } = useThemeScheme();
+  const styles = useMemo(() => createStyles(colorScheme), [colorScheme]);
   const { rowCategories, colCategories } = puzzle;
   
   // Use state for dimensions to properly update after hydration
@@ -139,7 +143,7 @@ export const GameGrid = memo(function GameGrid({
   );
 });
 
-const styles = StyleSheet.create({
+const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
   container: {
     padding: 8,
     alignSelf: 'center',
@@ -152,16 +156,20 @@ const styles = StyleSheet.create({
     margin: 2,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#2a3a5a',
+    backgroundColor: colorScheme.backgroundTertiary,
     borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colorScheme.borderSecondary,
   },
   colHeader: {
     margin: 2,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#3a5a8a',
+    backgroundColor: colorScheme.gridHeaderColBg,
     borderRadius: 8,
     padding: 4,
+    borderWidth: 1,
+    borderColor: colorScheme.borderAccent,
   },
   gridRow: {
     flexDirection: 'row',
@@ -170,12 +178,14 @@ const styles = StyleSheet.create({
     margin: 2,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#5a3a8a',
+    backgroundColor: colorScheme.gridHeaderRowBg,
     borderRadius: 8,
     padding: 4,
+    borderWidth: 1,
+    borderColor: colorScheme.warning,
   },
   headerText: {
-    color: '#fff',
+    color: colorScheme.textPrimary,
     fontWeight: '600',
     textAlign: 'center',
   },
