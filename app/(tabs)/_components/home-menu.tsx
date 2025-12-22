@@ -18,6 +18,7 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -135,7 +136,10 @@ export function HomeMenu({
   const [animationPhase, setAnimationPhase] = useState<'intro' | 'loop' | 'tap'>('intro');
   const hasStarted = useRef(false);
   const { colorScheme } = useThemeScheme();
+  const { width } = useWindowDimensions();
   const styles = useMemo(() => createStyles(colorScheme), [colorScheme]);
+  const logoSize = Math.min(Math.max(width * 0.55, 210), 320);
+  const logoFrameHeight = Math.round(logoSize * 0.9);
 
   const isWeb = Platform.OS === 'web';
 
@@ -398,26 +402,28 @@ export function HomeMenu({
             }}
           >
             <TouchableOpacity onPress={handleLogoPress} activeOpacity={0.8}>
-              <LottieView
-                ref={lottieRef}
-                source={require('@/assets/lottie/anim_full_intersections.json')}
-                style={styles.menuLogo}
-                webStyle={styles.menuLogo}
-                autoPlay={false}
-                loop={false}
-                onAnimationFinish={handleAnimationFinish}
-                onAnimationLoaded={() => {
-                  if (!isWeb) return;
-                  if (animationPhase === 'intro') {
-                    setAnimationPhase('loop');
-                    playSegment(LOOP_START, LOOP_END);
-                  } else if (animationPhase === 'loop') {
-                    playSegment(LOOP_START, LOOP_END);
-                  } else if (animationPhase === 'tap') {
-                    playSegment(TAP_START, TAP_END);
-                  }
-                }}
-              />
+              <View style={[styles.menuLogoFrame, { width: logoSize, height: logoFrameHeight }]}>
+                <LottieView
+                  ref={lottieRef}
+                  source={require('@/assets/lottie/anim_full_intersections.json')}
+                  style={[styles.menuLogo, { width: logoSize, height: logoSize }]}
+                  webStyle={{ ...styles.menuLogo, width: logoSize, height: logoSize }}
+                  autoPlay={false}
+                  loop={false}
+                  onAnimationFinish={handleAnimationFinish}
+                  onAnimationLoaded={() => {
+                    if (!isWeb) return;
+                    if (animationPhase === 'intro') {
+                      setAnimationPhase('loop');
+                      playSegment(LOOP_START, LOOP_END);
+                    } else if (animationPhase === 'loop') {
+                      playSegment(LOOP_START, LOOP_END);
+                    } else if (animationPhase === 'tap') {
+                      playSegment(TAP_START, TAP_END);
+                    }
+                  }}
+                />
+              </View>
             </TouchableOpacity>
           </Animated.View>
           <Animated.Text

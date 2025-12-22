@@ -80,12 +80,18 @@ export const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    paddingVertical: 40,
+    paddingVertical: 24,
+  },
+  menuLogoFrame: {
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    overflow: 'hidden',
+    marginBottom: 6,
   },
   menuLogo: {
-    width: 150,
-    height: 150,
-    marginBottom: 20,
+    width: 190,
+    height: 190,
+    marginBottom: 0,
   },
   menuTitle: {
     fontSize: 48,
