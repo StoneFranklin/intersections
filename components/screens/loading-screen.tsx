@@ -1,8 +1,14 @@
 import LottieView from 'lottie-react-native';
-import React, { useEffect, useRef, useState } from 'react';
-import { Animated, StyleSheet, View } from 'react-native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Animated, Platform, StyleSheet } from 'react-native';
 
 import { getColorScheme } from '@/constants/theme';
+
+// Animation frame constants (total 182 frames at 30fps)
+const OPENING_START = 0;
+const OPENING_END = 78;
+const LOOP_START = 79;
+const LOOP_END = 148;
 
 interface LoadingScreenProps {
   onLoadingComplete: () => void;
@@ -17,46 +23,72 @@ export function LoadingScreen({ onLoadingComplete, isDataReady }: LoadingScreenP
   const translateYAnim = useRef(new Animated.Value(0)).current;
   const colorScheme = getColorScheme('ocean');
 
+  const isWeb = Platform.OS === 'web';
+  const hasWebLoaded = useRef(false);
+  const pendingWebPhase = useRef<'opening' | 'loop' | null>(null);
+
   // Track if opening animation has finished
   const [openingFinished, setOpeningFinished] = useState(false);
 
+  const playSegment = useCallback((start: number, end: number) => {
+    if (!lottieRef.current) return;
+
+    if (isWeb) {
+      // Web needs segment + explicit start frame to actually begin playback.
+      lottieRef.current.play(start, end);
+      lottieRef.current.play(start);
+    } else {
+      lottieRef.current.play(start, end);
+    }
+  }, [isWeb]);
+
+  // Start the opening animation
   useEffect(() => {
-    // Start the opening animation
-    const timer = setTimeout(() => {
-      if (lottieRef.current) {
-        lottieRef.current.play(0, 78);
-        setTimeout(() => {
-          lottieRef.current?.play();
-        }, 50);
+    if (isWeb) {
+      if (hasWebLoaded.current) {
+        playSegment(OPENING_START, OPENING_END);
+      } else {
+        pendingWebPhase.current = 'opening';
       }
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      playSegment(OPENING_START, OPENING_END);
     }, 100);
-
     return () => clearTimeout(timer);
-  }, []);
+  }, [isWeb, playSegment]);
 
+  // Handle native animation finish
   const handleAnimationFinish = () => {
     if (animationPhase === 'opening') {
       setOpeningFinished(true);
-
-      // If data is ready, start transition immediately
-      // Otherwise, go to loop animation
       if (isDataReady) {
         startTransition();
       } else {
         setAnimationPhase('loop');
       }
     } else if (animationPhase === 'loop') {
-      // Keep looping until data is ready
       setTimeout(() => {
-        if (lottieRef.current) {
-          lottieRef.current.play(79, 148);
-          setTimeout(() => {
-            lottieRef.current?.play();
-          }, 50);
-        }
+        playSegment(LOOP_START, LOOP_END);
       }, 50);
     }
   };
+
+  // Play loop animation when phase changes to loop
+  useEffect(() => {
+    if (animationPhase !== 'loop') return;
+
+    if (isWeb && !hasWebLoaded.current) {
+      pendingWebPhase.current = 'loop';
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      playSegment(LOOP_START, LOOP_END);
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [animationPhase, isWeb, playSegment]);
 
   // When data becomes ready and opening animation is finished, start transition
   useEffect(() => {
@@ -64,22 +96,6 @@ export function LoadingScreen({ onLoadingComplete, isDataReady }: LoadingScreenP
       startTransition();
     }
   }, [isDataReady, openingFinished, animationPhase]);
-
-  // Play loop animation when phase changes to loop
-  useEffect(() => {
-    if (animationPhase === 'loop') {
-      const timer = setTimeout(() => {
-        if (lottieRef.current) {
-          lottieRef.current.play(79, 148);
-          setTimeout(() => {
-            lottieRef.current?.play();
-          }, 50);
-        }
-      }, 50);
-
-      return () => clearTimeout(timer);
-    }
-  }, [animationPhase]);
 
   const startTransition = () => {
     setAnimationPhase('complete');
@@ -131,9 +147,21 @@ export function LoadingScreen({ onLoadingComplete, isDataReady }: LoadingScreenP
           ref={lottieRef}
           source={require('@/assets/lottie/anim_full_intersections.json')}
           style={styles.lottie}
+          webStyle={styles.lottie}
           autoPlay={false}
           loop={false}
           onAnimationFinish={handleAnimationFinish}
+          onAnimationLoaded={() => {
+            if (!isWeb) return;
+            hasWebLoaded.current = true;
+            const phaseToPlay = pendingWebPhase.current ?? animationPhase;
+            pendingWebPhase.current = null;
+            if (phaseToPlay === 'opening') {
+              playSegment(OPENING_START, OPENING_END);
+            } else if (phaseToPlay === 'loop') {
+              playSegment(LOOP_START, LOOP_END);
+            }
+          }}
         />
       </Animated.View>
     </Animated.View>

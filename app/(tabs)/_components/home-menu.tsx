@@ -6,7 +6,7 @@ import { AntDesign, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons'
 import { User } from '@supabase/supabase-js';
 import { Link } from 'expo-router';
 import LottieView from 'lottie-react-native';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Animated,
@@ -24,6 +24,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeScheme } from '@/contexts/theme-context';
 
 import { createStyles } from '../index.styles';
+
+// Animation frame constants (total 182 frames at 30fps)
+const LOOP_START = 79;
+const LOOP_END = 148;
+const TAP_START = 149;
+const TAP_END = 182;
 
 export interface HomeMenuProps {
   user: User | null;
@@ -131,6 +137,8 @@ export function HomeMenu({
   const { colorScheme } = useThemeScheme();
   const styles = useMemo(() => createStyles(colorScheme), [colorScheme]);
 
+  const isWeb = Platform.OS === 'web';
+
   // Entrance animations
   const logoOpacity = useRef(new Animated.Value(showEntranceAnimations ? 0 : 1)).current;
   const logoScale = useRef(new Animated.Value(showEntranceAnimations ? 0.8 : 1)).current;
@@ -149,6 +157,18 @@ export function HomeMenu({
     }, 150);
     return () => clearTimeout(focusTimer);
   }, [showDisplayNameModal]);
+
+  const playSegment = useCallback((start: number, end: number) => {
+    if (!lottieRef.current) return;
+
+    if (isWeb) {
+      // Web needs segment + explicit start frame to actually begin playback.
+      lottieRef.current.play(start, end);
+      lottieRef.current.play(start);
+    } else {
+      lottieRef.current.play(start, end);
+    }
+  }, [isWeb]);
 
   // Entrance animations effect
   useEffect(() => {
@@ -218,41 +238,30 @@ export function HomeMenu({
   // Start loop animation on mount (skip the intro animation)
   useEffect(() => {
     if (hasStarted.current) return;
+    hasStarted.current = true;
+    setAnimationPhase('loop');
 
-    // Start immediately to avoid showing frame 0
-    if (lottieRef.current) {
-      hasStarted.current = true;
-      setAnimationPhase('loop');
-      // Start with the loop animation immediately
-      lottieRef.current.play(79, 148);
-      setTimeout(() => {
-        lottieRef.current?.play();
-      }, 50);
-    }
-  }, []);
+    const timer = setTimeout(() => {
+      playSegment(LOOP_START, LOOP_END);
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [playSegment]);
 
   // Play the appropriate segment when phase changes (except intro which plays on mount)
   useEffect(() => {
     if (animationPhase === 'intro' || !hasStarted.current) return;
 
     const timer = setTimeout(() => {
-      if (lottieRef.current) {
-        if (animationPhase === 'loop') {
-          lottieRef.current.play(79, 148);
-          setTimeout(() => {
-            lottieRef.current?.play();
-          }, 50);
-        } else if (animationPhase === 'tap') {
-          lottieRef.current.play(149, 182);
-          setTimeout(() => {
-            lottieRef.current?.play();
-          }, 50);
-        }
+      if (animationPhase === 'loop') {
+        playSegment(LOOP_START, LOOP_END);
+      } else if (animationPhase === 'tap') {
+        playSegment(TAP_START, TAP_END);
       }
     }, 50);
 
     return () => clearTimeout(timer);
-  }, [animationPhase]);
+  }, [animationPhase, isWeb, playSegment]);
 
   const handleAnimationFinish = () => {
     if (animationPhase === 'intro') {
@@ -262,20 +271,14 @@ export function HomeMenu({
     } else if (animationPhase === 'loop') {
       // Loop keeps replaying
       setTimeout(() => {
-        if (lottieRef.current) {
-          lottieRef.current.play(79, 148);
-          setTimeout(() => {
-            lottieRef.current?.play();
-          }, 50);
-        }
+        playSegment(LOOP_START, LOOP_END);
       }, 50);
     }
   };
 
   const handleLogoPress = () => {
-    if (animationPhase === 'loop' && lottieRef.current) {
-      // Pause current animation and reset before playing tap animation
-      lottieRef.current.pause();
+    if (animationPhase === 'loop') {
+      lottieRef.current?.pause();
       setAnimationPhase('tap');
     }
   };
@@ -399,9 +402,21 @@ export function HomeMenu({
                 ref={lottieRef}
                 source={require('@/assets/lottie/anim_full_intersections.json')}
                 style={styles.menuLogo}
+                webStyle={styles.menuLogo}
                 autoPlay={false}
                 loop={false}
                 onAnimationFinish={handleAnimationFinish}
+                onAnimationLoaded={() => {
+                  if (!isWeb) return;
+                  if (animationPhase === 'intro') {
+                    setAnimationPhase('loop');
+                    playSegment(LOOP_START, LOOP_END);
+                  } else if (animationPhase === 'loop') {
+                    playSegment(LOOP_START, LOOP_END);
+                  } else if (animationPhase === 'tap') {
+                    playSegment(TAP_START, TAP_END);
+                  }
+                }}
               />
             </TouchableOpacity>
           </Animated.View>

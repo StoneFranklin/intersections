@@ -54,7 +54,8 @@
       "Bash(wc:*)",
       "Bash(git rm:*)",
       "Bash(npx expo install:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(npx tsc --noEmit)"
     ]
   }
 }
