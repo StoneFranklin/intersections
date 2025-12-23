@@ -32,6 +32,7 @@ export interface GameContentProps {
   onShowAnswersModal: () => void;
   onOpenLeaderboard: () => void;
   onShowTutorial: () => void;
+  onShowSignIn: () => void;
   gameEnded: boolean;
 }
 
@@ -50,6 +51,7 @@ export function GameContent({
   onShowAnswersModal,
   onOpenLeaderboard,
   onShowTutorial,
+  onShowSignIn,
   gameEnded,
 }: GameContentProps) {
   const { colorScheme } = useThemeScheme();
@@ -491,6 +493,14 @@ export function GameContent({
               <Text style={styles.leaderboardEmptyText}>
                 Sign in to see your global ranking and view today&apos;s leaderboard
               </Text>
+              <TouchableOpacity
+                style={styles.gameCompleteSignInButton}
+                onPress={onShowSignIn}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="log-in-outline" size={20} color={colorScheme.brandPrimary} />
+                <Text style={styles.gameCompleteSignInButtonText}>Sign In</Text>
+              </TouchableOpacity>
             </View>
           )}
 

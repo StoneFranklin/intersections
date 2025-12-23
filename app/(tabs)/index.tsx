@@ -19,14 +19,21 @@ import {
 import { validateDisplayName } from '@/utils/displayNameValidation';
 import { logger } from '@/utils/logger';
 import { areNotificationsEnabled, scheduleDailyNotification, setNotificationsEnabled } from '@/utils/notificationService';
+import { AntDesign, Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useEffect, useRef, useState } from 'react';
-import { Platform } from 'react-native';
+import { Modal, Platform, Text, TouchableOpacity, View } from 'react-native';
 
 import { GameContent } from './_components/game-content';
 import { HomeMenu } from './_components/home-menu';
+import { createStyles } from './index.styles';
+import { useThemeScheme } from '@/contexts/theme-context';
+import { useMemo } from 'react';
+
 export default function GameScreen() {
   const { user, signInWithGoogle, signInWithApple, signOut } = useAuth();
+  const { colorScheme } = useThemeScheme();
+  const styles = useMemo(() => createStyles(colorScheme), [colorScheme]);
   const [puzzle, setPuzzle] = useState<Puzzle | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isReviewMode, setIsReviewMode] = useState(false);
@@ -688,56 +695,138 @@ export default function GameScreen() {
     setIsReviewMode(false);
   };
 
+  // Helper function to render the sign-in modal
+  const renderSignInModal = () => (
+    <Modal
+      visible={showSignIn}
+      animationType="fade"
+      transparent={true}
+      onRequestClose={() => setShowSignIn(false)}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={styles.signInModal}>
+          <Text style={styles.signInModalTitle}>Sign In</Text>
+          <Text style={styles.signInModalSubtitle}>Sync your scores and streaks across devices</Text>
+
+          <TouchableOpacity
+            style={styles.googleButton}
+            onPress={async () => {
+              setSigningIn(true);
+              try {
+                await signInWithGoogle();
+                setShowSignIn(false);
+              } catch (e) {
+                logger.error('Sign in error:', e);
+              } finally {
+                setSigningIn(false);
+              }
+            }}
+            disabled={signingIn}
+          >
+            <View style={styles.googleButtonContent}>
+              <AntDesign name="google" size={20} color="#4285f4" style={{ marginRight: 8 }} />
+              <Text style={styles.googleButtonText}>{signingIn ? 'Signing in...' : 'Continue with Google'}</Text>
+            </View>
+          </TouchableOpacity>
+
+          {Platform.OS === 'ios' && (
+            <TouchableOpacity
+              style={styles.appleButton}
+              onPress={async () => {
+                setSigningInWithApple(true);
+                try {
+                  await signInWithApple();
+                  setShowSignIn(false);
+                } catch (e) {
+                  logger.error('Apple sign in error:', e);
+                } finally {
+                  setSigningInWithApple(false);
+                }
+              }}
+              disabled={signingInWithApple}
+              activeOpacity={0.8}
+            >
+              <View style={styles.appleButtonContent}>
+                <Ionicons name="logo-apple" size={20} color="#fff" style={{ marginRight: 8 }} />
+                <Text style={styles.appleButtonText}>
+                  {signingInWithApple ? 'Signing in...' : 'Continue with Apple'}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          )}
+
+          <TouchableOpacity style={styles.signInCancelButton} onPress={() => setShowSignIn(false)}>
+            <Text style={styles.signInCancelText}>Cancel</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+  );
+
   // Show loading screen during initial load
   if (showLoadingScreen && !loadingComplete) {
     return (
-      <LoadingScreen
-        isDataReady={dataReady}
-        onLoadingComplete={() => {
-          setLoadingComplete(true);
-          setShowLoadingScreen(false);
-        }}
-      />
+      <>
+        <LoadingScreen
+          isDataReady={dataReady}
+          onLoadingComplete={() => {
+            setLoadingComplete(true);
+            setShowLoadingScreen(false);
+          }}
+        />
+        {renderSignInModal()}
+      </>
     );
   }
 
   // Show full-screen leaderboard
   if (showLeaderboardScreen) {
     return (
-      <LeaderboardScreen
-        fullLeaderboard={fullLeaderboard}
-        loadingFullLeaderboard={loadingFullLeaderboard}
-        fullLeaderboardLoaded={fullLeaderboardLoaded}
-        fullLeaderboardHasMore={fullLeaderboardHasMore}
-        isRefreshing={isRefreshing}
-        userRank={userRank}
-        savedScore={savedScore}
-        onBack={() => setShowLeaderboardScreen(false)}
-        onRefresh={refreshLeaderboard}
-        onLoadMore={() => loadFullLeaderboard()}
-        isCurrentUserEntry={isCurrentUserEntry}
-      />
+      <>
+        <LeaderboardScreen
+          fullLeaderboard={fullLeaderboard}
+          loadingFullLeaderboard={loadingFullLeaderboard}
+          fullLeaderboardLoaded={fullLeaderboardLoaded}
+          fullLeaderboardHasMore={fullLeaderboardHasMore}
+          isRefreshing={isRefreshing}
+          userRank={userRank}
+          savedScore={savedScore}
+          onBack={() => setShowLeaderboardScreen(false)}
+          onRefresh={refreshLeaderboard}
+          onLoadMore={() => loadFullLeaderboard()}
+          isCurrentUserEntry={isCurrentUserEntry}
+        />
+        {renderSignInModal()}
+      </>
     );
   }
 
   // Show full-screen correct answers
   if (showAnswersScreen) {
     return (
-      <CorrectAnswersScreen
-        puzzle={todaysPuzzle || puzzle}
-        onBack={() => setShowAnswersScreen(false)}
-        onRetry={async () => {
-          const puzzleData = await fetchTodaysPuzzle();
-          if (puzzleData) {
-            setTodaysPuzzle(puzzleData);
-          }
-        }}
-      />
+      <>
+        <CorrectAnswersScreen
+          puzzle={todaysPuzzle || puzzle}
+          onBack={() => setShowAnswersScreen(false)}
+          onRetry={async () => {
+            const puzzleData = await fetchTodaysPuzzle();
+            if (puzzleData) {
+              setTodaysPuzzle(puzzleData);
+            }
+          }}
+        />
+        {renderSignInModal()}
+      </>
     );
   }
   // Show full-screen how to play
   if (showTutorialScreen) {
-    return <HowToPlayScreen onBack={() => setShowTutorial(false)} />;
+    return (
+      <>
+        <HowToPlayScreen onBack={() => setShowTutorial(false)} />
+        {renderSignInModal()}
+      </>
+    );
   }
 
   // Show main menu
@@ -794,22 +883,26 @@ export default function GameScreen() {
   }
 
   return (
-    <GameContent
-      puzzle={puzzle}
-      onBack={handleBack}
-      onComplete={handleComplete}
-      isReviewMode={isReviewMode}
-      savedScore={savedScore}
-      displayName={displayName}
-      userId={user?.id}
-      userRank={userRank}
-      leaderboard={leaderboard}
-      leaderboardLoaded={leaderboardLoaded}
-      loadingLeaderboard={loadingLeaderboard}
-      onShowAnswersModal={() => setShowAnswersScreen(true)}
-      onOpenLeaderboard={openLeaderboard}
-      onShowTutorial={() => setShowTutorial(true)}
-      gameEnded={currentGameEnded}
-    />
+    <>
+      <GameContent
+        puzzle={puzzle}
+        onBack={handleBack}
+        onComplete={handleComplete}
+        isReviewMode={isReviewMode}
+        savedScore={savedScore}
+        displayName={displayName}
+        userId={user?.id}
+        userRank={userRank}
+        leaderboard={leaderboard}
+        leaderboardLoaded={leaderboardLoaded}
+        loadingLeaderboard={loadingLeaderboard}
+        onShowAnswersModal={() => setShowAnswersScreen(true)}
+        onOpenLeaderboard={openLeaderboard}
+        onShowTutorial={() => setShowTutorial(true)}
+        onShowSignIn={() => setShowSignIn(true)}
+        gameEnded={currentGameEnded}
+      />
+      {renderSignInModal()}
+    </>
   );
 }

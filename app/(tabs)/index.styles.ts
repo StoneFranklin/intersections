@@ -1818,6 +1818,22 @@ export const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
     fontWeight: '600',
     fontSize: 14,
   },
+  gameCompleteSignInButton: {
+    marginTop: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: colorScheme.brandPrimary,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+  },
+  gameCompleteSignInButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 15,
+  },
   gameCompleteBackButton: {
     paddingVertical: 12,
     paddingHorizontal: 24,
