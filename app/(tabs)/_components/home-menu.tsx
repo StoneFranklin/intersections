@@ -31,6 +31,7 @@ const LOOP_START = 79;
 const LOOP_END = 148;
 const TAP_START = 149;
 const TAP_END = 182;
+let hasPlayedEntranceAnimations = false;
 
 export interface HomeMenuProps {
   user: User | null;
@@ -142,17 +143,18 @@ export function HomeMenu({
   const logoFrameHeight = Math.round(logoSize * 0.9);
 
   const isWeb = Platform.OS === 'web';
+  const shouldPlayEntranceAnimations = showEntranceAnimations && !hasPlayedEntranceAnimations;
 
   // Entrance animations
-  const logoOpacity = useRef(new Animated.Value(showEntranceAnimations ? 0 : 1)).current;
-  const logoScale = useRef(new Animated.Value(showEntranceAnimations ? 0.8 : 1)).current;
-  const subtitleOpacity = useRef(new Animated.Value(showEntranceAnimations ? 0 : 1)).current;
-  const subtitleTranslateY = useRef(new Animated.Value(showEntranceAnimations ? 20 : 0)).current;
-  const dateRowOpacity = useRef(new Animated.Value(showEntranceAnimations ? 0 : 1)).current;
-  const dateRowTranslateY = useRef(new Animated.Value(showEntranceAnimations ? 20 : 0)).current;
-  const buttonsOpacity = useRef(new Animated.Value(showEntranceAnimations ? 0 : 1)).current;
-  const buttonsTranslateY = useRef(new Animated.Value(showEntranceAnimations ? 30 : 0)).current;
-  const footerOpacity = useRef(new Animated.Value(showEntranceAnimations ? 0 : 1)).current;
+  const logoOpacity = useRef(new Animated.Value(shouldPlayEntranceAnimations ? 0 : 1)).current;
+  const logoScale = useRef(new Animated.Value(shouldPlayEntranceAnimations ? 0.8 : 1)).current;
+  const subtitleOpacity = useRef(new Animated.Value(shouldPlayEntranceAnimations ? 0 : 1)).current;
+  const subtitleTranslateY = useRef(new Animated.Value(shouldPlayEntranceAnimations ? 20 : 0)).current;
+  const dateRowOpacity = useRef(new Animated.Value(shouldPlayEntranceAnimations ? 0 : 1)).current;
+  const dateRowTranslateY = useRef(new Animated.Value(shouldPlayEntranceAnimations ? 20 : 0)).current;
+  const buttonsOpacity = useRef(new Animated.Value(shouldPlayEntranceAnimations ? 0 : 1)).current;
+  const buttonsTranslateY = useRef(new Animated.Value(shouldPlayEntranceAnimations ? 30 : 0)).current;
+  const footerOpacity = useRef(new Animated.Value(shouldPlayEntranceAnimations ? 0 : 1)).current;
 
   useEffect(() => {
     if (!showDisplayNameModal) return;
@@ -176,7 +178,7 @@ export function HomeMenu({
 
   // Entrance animations effect
   useEffect(() => {
-    if (showEntranceAnimations) {
+    if (shouldPlayEntranceAnimations) {
       // Stagger the entrance animations
       const animations = Animated.stagger(100, [
         Animated.parallel([
@@ -236,8 +238,9 @@ export function HomeMenu({
       ]);
 
       animations.start();
+      hasPlayedEntranceAnimations = true;
     }
-  }, [showEntranceAnimations]);
+  }, [shouldPlayEntranceAnimations]);
 
   // Start loop animation on mount (skip the intro animation)
   useEffect(() => {
