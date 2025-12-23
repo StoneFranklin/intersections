@@ -56,7 +56,8 @@
       "Bash(npx expo install:*)",
       "Bash(grep:*)",
       "Bash(npx tsc --noEmit)",
-      "Bash(npm run typecheck:*)"
+      "Bash(npm run typecheck:*)",
+      "Bash(git checkout:*)"
     ]
   }
 }

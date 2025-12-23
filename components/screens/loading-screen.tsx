@@ -49,6 +49,14 @@ export function LoadingScreen({ onLoadingComplete, isDataReady }: LoadingScreenP
         playSegment(OPENING_START, OPENING_END);
       } else {
         pendingWebPhase.current = 'opening';
+        // Fallback: if onAnimationLoaded doesn't fire (cached animation), try playing after a delay
+        const fallbackTimer = setTimeout(() => {
+          if (!hasWebLoaded.current && lottieRef.current) {
+            hasWebLoaded.current = true;
+            playSegment(OPENING_START, OPENING_END);
+          }
+        }, 200);
+        return () => clearTimeout(fallbackTimer);
       }
       return;
     }

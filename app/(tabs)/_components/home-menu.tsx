@@ -416,10 +416,10 @@ export function HomeMenu({
                   onAnimationFinish={handleAnimationFinish}
                   onAnimationLoaded={() => {
                     if (!isWeb) return;
-                    if (animationPhase === 'intro') {
+                    // Always play the loop segment when animation loads on web
+                    // This handles both initial load and remount after OAuth redirect
+                    if (animationPhase === 'intro' || animationPhase === 'loop') {
                       setAnimationPhase('loop');
-                      playSegment(LOOP_START, LOOP_END);
-                    } else if (animationPhase === 'loop') {
                       playSegment(LOOP_START, LOOP_END);
                     } else if (animationPhase === 'tap') {
                       playSegment(TAP_START, TAP_END);

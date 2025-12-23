@@ -66,6 +66,7 @@ export default function GameScreen() {
   const [showLoadingScreen, setShowLoadingScreen] = useState(true);
   const [dataReady, setDataReady] = useState(false);
   const [loadingComplete, setLoadingComplete] = useState(false);
+  const hasCompletedInitialLoad = useRef(false);
 
   // Helper to determine if a leaderboard entry is the current user
   // For logged-in users, this uses isCurrentUser from the API
@@ -90,6 +91,23 @@ export default function GameScreen() {
 
   // Notification settings state
   const [notificationsEnabled, setNotificationsEnabledState] = useState(true);
+
+  // Check if initial load has already been completed
+  useEffect(() => {
+    const checkInitialLoad = async () => {
+      try {
+        const completed = await AsyncStorage.getItem('initialLoadComplete');
+        if (completed === 'true') {
+          hasCompletedInitialLoad.current = true;
+          setLoadingComplete(true);
+          setShowLoadingScreen(false);
+        }
+      } catch (e) {
+        logger.error('Error checking initial load:', e);
+      }
+    };
+    checkInitialLoad();
+  }, []);
 
   // Check if sign-in banner was dismissed
   useEffect(() => {
@@ -769,9 +787,15 @@ export default function GameScreen() {
       <>
         <LoadingScreen
           isDataReady={dataReady}
-          onLoadingComplete={() => {
+          onLoadingComplete={async () => {
             setLoadingComplete(true);
             setShowLoadingScreen(false);
+            hasCompletedInitialLoad.current = true;
+            try {
+              await AsyncStorage.setItem('initialLoadComplete', 'true');
+            } catch (e) {
+              logger.error('Error saving initial load state:', e);
+            }
           }}
         />
         {renderSignInModal()}
