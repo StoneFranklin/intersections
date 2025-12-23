@@ -57,7 +57,8 @@
       "Bash(grep:*)",
       "Bash(npx tsc --noEmit)",
       "Bash(npm run typecheck:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(sips:*)"
     ]
   }
 }
