@@ -1,9 +1,14 @@
 import { ColorScheme } from '@/constants/theme';
 import { useThemeScheme } from '@/contexts/theme-context';
 import { CellPosition, Puzzle, Word } from '@/types/game';
-import React, { memo, useEffect, useMemo, useState } from 'react';
-import { Dimensions, Image, Platform, StyleSheet, Text, View } from 'react-native';
+import LottieView from 'lottie-react-native';
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Dimensions, Platform, StyleSheet, Text, View } from 'react-native';
 import { GameCell } from './game-cell';
+
+// Animation frame constants for loop animation (total 182 frames at 30fps)
+const LOOP_START = 79;
+const LOOP_END = 148;
 
 interface GameGridProps {
   puzzle: Puzzle;
@@ -25,7 +30,11 @@ export const GameGrid = memo(function GameGrid({
   const { colorScheme } = useThemeScheme();
   const styles = useMemo(() => createStyles(colorScheme), [colorScheme]);
   const { rowCategories, colCategories } = puzzle;
-  
+
+  const lottieRef = useRef<LottieView>(null);
+  const hasStarted = useRef(false);
+  const isWeb = Platform.OS === 'web';
+
   // Use state for dimensions to properly update after hydration
   const [dimensions, setDimensions] = useState(() => {
     const { width, height } = Dimensions.get('window');
@@ -44,12 +53,43 @@ export const GameGrid = memo(function GameGrid({
         setDimensions({ width, height });
       }
     };
-    
+
     updateDimensions();
     const subscription = Dimensions.addEventListener('change', updateDimensions);
     return () => subscription.remove();
   }, []);
-  
+
+  const playSegment = useCallback((start: number, end: number) => {
+    if (!lottieRef.current) return;
+
+    if (isWeb) {
+      // Web needs segment + explicit start frame to actually begin playback.
+      lottieRef.current.play(start, end);
+      lottieRef.current.play(start);
+    } else {
+      lottieRef.current.play(start, end);
+    }
+  }, [isWeb]);
+
+  // Start loop animation on mount
+  useEffect(() => {
+    if (hasStarted.current) return;
+    hasStarted.current = true;
+
+    const timer = setTimeout(() => {
+      playSegment(LOOP_START, LOOP_END);
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [playSegment]);
+
+  const handleAnimationFinish = () => {
+    // Keep looping
+    setTimeout(() => {
+      playSegment(LOOP_START, LOOP_END);
+    }, 50);
+  };
+
   const { width, height } = dimensions;
   
   // Calculate responsive sizes based on screen dimensions
@@ -72,20 +112,27 @@ export const GameGrid = memo(function GameGrid({
   const headerWidth = cellSize * 1.3;
   const fontSize = Math.max(10, Math.min(cellSize / 6, 16));
 
-  // Logo size to fit perfectly in corner cell (accounting for margin)
-  const cornerWidth = headerWidth - 4; // subtract margin
-  const cornerHeight = cellSize * 0.8 - 4; // subtract margin
-  const logoSize = Math.min(cornerWidth, cornerHeight);
+  // Logo size to fill more of the corner cell
+  // Use the larger dimension and scale up to fill the cell better
+  const logoSize = Math.max(headerWidth, cellSize * 0.8) * 1.2;
 
   return (
     <View style={styles.container}>
       {/* Column headers (top) */}
       <View style={styles.headerRow}>
         <View style={[styles.cornerCell, { width: headerWidth, height: cellSize * 0.8 }]}>
-          <Image
-            source={require('@/assets/images/intersections-logo-v2.png')}
+          <LottieView
+            ref={lottieRef}
+            source={require('@/assets/lottie/anim_full_intersections.json')}
             style={{ width: logoSize, height: logoSize }}
-            resizeMode="contain"
+            webStyle={{ width: logoSize, height: logoSize }}
+            autoPlay={false}
+            loop={false}
+            onAnimationFinish={handleAnimationFinish}
+            onAnimationLoaded={() => {
+              if (!isWeb) return;
+              playSegment(LOOP_START, LOOP_END);
+            }}
           />
         </View>
         {colCategories.map((col) => (

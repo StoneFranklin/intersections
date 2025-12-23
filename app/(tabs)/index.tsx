@@ -533,7 +533,7 @@ export default function GameScreen() {
           // Not logged in - use local storage
           const completed = await AsyncStorage.getItem(dailyCompletedKey(todayKey));
           setDailyCompleted(completed === 'true');
-          
+
           // Load saved score and rank if completed
           if (completed === 'true') {
             const scoreData = await AsyncStorage.getItem(dailyScoreKey(todayKey));
@@ -549,6 +549,11 @@ export default function GameScreen() {
             const savedRank = await AsyncStorage.getItem(dailyRankKey(todayKey));
             if (savedRank) {
               setUserRank(parseInt(savedRank, 10));
+            }
+            // Load puzzle data for viewing correct answers
+            const puzzleData = await fetchTodaysPuzzle();
+            if (puzzleData) {
+              setTodaysPuzzle(puzzleData);
             }
           }
           
@@ -593,6 +598,7 @@ export default function GameScreen() {
       const dbPuzzle = await fetchTodaysPuzzle();
       if (dbPuzzle) {
         setPuzzle(dbPuzzle);
+        setTodaysPuzzle(dbPuzzle); // Also set todaysPuzzle for answers screen
         // If already completed, open in review mode
         setIsReviewMode(dailyCompleted);
         setIsPlaying(true);
@@ -718,7 +724,7 @@ export default function GameScreen() {
   if (showAnswersScreen) {
     return (
       <CorrectAnswersScreen
-        puzzle={todaysPuzzle}
+        puzzle={todaysPuzzle || puzzle}
         onBack={() => setShowAnswersScreen(false)}
         onRetry={async () => {
           const puzzleData = await fetchTodaysPuzzle();

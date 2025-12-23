@@ -86,7 +86,7 @@ export const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-start',
     overflow: 'hidden',
-    marginBottom: 6,
+    marginBottom: -10,
   },
   menuLogo: {
     width: 190,
@@ -102,7 +102,7 @@ export const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
   menuSubtitle: {
     fontSize: 18,
     color: colorScheme.textTertiary,
-    marginBottom: 24,
+    marginBottom: 16,
   },
   menuButtons: {
     width: '100%',
