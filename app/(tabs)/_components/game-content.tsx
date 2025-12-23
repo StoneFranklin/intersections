@@ -1,5 +1,5 @@
 import { RewardedAdModal } from '@/components/ads/rewarded-ad-modal';
-import { GameGrid, WordTray } from '@/components/game';
+import { GameGrid, LeaveGameModal, WordTray } from '@/components/game';
 import { LeaderboardEntry, submitScore } from '@/data/puzzleApi';
 import { useGameState } from '@/hooks/use-game-state';
 import { useRewardedAd } from '@/hooks/use-rewarded-ad';
@@ -9,8 +9,8 @@ import { logger } from '@/utils/logger';
 import { formatTime, shareScore } from '@/utils/share';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import React, { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, Platform, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useThemeScheme } from '@/contexts/theme-context';
@@ -72,11 +72,13 @@ export function GameContent({
   const [showRewardedAdModal, setShowRewardedAdModal] = useState(false);
   const [hasShownAdOffer, setHasShownAdOffer] = useState(false);
   const [adOfferDeclined, setAdOfferDeclined] = useState(false);
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
 
   const rewardedAd = useRewardedAd();
 
   const isGameOver = gameState.lives <= 0;
   const shouldShowGameOver = isGameOver && (adOfferDeclined || !showRewardedAdModal) && hasShownAdOffer;
+  const isGameActive = !isReviewMode && !gameState.isSolved && !isGameOver && !gameEnded;
 
   const isCurrentUserEntry = (entry: LeaderboardEntry): boolean => {
     if (entry.isCurrentUser) return true;
@@ -119,6 +121,55 @@ export function GameContent({
     setShowRewardedAdModal(false);
     setAdOfferDeclined(true);
   };
+
+  // Handle leave game confirmation
+  const handleLeaveRequest = useCallback(() => {
+    if (isGameActive) {
+      setShowLeaveModal(true);
+    } else {
+      onBack();
+    }
+  }, [isGameActive, onBack]);
+
+  const handleConfirmLeave = useCallback(() => {
+    setShowLeaveModal(false);
+    onBack();
+  }, [onBack]);
+
+  const handleCancelLeave = useCallback(() => {
+    setShowLeaveModal(false);
+  }, []);
+
+  // Browser back/navigation prevention (web only)
+  useEffect(() => {
+    if (Platform.OS !== 'web' || !isGameActive) return;
+
+    // Handle browser beforeunload (tab close, refresh)
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+      return '';
+    };
+
+    // Handle browser back button via popstate
+    const handlePopState = (e: PopStateEvent) => {
+      e.preventDefault();
+      // Push state back to prevent actual navigation
+      window.history.pushState(null, '', window.location.href);
+      setShowLeaveModal(true);
+    };
+
+    // Push initial state so we can catch back button
+    window.history.pushState(null, '', window.location.href);
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [isGameActive]);
 
   useEffect(() => {
     if (isReviewMode) return;
@@ -471,9 +522,7 @@ export function GameContent({
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={onBack} style={styles.headerBackButton}>
-          <Ionicons name="chevron-back" size={28} color={colorScheme.textPrimary} />
-        </TouchableOpacity>
+        <View style={styles.headerPlaceholder} />
         <View style={styles.headerCenter}>
           <Text style={styles.timerText}>{formatTime(elapsedTime)}</Text>
         </View>
@@ -513,6 +562,12 @@ export function GameContent({
         onWatchAd={handleWatchAd}
         onDecline={handleDeclineAd}
         error={rewardedAd.error}
+      />
+
+      <LeaveGameModal
+        visible={showLeaveModal}
+        onStay={handleCancelLeave}
+        onLeave={handleConfirmLeave}
       />
     </SafeAreaView>
   );

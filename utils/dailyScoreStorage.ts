@@ -28,6 +28,10 @@ export function dailyRankKey(dateKey: string) {
   return `rank-${dateKey}`;
 }
 
+export function dailyGameStartKey(dateKey: string) {
+  return `gameStart-${dateKey}`;
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }

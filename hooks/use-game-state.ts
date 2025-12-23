@@ -10,6 +10,9 @@ import {
     Puzzle,
     Word,
 } from '@/types/game';
+import { dailyGameStartKey } from '@/utils/dailyScoreStorage';
+import { getTodayKey } from '@/utils/dateKeys';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 export interface UseGameStateReturn {
@@ -60,11 +63,42 @@ export function useGameState(puzzle: Puzzle): UseGameStateReturn {
   const [elapsedTime, setElapsedTime] = useState(0);
   const [mistakes, setMistakes] = useState(0);
   const [finalScore, setFinalScore] = useState<GameScore | null>(null);
+  const [timerInitialized, setTimerInitialized] = useState(false);
   const startTimeRef = useRef<number>(Date.now());
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // Load persisted start time on mount (for timer persistence when leaving/returning)
+  useEffect(() => {
+    const loadStartTime = async () => {
+      try {
+        const todayKey = getTodayKey();
+        const storedStartTime = await AsyncStorage.getItem(dailyGameStartKey(todayKey));
+
+        if (storedStartTime) {
+          const parsedTime = parseInt(storedStartTime, 10);
+          if (!isNaN(parsedTime) && parsedTime > 0) {
+            startTimeRef.current = parsedTime;
+            // Calculate initial elapsed time from stored start
+            setElapsedTime(Math.floor((Date.now() - parsedTime) / 1000));
+          }
+        } else {
+          // No stored start time - this is a fresh game, save the current start time
+          await AsyncStorage.setItem(dailyGameStartKey(todayKey), Date.now().toString());
+        }
+      } catch (error) {
+        // Silently fail - timer will just start fresh
+      }
+      setTimerInitialized(true);
+    };
+
+    loadStartTime();
+  }, []);
+
   // Start/stop timer based on game state
   useEffect(() => {
+    // Wait for timer to be initialized from storage
+    if (!timerInitialized) return;
+
     // Clear any existing timer first to prevent memory leaks
     if (timerRef.current) {
       clearInterval(timerRef.current);
@@ -84,7 +118,7 @@ export function useGameState(puzzle: Puzzle): UseGameStateReturn {
         timerRef.current = null;
       }
     };
-  }, [gameState.isSolved, gameState.lives]);
+  }, [gameState.isSolved, gameState.lives, timerInitialized]);
 
   // Calculate correct placements
   const correctPlacements = useMemo(() => {
@@ -113,11 +147,24 @@ export function useGameState(puzzle: Puzzle): UseGameStateReturn {
       if (timerRef.current) {
         clearInterval(timerRef.current);
       }
+      // Clear the stored start time since game is complete
+      const todayKey = getTodayKey();
+      AsyncStorage.removeItem(dailyGameStartKey(todayKey)).catch(() => {
+        // Silently fail
+      });
     }
   }, [gameState.isSolved, isGameOver, elapsedTime, mistakes, correctPlacements, totalCells, finalScore]);
 
-  // Reset when puzzle changes
+  // Track if this is the initial mount
+  const isInitialMount = useRef(true);
+
+  // Reset when puzzle changes (but not on initial mount - let the storage load handle that)
   useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+
     setShuffledWords(shuffleWords(puzzle));
     setGameState({
       puzzle,
@@ -130,6 +177,12 @@ export function useGameState(puzzle: Puzzle): UseGameStateReturn {
     setMistakes(0);
     setFinalScore(null);
     startTimeRef.current = Date.now();
+
+    // Save new start time for the new puzzle
+    const todayKey = getTodayKey();
+    AsyncStorage.setItem(dailyGameStartKey(todayKey), Date.now().toString()).catch(() => {
+      // Silently fail
+    });
   }, [puzzle]);
 
   const unplacedWords = useMemo(() => {
