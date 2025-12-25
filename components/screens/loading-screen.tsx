@@ -153,7 +153,7 @@ export function LoadingScreen({ onLoadingComplete, isDataReady }: LoadingScreenP
       >
         <LottieView
           ref={lottieRef}
-          source={require('@/assets/lottie/anim_full_intersections.json')}
+          source={require('@/assets/lottie/anim_full_intersections_v2.json')}
           style={styles.lottie}
           webStyle={styles.lottie}
           autoPlay={false}

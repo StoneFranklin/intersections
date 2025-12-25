@@ -495,7 +495,7 @@ export function HomeMenu({
               <View style={[styles.menuLogoFrame, { width: logoSize, height: logoFrameHeight }]}>
                 <LottieView
                   ref={lottieRef}
-                  source={require('@/assets/lottie/anim_full_intersections.json')}
+                  source={require('@/assets/lottie/anim_full_intersections_v2.json')}
                   style={[styles.menuLogo, { width: logoSize, height: logoSize }]}
                   webStyle={{ ...styles.menuLogo, width: logoSize, height: logoSize }}
                   autoPlay={false}

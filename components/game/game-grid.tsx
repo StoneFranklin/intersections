@@ -123,7 +123,7 @@ export const GameGrid = memo(function GameGrid({
         <View style={[styles.cornerCell, { width: headerWidth, height: cellSize * 0.8 }]}>
           <LottieView
             ref={lottieRef}
-            source={require('@/assets/lottie/anim_full_intersections.json')}
+            source={require('@/assets/lottie/anim_full_intersections_v2.json')}
             style={{ width: logoSize, height: logoSize }}
             webStyle={{ width: logoSize, height: logoSize }}
             autoPlay={false}
