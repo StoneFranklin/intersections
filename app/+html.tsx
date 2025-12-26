@@ -17,7 +17,8 @@ export default function Root({ children }: PropsWithChildren) {
         />
 
         {/* Favicon */}
-        <link rel="icon" type="image/png" href="/intersections/assets/images/intersections-logo.png" />
+        <link rel="icon" type="image/png" href="/assets/images/intersections-logo.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/assets/images/intersections-logo.png" />
 
         {/* Google AdSense */}
         <script
