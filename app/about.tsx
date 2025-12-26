@@ -1,10 +1,12 @@
-import { Link } from 'expo-router';
+﻿import { useRouter } from 'expo-router';
 import React from 'react';
 import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useThemeScheme } from '@/contexts/theme-context';
 
 export default function AboutPage() {
   const { colorScheme } = useThemeScheme();
+  const router = useRouter();
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colorScheme.backgroundPrimary }]}>
@@ -15,11 +17,10 @@ export default function AboutPage() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Link href="/" asChild>
-            <TouchableOpacity style={styles.backButton}>
-              <Text style={[styles.backButtonText, { color: colorScheme.brandPrimary }]}>← Back to Game</Text>
-            </TouchableOpacity>
-          </Link>
+          <TouchableOpacity style={styles.backButton} onPress={() => router.push('/')}>
+            <Ionicons name="arrow-back" size={20} color={colorScheme.brandPrimary} />
+            <Text style={[styles.backButtonText, { color: colorScheme.brandPrimary }]}>Back to Game</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Title */}
@@ -69,25 +70,43 @@ export default function AboutPage() {
         {/* Features */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colorScheme.textPrimary }]}>Features</Text>
-          <View style={styles.bulletList}>
-            <Text style={[styles.bulletItem, { color: colorScheme.textSecondary }]}>
-              - Daily Puzzles: A new challenge every day
-            </Text>
-            <Text style={[styles.bulletItem, { color: colorScheme.textSecondary }]}>
-              - Leaderboards: See how you rank globally
-            </Text>
-            <Text style={[styles.bulletItem, { color: colorScheme.textSecondary }]}>
-              - Streaks: Track your daily playing streak
-            </Text>
-            <Text style={[styles.bulletItem, { color: colorScheme.textSecondary }]}>
-              - Cross-Platform: Play on iOS, Android, or web
-            </Text>
-            <Text style={[styles.bulletItem, { color: colorScheme.textSecondary }]}>
-              - Cloud Sync: Sign in to sync progress across devices
-            </Text>
-            <Text style={[styles.bulletItem, { color: colorScheme.textSecondary }]}>
-              - Free to Play: No purchase required
-            </Text>
+          <View style={styles.topicGrid}>
+            <View style={[styles.topicCard, { backgroundColor: colorScheme.backgroundSecondary }]}>
+              <Text style={[styles.topicTitle, { color: colorScheme.textPrimary }]}>Daily Puzzles</Text>
+              <Text style={[styles.topicDesc, { color: colorScheme.textSecondary }]}>
+                A new challenge every day.
+              </Text>
+            </View>
+            <View style={[styles.topicCard, { backgroundColor: colorScheme.backgroundSecondary }]}>
+              <Text style={[styles.topicTitle, { color: colorScheme.textPrimary }]}>Leaderboards</Text>
+              <Text style={[styles.topicDesc, { color: colorScheme.textSecondary }]}>
+                See how you rank globally.
+              </Text>
+            </View>
+            <View style={[styles.topicCard, { backgroundColor: colorScheme.backgroundSecondary }]}>
+              <Text style={[styles.topicTitle, { color: colorScheme.textPrimary }]}>Streaks</Text>
+              <Text style={[styles.topicDesc, { color: colorScheme.textSecondary }]}>
+                Track your daily playing streak.
+              </Text>
+            </View>
+            <View style={[styles.topicCard, { backgroundColor: colorScheme.backgroundSecondary }]}>
+              <Text style={[styles.topicTitle, { color: colorScheme.textPrimary }]}>Cross-Platform</Text>
+              <Text style={[styles.topicDesc, { color: colorScheme.textSecondary }]}>
+                Play on iOS, Android, or web.
+              </Text>
+            </View>
+            <View style={[styles.topicCard, { backgroundColor: colorScheme.backgroundSecondary }]}>
+              <Text style={[styles.topicTitle, { color: colorScheme.textPrimary }]}>Cloud Sync</Text>
+              <Text style={[styles.topicDesc, { color: colorScheme.textSecondary }]}>
+                Sign in to sync progress across devices.
+              </Text>
+            </View>
+            <View style={[styles.topicCard, { backgroundColor: colorScheme.backgroundSecondary }]}>
+              <Text style={[styles.topicTitle, { color: colorScheme.textPrimary }]}>Free to Play</Text>
+              <Text style={[styles.topicDesc, { color: colorScheme.textSecondary }]}>
+                No purchase required.
+              </Text>
+            </View>
           </View>
         </View>
 
@@ -106,32 +125,33 @@ export default function AboutPage() {
           <Text style={[styles.paragraph, { color: colorScheme.textSecondary }]}>
             Have questions, feedback, or suggestions? We'd love to hear from you!
           </Text>
-          <Link href={"/contact" as any} asChild>
-            <TouchableOpacity style={[styles.contactButton, { backgroundColor: colorScheme.brandPrimary }]}>
-              <Text style={styles.contactButtonText}>Contact Us</Text>
-            </TouchableOpacity>
-          </Link>
+          <TouchableOpacity
+            style={[styles.emailBox, { backgroundColor: colorScheme.backgroundSecondary }]}
+            onPress={() => router.push('/contact')}
+          >
+            <Text style={[styles.emailLabel, { color: colorScheme.textTertiary }]}>Reach us via:</Text>
+            <Text style={[styles.emailText, { color: colorScheme.brandPrimary }]}>Contact Page</Text>
+            <Text style={[styles.tapHint, { color: colorScheme.textTertiary }]}>Tap to open contact options</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Footer */}
         <View style={[styles.footer, { borderTopColor: colorScheme.borderPrimary }]}>
-          <Link href={"/privacy" as any} asChild>
-            <TouchableOpacity>
-              <Text style={[styles.footerLink, { color: colorScheme.brandPrimary }]}>Privacy Policy</Text>
-            </TouchableOpacity>
-          </Link>
+          <TouchableOpacity onPress={() => router.push('/contact')}>
+            <Text style={[styles.footerLink, { color: colorScheme.brandPrimary }]}>Contact</Text>
+          </TouchableOpacity>
           <Text style={[styles.footerDivider, { color: colorScheme.textSecondary }]}>|</Text>
-          <Link href={"/terms" as any} asChild>
-            <TouchableOpacity>
-              <Text style={[styles.footerLink, { color: colorScheme.brandPrimary }]}>Terms of Service</Text>
-            </TouchableOpacity>
-          </Link>
+          <TouchableOpacity onPress={() => router.push('/privacy')}>
+            <Text style={[styles.footerLink, { color: colorScheme.brandPrimary }]}>Privacy Policy</Text>
+          </TouchableOpacity>
           <Text style={[styles.footerDivider, { color: colorScheme.textSecondary }]}>|</Text>
-          <Link href="/" asChild>
-            <TouchableOpacity>
-              <Text style={[styles.footerLink, { color: colorScheme.brandPrimary }]}>Play Game</Text>
-            </TouchableOpacity>
-          </Link>
+          <TouchableOpacity onPress={() => router.push('/terms')}>
+            <Text style={[styles.footerLink, { color: colorScheme.brandPrimary }]}>Terms of Service</Text>
+          </TouchableOpacity>
+          <Text style={[styles.footerDivider, { color: colorScheme.textSecondary }]}>|</Text>
+          <TouchableOpacity onPress={() => router.push('/')}>
+            <Text style={[styles.footerLink, { color: colorScheme.brandPrimary }]}>Play Game</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -157,6 +177,9 @@ const styles = StyleSheet.create({
   },
   backButton: {
     paddingVertical: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   backButtonText: {
     fontSize: 16,
@@ -195,17 +218,39 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     paddingLeft: 8,
   },
-  contactButton: {
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    borderRadius: 8,
+  emailBox: {
+    borderRadius: 12,
+    padding: 24,
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: 16,
   },
-  contactButtonText: {
-    color: '#FFFFFF',
+  emailLabel: {
+    fontSize: 14,
+    marginBottom: 8,
+  },
+  emailText: {
+    fontSize: 20,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  tapHint: {
+    fontSize: 12,
+  },
+  topicGrid: {
+    gap: 12,
+  },
+  topicCard: {
+    borderRadius: 8,
+    padding: 16,
+  },
+  topicTitle: {
     fontSize: 16,
     fontWeight: '600',
+    marginBottom: 4,
+  },
+  topicDesc: {
+    fontSize: 14,
+    lineHeight: 20,
   },
   footer: {
     flexDirection: 'row',
@@ -224,3 +269,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
 });
+
+
+
+
+
+
+
+
+

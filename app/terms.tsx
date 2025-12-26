@@ -1,6 +1,7 @@
-import { Link } from 'expo-router';
+﻿import { Link } from 'expo-router';
 import React from 'react';
 import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useThemeScheme } from '@/contexts/theme-context';
 
 export default function TermsOfServicePage() {
@@ -18,7 +19,8 @@ export default function TermsOfServicePage() {
         <View style={styles.header}>
           <Link href="/" asChild>
             <TouchableOpacity style={styles.backButton}>
-              <Text style={[styles.backButtonText, { color: colorScheme.brandPrimary }]}>← Back to Game</Text>
+              <Ionicons name="arrow-back" size={20} color={colorScheme.brandPrimary} />
+              <Text style={[styles.backButtonText, { color: colorScheme.brandPrimary }]}>Back to Game</Text>
             </TouchableOpacity>
           </Link>
         </View>
@@ -281,6 +283,9 @@ const styles = StyleSheet.create({
   },
   backButton: {
     paddingVertical: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   backButtonText: {
     fontSize: 16,
@@ -347,3 +352,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
 });
+
+
+
+

@@ -1,6 +1,7 @@
-import { Link } from 'expo-router';
+﻿import { Link } from 'expo-router';
 import React from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function HowToPlayPage() {
@@ -15,7 +16,8 @@ export default function HowToPlayPage() {
         <View style={styles.header}>
           <Link href="/" asChild>
             <TouchableOpacity style={styles.backButton}>
-              <Text style={styles.backButtonText}>← Back to Game</Text>
+              <Ionicons name="arrow-back" size={20} color="#A855F7" />
+              <Text style={styles.backButtonText}>Back to Game</Text>
             </TouchableOpacity>
           </Link>
         </View>
@@ -119,7 +121,7 @@ export default function HowToPlayPage() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Lives System</Text>
           <View style={styles.livesBox}>
-            <Text style={styles.livesIcons}>♥ ♥ ♥</Text>
+            <Text style={styles.livesIcons}>â™¥ â™¥ â™¥</Text>
             <Text style={styles.livesText}>You start with 3 lives</Text>
           </View>
           <Text style={styles.paragraph}>
@@ -181,28 +183,28 @@ export default function HowToPlayPage() {
           <Text style={styles.sectionTitle}>Tips & Strategies</Text>
           <View style={styles.tipsList}>
             <View style={styles.tipItem}>
-              <Text style={styles.tipItemIcon}>•</Text>
+              <Text style={styles.tipItemIcon}>â€¢</Text>
               <Text style={styles.tipItemText}>
                 Start with the words you&apos;re most confident about - they&apos;ll help narrow
                 down the remaining options.
               </Text>
             </View>
             <View style={styles.tipItem}>
-              <Text style={styles.tipItemIcon}>•</Text>
+              <Text style={styles.tipItemIcon}>â€¢</Text>
               <Text style={styles.tipItemText}>
                 Look for unique intersections - some category combinations only have
                 one possible answer.
               </Text>
             </View>
             <View style={styles.tipItem}>
-              <Text style={styles.tipItemIcon}>•</Text>
+              <Text style={styles.tipItemIcon}>â€¢</Text>
               <Text style={styles.tipItemText}>
                 Think about all the categories a word could belong to, not just the
                 obvious ones.
               </Text>
             </View>
             <View style={styles.tipItem}>
-              <Text style={styles.tipItemIcon}>•</Text>
+              <Text style={styles.tipItemIcon}>â€¢</Text>
               <Text style={styles.tipItemText}>
                 You can remove a placed word by tapping it again - rearrange freely
                 before checking!
@@ -272,6 +274,9 @@ const styles = StyleSheet.create({
   },
   backButton: {
     paddingVertical: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   backButtonText: {
     fontSize: 16,
@@ -484,3 +489,7 @@ const styles = StyleSheet.create({
     color: '#444',
   },
 });
+
+
+
+
