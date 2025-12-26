@@ -5,6 +5,7 @@ import { requestNotificationPermissions, scheduleNotificationForToday } from '@/
 import { DarkTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
+import Head from 'expo-router/head';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useMemo } from 'react';
@@ -59,6 +60,9 @@ export default function RootLayout() {
 
   return (
     <ErrorBoundary>
+      <Head>
+        <title>Intersections</title>
+      </Head>
       <AuthProvider>
         <AppThemeProvider>
           <SafeAreaProvider>
