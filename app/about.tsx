@@ -68,22 +68,22 @@ export default function AboutPage() {
           <Text style={[styles.sectionTitle, { color: colorScheme.textPrimary }]}>Features</Text>
           <View style={styles.bulletList}>
             <Text style={[styles.bulletItem, { color: colorScheme.textSecondary }]}>
-              - <Text style={{ fontWeight: '600' }}>Daily Puzzles:</Text> A new challenge every day
+              - <Text style={[styles.bold, { color: colorScheme.textPrimary }]}>Daily Puzzles:</Text> A new challenge every day
             </Text>
             <Text style={[styles.bulletItem, { color: colorScheme.textSecondary }]}>
-              - <Text style={{ fontWeight: '600' }}>Leaderboards:</Text> See how you rank globally
+              - <Text style={[styles.bold, { color: colorScheme.textPrimary }]}>Leaderboards:</Text> See how you rank globally
             </Text>
             <Text style={[styles.bulletItem, { color: colorScheme.textSecondary }]}>
-              - <Text style={{ fontWeight: '600' }}>Streaks:</Text> Track your daily playing streak
+              - <Text style={[styles.bold, { color: colorScheme.textPrimary }]}>Streaks:</Text> Track your daily playing streak
             </Text>
             <Text style={[styles.bulletItem, { color: colorScheme.textSecondary }]}>
-              - <Text style={{ fontWeight: '600' }}>Cross-Platform:</Text> Play on iOS, Android, or web
+              - <Text style={[styles.bold, { color: colorScheme.textPrimary }]}>Cross-Platform:</Text> Play on iOS, Android, or web
             </Text>
             <Text style={[styles.bulletItem, { color: colorScheme.textSecondary }]}>
-              - <Text style={{ fontWeight: '600' }}>Cloud Sync:</Text> Sign in to sync progress across devices
+              - <Text style={[styles.bold, { color: colorScheme.textPrimary }]}>Cloud Sync:</Text> Sign in to sync progress across devices
             </Text>
             <Text style={[styles.bulletItem, { color: colorScheme.textSecondary }]}>
-              - <Text style={{ fontWeight: '600' }}>Free to Play:</Text> No purchase required
+              - <Text style={[styles.bold, { color: colorScheme.textPrimary }]}>Free to Play:</Text> No purchase required
             </Text>
           </View>
         </View>
@@ -188,6 +188,9 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 24,
     paddingLeft: 8,
+  },
+  bold: {
+    fontWeight: '600',
   },
   contactButton: {
     paddingVertical: 14,
