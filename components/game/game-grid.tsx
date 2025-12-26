@@ -143,7 +143,13 @@ export const GameGrid = memo(function GameGrid({
               { width: cellSize, height: cellSize * 0.8 }
             ]}
           >
-            <Text style={[styles.headerText, { fontSize }]} numberOfLines={2}>
+            <Text
+              style={[styles.headerText, { fontSize }]}
+              numberOfLines={2}
+              adjustsFontSizeToFit
+              minimumFontScale={0.5}
+              allowFontScaling={false}
+            >
               {col.label}
             </Text>
           </View>
@@ -160,7 +166,13 @@ export const GameGrid = memo(function GameGrid({
               { width: headerWidth, height: cellSize }
             ]}
           >
-            <Text style={[styles.headerText, { fontSize }]} numberOfLines={2}>
+            <Text
+              style={[styles.headerText, { fontSize }]}
+              numberOfLines={2}
+              adjustsFontSizeToFit
+              minimumFontScale={0.5}
+              allowFontScaling={false}
+            >
               {row.label}
             </Text>
           </View>
