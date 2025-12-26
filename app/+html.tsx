@@ -37,7 +37,53 @@ export default function Root({ children }: PropsWithChildren) {
 
         {/* Add any additional <head> elements that you want globally available on web... */}
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        {/* Static footer for SEO crawlers - visible in initial HTML for Google verification */}
+        <footer
+          id="static-footer"
+          style={{
+            position: 'fixed',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            textAlign: 'center',
+            padding: '12px',
+            fontSize: '12px',
+            backgroundColor: 'rgba(10,22,40,0.95)',
+            borderTop: '1px solid rgba(30,58,95,1)',
+            zIndex: 9999,
+          }}
+        >
+          <a
+            href="/privacy"
+            style={{ color: '#a855f7', textDecoration: 'none', margin: '0 10px' }}
+          >
+            Privacy Policy
+          </a>
+          <span style={{ color: '#666' }}>|</span>
+          <a
+            href="/terms"
+            style={{ color: '#a855f7', textDecoration: 'none', margin: '0 10px' }}
+          >
+            Terms of Service
+          </a>
+          <span style={{ color: '#666' }}>|</span>
+          <a
+            href="/about"
+            style={{ color: '#a855f7', textDecoration: 'none', margin: '0 10px' }}
+          >
+            About
+          </a>
+          <span style={{ color: '#666' }}>|</span>
+          <a
+            href="/contact"
+            style={{ color: '#a855f7', textDecoration: 'none', margin: '0 10px' }}
+          >
+            Contact
+          </a>
+        </footer>
+      </body>
     </html>
   );
 }
