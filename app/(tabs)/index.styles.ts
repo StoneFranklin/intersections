@@ -759,6 +759,7 @@ export const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
     marginTop: 24,
     marginBottom: 20,
     gap: 12,
+    flexWrap: 'wrap',
   },
   footerLinkText: {
     fontSize: 13,

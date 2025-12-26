@@ -99,6 +99,8 @@ function RootLayoutContent() {
           <Stack.Screen name="how-to-play" options={{ headerShown: false, title: 'How to Play' }} />
           <Stack.Screen name="privacy" options={{ headerShown: false, title: 'Privacy Policy' }} />
           <Stack.Screen name="terms" options={{ headerShown: false, title: 'Terms of Service' }} />
+          <Stack.Screen name="about" options={{ headerShown: false, title: 'About' }} />
+          <Stack.Screen name="contact" options={{ headerShown: false, title: 'Contact Us' }} />
         </Stack>
         <StatusBar style="light" />
       </ThemeProvider>

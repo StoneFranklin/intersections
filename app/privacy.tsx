@@ -244,6 +244,18 @@ export default function PrivacyPolicyPage() {
 
         {/* Footer */}
         <View style={[styles.footer, { borderTopColor: colorScheme.borderPrimary }]}>
+          <Link href={"/about" as any} asChild>
+            <TouchableOpacity>
+              <Text style={[styles.footerLink, { color: colorScheme.brandPrimary }]}>About</Text>
+            </TouchableOpacity>
+          </Link>
+          <Text style={[styles.footerDivider, { color: colorScheme.textSecondary }]}>|</Text>
+          <Link href={"/contact" as any} asChild>
+            <TouchableOpacity>
+              <Text style={[styles.footerLink, { color: colorScheme.brandPrimary }]}>Contact</Text>
+            </TouchableOpacity>
+          </Link>
+          <Text style={[styles.footerDivider, { color: colorScheme.textSecondary }]}>|</Text>
           <Link href={"/terms" as any} asChild>
             <TouchableOpacity>
               <Text style={[styles.footerLink, { color: colorScheme.brandPrimary }]}>Terms of Service</Text>
@@ -346,6 +358,7 @@ const styles = StyleSheet.create({
     paddingTop: 24,
     marginTop: 20,
     borderTopWidth: 1,
+    flexWrap: 'wrap',
   },
   footerLink: {
     fontSize: 14,

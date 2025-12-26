@@ -59,7 +59,9 @@
       "Bash(npm run typecheck:*)",
       "Bash(git checkout:*)",
       "Bash(sips:*)",
-      "Bash(eas --version:*)"
+      "Bash(eas --version:*)",
+      "Bash(ls -la \"c:\\\\Users\\\\saf1\\\\Documents\\\\react-native\\\\word-game\\\\components\\\\ads\"\" 2>/dev/null || echo \"No ads directory found \")",
+      "Bash(ls -la \"c:\\\\Users\\\\saf1\\\\Documents\\\\react-native\\\\word-game\\\\hooks\"\" | grep -i \"ad|reward \")"
     ]
   }
 }

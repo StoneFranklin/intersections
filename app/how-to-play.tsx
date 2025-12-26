@@ -223,6 +223,18 @@ export default function HowToPlayPage() {
 
         {/* Footer */}
         <View style={styles.footer}>
+          <Link href={"/about" as any} asChild>
+            <TouchableOpacity>
+              <Text style={styles.footerLink}>About</Text>
+            </TouchableOpacity>
+          </Link>
+          <Text style={styles.footerDivider}>|</Text>
+          <Link href={"/contact" as any} asChild>
+            <TouchableOpacity>
+              <Text style={styles.footerLink}>Contact</Text>
+            </TouchableOpacity>
+          </Link>
+          <Text style={styles.footerDivider}>|</Text>
           <Link href={"/privacy" as any} asChild>
             <TouchableOpacity>
               <Text style={styles.footerLink}>Privacy Policy</Text>
@@ -461,6 +473,7 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     borderTopWidth: 1,
     borderTopColor: '#2a2a4e',
+    flexWrap: 'wrap',
   },
   footerLink: {
     fontSize: 14,
