@@ -159,9 +159,8 @@ export const GameGrid = memo(function GameGrid({
   const headerWidth = cellSize * 1.3;
   const fontSize = Math.max(10, Math.min(cellSize / 6, 16));
 
-  // Logo size to fill more of the corner cell
-  // Use the larger dimension and scale up to fill the cell better
-  const logoSize = Math.max(headerWidth, cellSize * 0.8) * 1.2;
+  // Logo size - scaled down to be less prominent
+  const logoSize = Math.max(headerWidth, cellSize * 0.8) * 0.85;
 
   return (
     <View style={styles.container}>
