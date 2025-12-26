@@ -25,6 +25,9 @@ export default function AboutPage() {
         {/* Title */}
         <View style={styles.titleSection}>
           <Text style={[styles.title, { color: colorScheme.textPrimary }]}>About Intersections</Text>
+          <Text style={[styles.subtitle, { color: colorScheme.textSecondary }]}>
+            A daily word puzzle game
+          </Text>
         </View>
 
         {/* What is Intersections */}
@@ -68,22 +71,22 @@ export default function AboutPage() {
           <Text style={[styles.sectionTitle, { color: colorScheme.textPrimary }]}>Features</Text>
           <View style={styles.bulletList}>
             <Text style={[styles.bulletItem, { color: colorScheme.textSecondary }]}>
-              <Text style={{ fontWeight: '600', color: colorScheme.textPrimary }}>Daily Puzzles:</Text> A new challenge every day
+              - Daily Puzzles: A new challenge every day
             </Text>
             <Text style={[styles.bulletItem, { color: colorScheme.textSecondary }]}>
-              <Text style={{ fontWeight: '600', color: colorScheme.textPrimary }}>Leaderboards:</Text> See how you rank globally
+              - Leaderboards: See how you rank globally
             </Text>
             <Text style={[styles.bulletItem, { color: colorScheme.textSecondary }]}>
-              <Text style={{ fontWeight: '600', color: colorScheme.textPrimary }}>Streaks:</Text> Track your daily playing streak
+              - Streaks: Track your daily playing streak
             </Text>
             <Text style={[styles.bulletItem, { color: colorScheme.textSecondary }]}>
-              <Text style={{ fontWeight: '600', color: colorScheme.textPrimary }}>Cross-Platform:</Text> Play on iOS, Android, or web
+              - Cross-Platform: Play on iOS, Android, or web
             </Text>
             <Text style={[styles.bulletItem, { color: colorScheme.textSecondary }]}>
-              <Text style={{ fontWeight: '600', color: colorScheme.textPrimary }}>Cloud Sync:</Text> Sign in to sync progress across devices
+              - Cloud Sync: Sign in to sync progress across devices
             </Text>
             <Text style={[styles.bulletItem, { color: colorScheme.textSecondary }]}>
-              <Text style={{ fontWeight: '600', color: colorScheme.textPrimary }}>Free to Play:</Text> No purchase required
+              - Free to Play: No purchase required
             </Text>
           </View>
         </View>
@@ -167,6 +170,9 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 8,
   },
+  subtitle: {
+    fontSize: 18,
+  },
   section: {
     marginBottom: 32,
   },
@@ -181,13 +187,13 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   bulletList: {
+    gap: 8,
     marginBottom: 12,
   },
   bulletItem: {
     fontSize: 15,
     lineHeight: 24,
     paddingLeft: 8,
-    marginBottom: 8,
   },
   contactButton: {
     paddingVertical: 14,
@@ -205,6 +211,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+    gap: 12,
     paddingTop: 24,
     marginTop: 20,
     borderTopWidth: 1,
@@ -212,10 +219,8 @@ const styles = StyleSheet.create({
   },
   footerLink: {
     fontSize: 14,
-    marginHorizontal: 6,
   },
   footerDivider: {
     fontSize: 14,
-    marginHorizontal: 6,
   },
 });
