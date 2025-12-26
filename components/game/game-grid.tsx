@@ -7,8 +7,12 @@ import { Dimensions, Platform, StyleSheet, Text, View } from 'react-native';
 import { GameCell } from './game-cell';
 
 // Animation frame constants for loop animation (total 182 frames at 30fps)
+const TOTAL_FRAMES = 182;
 const LOOP_START = 79;
 const LOOP_END = 148;
+// Normalized progress values (0-1)
+const LOOP_START_PROGRESS = LOOP_START / TOTAL_FRAMES;
+const LOOP_END_PROGRESS = LOOP_END / TOTAL_FRAMES;
 
 interface GameGridProps {
   puzzle: Puzzle;
@@ -35,6 +39,10 @@ export const GameGrid = memo(function GameGrid({
   const hasStarted = useRef(false);
   const isWeb = Platform.OS === 'web';
 
+  // Progress state for mobile (more reliable than play(start, end) on Android)
+  const [mobileProgress, setMobileProgress] = useState(LOOP_START_PROGRESS);
+  const animationFrameRef = useRef<number | null>(null);
+
   // Use state for dimensions to properly update after hydration
   const [dimensions, setDimensions] = useState(() => {
     const { width, height } = Dimensions.get('window');
@@ -59,6 +67,31 @@ export const GameGrid = memo(function GameGrid({
     return () => subscription.remove();
   }, []);
 
+  // Start the loop animation for mobile using requestAnimationFrame
+  const startLoopAnimation = useCallback(() => {
+    if (isWeb) return;
+
+    // Cancel any existing animation
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+    }
+
+    const loopDurationMs = ((LOOP_END - LOOP_START) / 30) * 1000;
+    let startTime: number | null = null;
+
+    const animate = (timestamp: number) => {
+      if (!startTime) startTime = timestamp;
+      const elapsed = timestamp - startTime;
+      const progressInLoop = (elapsed % loopDurationMs) / loopDurationMs;
+      const progress = LOOP_START_PROGRESS + progressInLoop * (LOOP_END_PROGRESS - LOOP_START_PROGRESS);
+
+      setMobileProgress(progress);
+      animationFrameRef.current = requestAnimationFrame(animate);
+    };
+
+    animationFrameRef.current = requestAnimationFrame(animate);
+  }, [isWeb]);
+
   const playSegment = useCallback((start: number, end: number) => {
     if (!lottieRef.current) return;
 
@@ -66,10 +99,17 @@ export const GameGrid = memo(function GameGrid({
       // Web needs segment + explicit start frame to actually begin playback.
       lottieRef.current.play(start, end);
       lottieRef.current.play(start);
-    } else {
-      lottieRef.current.play(start, end);
     }
   }, [isWeb]);
+
+  // Cleanup animation frame on unmount
+  useEffect(() => {
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, []);
 
   // Start loop animation on mount
   useEffect(() => {
@@ -77,14 +117,21 @@ export const GameGrid = memo(function GameGrid({
     hasStarted.current = true;
 
     const timer = setTimeout(() => {
-      playSegment(LOOP_START, LOOP_END);
+      if (isWeb) {
+        playSegment(LOOP_START, LOOP_END);
+      } else {
+        startLoopAnimation();
+      }
     }, 100);
 
     return () => clearTimeout(timer);
-  }, [playSegment]);
+  }, [isWeb, playSegment, startLoopAnimation]);
 
   const handleAnimationFinish = () => {
-    // Keep looping
+    // Only used for web - mobile uses continuous requestAnimationFrame
+    if (!isWeb) return;
+
+    // Keep looping on web
     setTimeout(() => {
       playSegment(LOOP_START, LOOP_END);
     }, 50);
@@ -128,6 +175,7 @@ export const GameGrid = memo(function GameGrid({
             webStyle={{ width: logoSize, height: logoSize }}
             autoPlay={false}
             loop={false}
+            progress={isWeb ? undefined : mobileProgress}
             onAnimationFinish={handleAnimationFinish}
             onAnimationLoaded={() => {
               if (!isWeb) return;
