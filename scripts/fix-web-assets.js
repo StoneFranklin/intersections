@@ -77,15 +77,15 @@ if (fs.existsSync(fontsSourcePath)) {
 
 // Update all HTML and JS files to reference the new fonts path.
 // We handle two cases:
-// 1) prefixed paths like `/intersections/assets/node_modules/.../Fonts/`
-//    — we preserve the leading base (`/intersections/`) and replace
+// 1) prefixed paths like `/assets/node_modules/.../Fonts/`
+//    — we preserve the leading base and replace
 //    the trailing `assets/node_modules/.../Fonts/` with `assets/fonts/`.
 // 2) plain `node_modules/.../Fonts/` references.
 const fontsPathRegexWithAssets = /(\/[^"]+?)?assets\/node_modules\/@expo\/vector-icons\/build\/vendor\/react-native-vector-icons\/Fonts\//g;
 const fontsPathRegexPlain = /node_modules\/@expo\/vector-icons\/build\/vendor\/react-native-vector-icons\/Fonts\//g;
 
 function replaceFontPathsInContent(content) {
-  // Preserve an optional leading base path (like `/intersections/`) when present.
+  // Preserve an optional leading base path when present.
   content = content.replace(fontsPathRegexWithAssets, (match, basePrefix) => {
     return (basePrefix || '') + 'assets/fonts/';
   });

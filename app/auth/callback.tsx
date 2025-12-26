@@ -61,7 +61,7 @@ export default function AuthCallback() {
       } finally {
         // Clean up the URL on web so tokens/code aren't left in the address bar.
         if (Platform.OS === 'web' && typeof window !== 'undefined') {
-          window.history.replaceState({}, document.title, '/intersections/');
+          window.history.replaceState({}, document.title, '/');
         }
 
         // Navigate back to the main app
