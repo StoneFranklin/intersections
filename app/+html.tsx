@@ -39,20 +39,15 @@ export default function Root({ children }: PropsWithChildren) {
       </head>
       <body>
         {children}
-        {/* Static footer for SEO crawlers - visible in initial HTML for Google verification */}
+        {/* Static footer for SEO crawlers - visually hidden but readable by crawlers */}
         <footer
           id="static-footer"
           style={{
-            position: 'fixed',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            textAlign: 'center',
-            padding: '12px',
-            fontSize: '12px',
-            backgroundColor: 'rgba(10,22,40,0.95)',
-            borderTop: '1px solid rgba(30,58,95,1)',
-            zIndex: 9999,
+            position: 'absolute',
+            left: '-9999px',
+            width: '1px',
+            height: '1px',
+            overflow: 'hidden',
           }}
         >
           <a
