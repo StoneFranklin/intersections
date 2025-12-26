@@ -16,6 +16,8 @@ export default function Root({ children }: PropsWithChildren) {
           content="width=device-width, initial-scale=1, shrink-to-fit=no"
         />
 
+        <title>Intersections</title>
+
         {/* Favicon */}
         <link rel="icon" type="image/png" href="/assets/images/intersections-logo.png" />
         <link rel="apple-touch-icon" sizes="180x180" href="/assets/images/intersections-logo.png" />

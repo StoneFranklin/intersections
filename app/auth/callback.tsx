@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import * as Linking from 'expo-linking';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import Head from 'expo-router/head';
 import { useEffect } from 'react';
 import { ActivityIndicator, Platform, StyleSheet, View } from 'react-native';
 
@@ -73,9 +74,14 @@ export default function AuthCallback() {
   }, []);
 
   return (
-    <View style={styles.container}>
-      <ActivityIndicator size="large" color="#6366f1" />
-    </View>
+    <>
+      <Head>
+        <title>Intersections</title>
+      </Head>
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color="#6366f1" />
+      </View>
+    </>
   );
 }
 
