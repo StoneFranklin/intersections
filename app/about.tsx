@@ -181,13 +181,13 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   bulletList: {
-    gap: 8,
     marginBottom: 12,
   },
   bulletItem: {
     fontSize: 15,
     lineHeight: 24,
     paddingLeft: 8,
+    marginBottom: 8,
   },
   bold: {
     fontWeight: '600',
@@ -208,7 +208,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 12,
     paddingTop: 24,
     marginTop: 20,
     borderTopWidth: 1,
@@ -216,8 +215,10 @@ const styles = StyleSheet.create({
   },
   footerLink: {
     fontSize: 14,
+    marginHorizontal: 6,
   },
   footerDivider: {
     fontSize: 14,
+    marginHorizontal: 6,
   },
 });
