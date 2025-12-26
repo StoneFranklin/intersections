@@ -169,8 +169,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         provider: 'google',
         options: {
           redirectTo: typeof window !== 'undefined'
-            ? `${window.location.origin}/intersections/auth/callback`
+            ? `${window.location.origin}/auth/callback`
             : undefined,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
         },
       });
       if (error) {
@@ -191,6 +195,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           options: {
             redirectTo: redirectTo,
             skipBrowserRedirect: true,
+            queryParams: {
+              access_type: 'offline',
+              prompt: 'consent',
+            },
           },
         });
 

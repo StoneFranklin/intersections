@@ -10,7 +10,8 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "predeploy": "npx expo export --platform web && node scripts/fix-web-assets.js",
-    "deploy": "gh-pages -d dist --dotfiles"
+    "deploy": "gh-pages -d dist --dotfiles",
+    "build": "npx expo export --platform web && node scripts/fix-web-assets.js"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
