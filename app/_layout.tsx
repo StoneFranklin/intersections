@@ -90,6 +90,7 @@ function RootLayoutContent() {
       <ThemeProvider value={navigationTheme}>
         <Stack screenOptions={{ contentStyle: { backgroundColor: colorScheme.backgroundPrimary } }}>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="auth" options={{ headerShown: false, title: 'Intersections' }} />
           <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
           <Stack.Screen name="how-to-play" options={{ headerShown: false, title: 'How to Play' }} />
           <Stack.Screen name="privacy" options={{ headerShown: false, title: 'Privacy Policy' }} />
