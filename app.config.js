@@ -1,0 +1,81 @@
+export default {
+  expo: {
+    name: "IntersectionsGame",
+    slug: "intersections",
+    version: "1.0.0",
+    orientation: "portrait",
+    icon: "./assets/images/intersections-logo.png",
+    scheme: "intersections",
+    userInterfaceStyle: "automatic",
+    newArchEnabled: true,
+    ios: {
+      supportsTablet: true,
+      bundleIdentifier: "com.stonefranklin.intersections",
+      buildNumber: "1",
+      infoPlist: {
+        ITSAppUsesNonExemptEncryption: false,
+        CFBundleDisplayName: "Intersections"
+      },
+      entitlements: {
+        "aps-environment": "production"
+      }
+    },
+    android: {
+      adaptiveIcon: {
+        backgroundColor: "#0f0f1a",
+        foregroundImage: "./assets/images/intersections-logo.png"
+      },
+      edgeToEdgeEnabled: true,
+      predictiveBackGestureEnabled: false,
+      package: "com.stonefranklin.intersections",
+      name: "Intersections"
+    },
+    web: {
+      bundler: "metro",
+      output: "static",
+      backgroundColor: "#0f0f1a",
+      template: "./web/index.html"
+    },
+    plugins: [
+      "expo-router",
+      "expo-apple-authentication",
+      [
+        "expo-splash-screen",
+        {
+          image: "./assets/images/intersections-splash.png",
+          imageWidth: 200,
+          resizeMode: "contain",
+          backgroundColor: "#ffffff",
+          dark: {
+            backgroundColor: "#000000"
+          }
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          icon: "./assets/images/intersections-logo.png",
+          color: "#0f0f1a",
+          sounds: []
+        }
+      ],
+      [
+        "react-native-google-mobile-ads",
+        {
+          androidAppId: process.env.ADMOB_ANDROID_APP_ID || "ca-app-pub-3940256099942544~3347511713",
+          iosAppId: process.env.ADMOB_IOS_APP_ID || "ca-app-pub-3940256099942544~1458002511"
+        }
+      ]
+    ],
+    experiments: {
+      typedRoutes: true,
+      reactCompiler: true
+    },
+    extra: {
+      router: {},
+      eas: {
+        projectId: "00385042-f12e-486f-a98f-e15cd61abba3"
+      }
+    }
+  }
+};

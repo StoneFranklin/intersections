@@ -15,7 +15,9 @@
       },
       "env": {
         "EXPO_IOS_BUNDLE_IDENTIFIER": "com.stonefranklin.intersections",
-        "EXPO_ANDROID_PACKAGE": "com.stonefranklin.intersections"
+        "EXPO_ANDROID_PACKAGE": "com.stonefranklin.intersections",
+        "ADMOB_ANDROID_APP_ID": "ca-app-pub-6475460515852013~5639575492",
+        "ADMOB_IOS_APP_ID": "ca-app-pub-6475460515852013~1564599114"
       }
     },
     "production": {
@@ -28,7 +30,12 @@
       },
       "env": {
         "EXPO_IOS_BUNDLE_IDENTIFIER": "com.stonefranklin.intersections",
-        "EXPO_ANDROID_PACKAGE": "com.stonefranklin.intersections"
+        "EXPO_ANDROID_PACKAGE": "com.stonefranklin.intersections",
+        "ADMOB_ANDROID_APP_ID": "ca-app-pub-6475460515852013~5639575492",
+        "ADMOB_IOS_APP_ID": "ca-app-pub-6475460515852013~1564599114",
+        "EXPO_PUBLIC_ADMOB_ANDROID_REWARDED_AD_UNIT": "ca-app-pub-6475460515852013/8785431829",
+        "EXPO_PUBLIC_ADMOB_IOS_REWARDED_AD_UNIT": "ca-app-pub-6475460515852013/9211332458",
+        "USE_PRODUCTION_ADS": "true"
       }
     }
   },
