@@ -275,7 +275,7 @@ const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
     borderRadius: 8,
     padding: 4,
     borderWidth: 1,
-    borderColor: colorScheme.borderAccent,
+    borderColor: colorScheme.borderSecondary,
   },
   gridRow: {
     flexDirection: 'row',
@@ -288,7 +288,7 @@ const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
     borderRadius: 8,
     padding: 4,
     borderWidth: 1,
-    borderColor: colorScheme.warning,
+    borderColor: colorScheme.borderSecondary,
   },
   headerText: {
     color: colorScheme.textPrimary,

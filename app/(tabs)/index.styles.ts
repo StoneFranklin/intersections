@@ -60,15 +60,15 @@ export const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
     color: colorScheme.textPrimary,
   },
   headerSignInButton: {
-    backgroundColor: colorScheme.backgroundTertiary,
+    backgroundColor: colorScheme.gold,
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 8,
   },
   headerSignInText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: colorScheme.brandPrimary,
+    fontWeight: '700',
+    color: '#1a1a1a',
   },
   // Main menu styles
   mainMenuScroll: {

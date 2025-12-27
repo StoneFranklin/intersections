@@ -82,68 +82,68 @@ export const colorSchemes = {
     warmBorder: '#4d3a10',
   },
 
-  // Ocean blue theme
+  // Ocean blue theme - using logo colors: #3a5a8a (blue), #5a3a8a (purple), #ffc721 (gold)
   ocean: {
-    backgroundPrimary: '#0a1628',
-    backgroundSecondary: '#132a46',
-    backgroundTertiary: '#1e3a5f',
+    backgroundPrimary: '#0d1a2d',      // Very dark blue (darkened #3a5a8a)
+    backgroundSecondary: '#1a2d4a',    // Dark blue
+    backgroundTertiary: '#2a4268',     // Medium-dark blue
 
-    textPrimary: '#fff',
-    textSecondary: '#cce7ff',
-    textTertiary: '#7ea8d6',
-    textMuted: '#5a7fa3',
-    textDisabled: '#4a6a8a',
+    textPrimary: '#ffffff',
+    textSecondary: '#d4e4f4',          // Light blue-white
+    textTertiary: '#8aa8c8',           // Muted blue (lightened #3a5a8a)
+    textMuted: '#6a88a8',              // Softer blue
+    textDisabled: '#4a6888',           // Dim blue
 
-    brandPrimary: '#3b82f6',
-    brandSecondary: '#2563eb',
-    brandLight: '#60a5fa',
+    brandPrimary: '#7a9ac8',           // Bright readable blue
+    brandSecondary: '#3a5a8a',         // Logo blue
+    brandLight: '#9abadc',             // Light version for highlights
 
     success: '#10b981',
     successDark: '#065f46',
-    successBg: '#064e3b',
+    successBg: '#0d2a20',
     successText: '#6ee7b7',
 
     error: '#ef4444',
     errorLight: '#ff6b6b',
-    errorBg: '#3d2d2d',
+    errorBg: '#2d1a1a',
     errorText: '#f87171',
 
-    warning: '#f59e0b',
-    warningBg: '#2a1a0a',
+    warning: '#ffc721',                // Logo gold
+    warningBg: '#2d2510',
 
-    info: '#93c5fd',
+    info: '#8aa8c8',
 
-    gold: '#fbbf24',
-    yellow: '#fbbf24',
-    orange: '#fb923c',
+    gold: '#ffc721',                   // Logo gold
+    yellow: '#ffc721',                 // Logo gold
+    orange: '#e5a91e',                 // Darker gold variation
 
-    borderPrimary: '#1e3a5f',
-    borderSecondary: '#2e4a7f',
-    borderAccent: '#3b82f6',
+    borderPrimary: '#2a4268',          // Matches backgroundTertiary
+    borderSecondary: '#3a5a8a',        // Logo blue
+    borderAccent: '#ffc721',           // Logo gold for accent
 
-    gridHeaderColBg: '#1e3a8a',
-    gridHeaderRowBg: '#7c2d12',
+    gridHeaderColBg: '#3a5a8a',        // Logo blue
+    gridHeaderRowBg: '#5a3a8a',        // Logo purple
 
-    cellEmpty: '#132a46',
-    cellFilled: '#1e3a5f',
-    cellCorrect: '#064e3b',
-    cellIncorrect: '#3d2d2d',
-    cellSelected: '#1e3a5f',
+    cellEmpty: '#1a2d4a',              // Matches backgroundSecondary
+    cellFilled: '#2a4268',             // Matches backgroundTertiary
+    cellCorrect: '#0d2a20',
+    cellIncorrect: '#2d1a1a',
+    cellSelected: '#3a5a8a',           // Logo blue for selection
 
-    overlayDark: 'rgba(10, 22, 40, 0.8)',
-    overlayMedium: 'rgba(19, 42, 70, 0.7)',
-    overlayLight: 'rgba(59, 130, 246, 0.15)',
+    overlayDark: 'rgba(13, 26, 45, 0.85)',
+    overlayMedium: 'rgba(26, 45, 74, 0.75)',
+    overlayLight: 'rgba(58, 90, 138, 0.2)',
 
     googleButton: '#fff',
     googleButtonText: '#333',
     appleButton: '#000',
     appleButtonText: '#fff',
-    authButton: '#3b82f6',
+    authButton: '#7a9ac8',
 
-    warmWhite: '#cce7ff',
-    warmBlack: '#0a1628',
-    warmGray: '#1e3a5f',
-    warmBorder: '#2e4a7f',
+    warmWhite: '#d4e4f4',              // Light blue-white
+    warmBlack: '#0d1a2d',              // Darkest blue
+    warmGray: '#2a4268',
+    warmBorder: '#3a5a8a',             // Logo blue
   },
 
   // Forest green theme
