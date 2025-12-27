@@ -110,7 +110,7 @@ export const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
     gap: 16,
   },
   playButton: {
-    backgroundColor: colorScheme.brandSecondary,
+    backgroundColor: colorScheme.gold,
     padding: 24,
     borderRadius: 16,
     alignItems: 'center',
@@ -128,12 +128,12 @@ export const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
   playButtonLabel: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: colorScheme.textPrimary,
+    color: '#1a1a1a',
     marginBottom: 4,
   },
   playButtonDesc: {
     fontSize: 14,
-    color: colorScheme.textSecondary,
+    color: '#3a3a3a',
   },
   playButtonError: {
     fontSize: 13,
@@ -661,15 +661,15 @@ export const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
     lineHeight: 18,
   },
   signInBannerButton: {
-    backgroundColor: colorScheme.authButton,
+    backgroundColor: colorScheme.gold,
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 6,
   },
   signInBannerButtonText: {
     fontSize: 13,
-    fontWeight: '600',
-    color: colorScheme.textPrimary,
+    fontWeight: '700',
+    color: '#1a1a1a',
   },
   signInBannerDismiss: {
     padding: 8,
@@ -1329,7 +1329,7 @@ export const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
     lineHeight: 22,
   },
   tutorialCloseButton: {
-    backgroundColor: colorScheme.brandSecondary,
+    backgroundColor: colorScheme.gold,
     borderRadius: 12,
     paddingVertical: 14,
     paddingHorizontal: 32,
@@ -1340,8 +1340,8 @@ export const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
   },
   tutorialCloseText: {
     fontSize: 18,
-    fontWeight: '600',
-    color: colorScheme.textPrimary,
+    fontWeight: '700',
+    color: '#1a1a1a',
   },
   // Header styles
   header: {
@@ -1825,14 +1825,14 @@ export const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: colorScheme.brandPrimary,
+    backgroundColor: colorScheme.gold,
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 12,
   },
   gameCompleteSignInButtonText: {
-    color: '#fff',
-    fontWeight: '600',
+    color: '#1a1a1a',
+    fontWeight: '700',
     fontSize: 15,
   },
   gameCompleteBackButton: {
