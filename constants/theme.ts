@@ -99,8 +99,8 @@ export const colorSchemes = {
     brandLight: '#9abadc',             // Light version for highlights
 
     success: '#10b981',
-    successDark: '#065f46',
-    successBg: '#0d2a20',
+    successDark: '#0a5040',
+    successBg: '#1a4a38',
     successText: '#6ee7b7',
 
     error: '#ef4444',
@@ -126,7 +126,7 @@ export const colorSchemes = {
 
     cellEmpty: '#1a2d4a',              // Matches backgroundSecondary
     cellFilled: '#2a4268',             // Matches backgroundTertiary
-    cellCorrect: '#0d2a20',
+    cellCorrect: '#1a4a38',
     cellIncorrect: '#2d1a1a',
     cellSelected: '#3a5a8a',           // Logo blue for selection
 

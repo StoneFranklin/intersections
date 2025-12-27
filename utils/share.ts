@@ -36,7 +36,7 @@ export function generateShareText(score: GameScore, rank: number | null): string
     text += `🏆 Ranked #${rank} today\n`;
   }
 
-  text += `\n➡️ Play at: stonefranklin.github.io/intersections`;
+  text += `\n➡️ Play Now: playintersections.com`;
 
   return text;
 }
