@@ -437,6 +437,7 @@ export interface LeaderboardEntry {
   score: number;
   timeSeconds: number;
   correctPlacements: number;
+  mistakes: number;
   displayName: string | null;
   isCurrentUser: boolean;
 }
@@ -498,7 +499,7 @@ export async function getTodayLeaderboardPage(params?: {
   try {
     const { data, error } = await supabase
       .from('puzzle_scores')
-      .select('score, time_seconds, correct_placements, user_id')
+      .select('score, time_seconds, correct_placements, mistakes, user_id')
       .eq('puzzle_date', puzzleDate)
       .not('user_id', 'is', null)
       .order('score', { ascending: false })
@@ -525,6 +526,7 @@ export async function getTodayLeaderboardPage(params?: {
       score: row.score,
       timeSeconds: row.time_seconds,
       correctPlacements: row.correct_placements || 0,
+      mistakes: row.mistakes || 0,
       displayName: row.user_id ? displayNames.get(row.user_id) || null : null,
       isCurrentUser: currentUserId ? row.user_id === currentUserId : false,
     }));
@@ -546,7 +548,7 @@ export async function getTodayLeaderboard(currentUserId?: string): Promise<Leade
     // Get top scores - don't join profiles, fetch separately
     const { data, error } = await supabase
       .from('puzzle_scores')
-      .select('score, time_seconds, correct_placements, user_id')
+      .select('score, time_seconds, correct_placements, mistakes, user_id')
       .eq('puzzle_date', puzzleDate)
       .not('user_id', 'is', null)
       .order('score', { ascending: false })
@@ -618,6 +620,7 @@ export async function getTodayLeaderboard(currentUserId?: string): Promise<Leade
       score: entry.score,
       timeSeconds: entry.time_seconds,
       correctPlacements: entry.correct_placements || 0,
+      mistakes: entry.mistakes || 0,
       displayName: entry.user_id ? displayNames.get(entry.user_id) || null : null,
       isCurrentUser: currentUserId ? entry.user_id === currentUserId : false,
     }));
@@ -630,7 +633,7 @@ export async function getTodayLeaderboard(currentUserId?: string): Promise<Leade
         // Fetch user's best score for today and compute rank via count query (does not depend on top-N fetch)
         const { data: userEntry, error: userEntryError } = await supabase
           .from('puzzle_scores')
-          .select('score, time_seconds, correct_placements, user_id')
+          .select('score, time_seconds, correct_placements, mistakes, user_id')
           .eq('puzzle_date', puzzleDate)
           .eq('user_id', currentUserId)
           .order('score', { ascending: false })
@@ -656,6 +659,7 @@ export async function getTodayLeaderboard(currentUserId?: string): Promise<Leade
             score: userEntry.score,
             timeSeconds: userEntry.time_seconds,
             correctPlacements: userEntry.correct_placements || 0,
+            mistakes: userEntry.mistakes || 0,
             displayName: displayNames.get(currentUserId) || null,
             isCurrentUser: true,
           });
