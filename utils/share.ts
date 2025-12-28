@@ -31,6 +31,8 @@ export function generateShareText(score: GameScore, rank: number | null): string
   let text = `✴️ 𝗜𝗡𝗧𝗘𝗥𝗦𝗘𝗖𝗧𝗜𝗢𝗡𝗦 — ${today}\n\n`;
   text += `📈 My score: ${score.score}\n`;
   text += `${emoji} ${score.correctPlacements}/16 correct in ${formatTime(score.timeSeconds)}\n`;
+  const mistakeEmoji = score.mistakes === 0 ? '✅' : '❌';
+  text += `${mistakeEmoji} ${score.mistakes} mistake${score.mistakes === 1 ? '' : 's'}\n`;
 
   if (rank !== null) {
     text += `🏆 Ranked #${rank} today\n`;
