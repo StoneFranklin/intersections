@@ -20,6 +20,22 @@
         "ADMOB_IOS_APP_ID": "ca-app-pub-6475460515852013~1564599114"
       }
     },
+    "internal-testing": {
+      "distribution": "internal",
+      "autoIncrement": true,
+      "android": {
+        "buildType": "app-bundle"
+      },
+      "ios": {
+        "autoIncrement": true
+      },
+      "env": {
+        "EXPO_IOS_BUNDLE_IDENTIFIER": "com.stonefranklin.intersections",
+        "EXPO_ANDROID_PACKAGE": "com.stonefranklin.intersections",
+        "ADMOB_ANDROID_APP_ID": "ca-app-pub-6475460515852013~5639575492",
+        "ADMOB_IOS_APP_ID": "ca-app-pub-6475460515852013~1564599114"
+      }
+    },
     "production": {
       "autoIncrement": true,
       "android": {
