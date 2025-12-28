@@ -157,7 +157,38 @@ export const GameGrid = memo(function GameGrid({
   
   // Header cells are slightly wider for labels
   const headerWidth = cellSize * 1.3;
-  const fontSize = Math.max(10, Math.min(cellSize / 6, 16));
+
+  // Calculate font size for category headers (similar to game-cell logic)
+  const calculateHeaderFontSize = (text: string, width: number): number => {
+    const baseSize = Math.max(10, Math.min(width / 5, 16));
+
+    // Find the longest word to ensure it fits on a single line
+    const words = text.split(/\s+/);
+    const longestWord = Math.max(...words.map(w => w.length));
+
+    // Estimate how much space we need
+    const availableWidth = width - 8; // subtract padding
+    const charsPerLine = Math.floor(availableWidth / (baseSize * 0.6));
+
+    // If the longest word is too long for one line, scale down to fit it
+    let adjustedFontSize = baseSize;
+    if (longestWord > charsPerLine) {
+      const wordScaleFactor = Math.max(0.3, charsPerLine / longestWord);
+      adjustedFontSize = baseSize * wordScaleFactor;
+    }
+
+    // Recalculate with adjusted font size
+    const adjustedCharsPerLine = Math.floor(availableWidth / (adjustedFontSize * 0.6));
+    const estimatedLines = Math.ceil(text.length / adjustedCharsPerLine);
+
+    // If text would overflow 2 lines (headers have max 2 lines), scale down further
+    if (estimatedLines > 2) {
+      const scaleFactor = Math.max(0.3, 2 / estimatedLines);
+      adjustedFontSize = adjustedFontSize * scaleFactor;
+    }
+
+    return Math.max(adjustedFontSize, baseSize * 0.3); // minimum 30% of base
+  };
 
   // Logo size - scaled down to be less prominent
   const logoSize = Math.max(headerWidth, cellSize * 0.8) * 0.85;
@@ -183,18 +214,18 @@ export const GameGrid = memo(function GameGrid({
           />
         </View>
         {colCategories.map((col) => (
-          <View 
-            key={col.id} 
+          <View
+            key={col.id}
             style={[
-              styles.colHeader, 
+              styles.colHeader,
               { width: cellSize, height: cellSize * 0.8 }
             ]}
           >
             <Text
-              style={[styles.headerText, { fontSize }]}
+              style={[styles.headerText, { fontSize: calculateHeaderFontSize(col.label, cellSize) }]}
               numberOfLines={2}
               adjustsFontSizeToFit
-              minimumFontScale={0.5}
+              minimumFontScale={0.3}
               allowFontScaling={false}
             >
               {col.label}
@@ -207,17 +238,17 @@ export const GameGrid = memo(function GameGrid({
       {rowCategories.map((row, rowIndex) => (
         <View key={row.id} style={styles.gridRow}>
           {/* Left row header */}
-          <View 
+          <View
             style={[
-              styles.rowHeader, 
+              styles.rowHeader,
               { width: headerWidth, height: cellSize }
             ]}
           >
             <Text
-              style={[styles.headerText, { fontSize }]}
+              style={[styles.headerText, { fontSize: calculateHeaderFontSize(row.label, headerWidth) }]}
               numberOfLines={2}
               adjustsFontSizeToFit
-              minimumFontScale={0.5}
+              minimumFontScale={0.3}
               allowFontScaling={false}
             >
               {row.label}
