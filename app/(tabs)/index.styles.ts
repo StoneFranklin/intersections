@@ -68,7 +68,7 @@ export const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
   headerSignInText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#1a1a1a',
+    color: colorScheme.warmBlack,
   },
   // Main menu styles
   mainMenuScroll: {
@@ -128,12 +128,12 @@ export const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
   playButtonLabel: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#1a1a1a',
+    color: colorScheme.warmBlack,
     marginBottom: 4,
   },
   playButtonDesc: {
     fontSize: 14,
-    color: '#3a3a3a',
+    color: colorScheme.warmGray,
   },
   playButtonError: {
     fontSize: 13,
@@ -669,7 +669,7 @@ export const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
   signInBannerButtonText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#1a1a1a',
+    color: colorScheme.warmBlack,
   },
   signInBannerDismiss: {
     padding: 8,
@@ -1341,7 +1341,7 @@ export const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
   tutorialCloseText: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#1a1a1a',
+    color: colorScheme.warmBlack,
   },
   // Header styles
   header: {
@@ -1393,7 +1393,7 @@ export const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
   headerBackIcon: {
-    color: 'white',
+    color: colorScheme.textPrimary,
     fontSize: 28,
   },
   livesContainer: {
@@ -1429,7 +1429,7 @@ export const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
   },
   instructions: {
     fontSize: 14,
-    color: 'white',
+    color: colorScheme.textPrimary,
     textAlign: 'center',
     marginBottom: 8,
     marginTop: 8,
@@ -1831,7 +1831,7 @@ export const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
     borderRadius: 12,
   },
   gameCompleteSignInButtonText: {
-    color: '#1a1a1a',
+    color: colorScheme.warmBlack,
     fontWeight: '700',
     fontSize: 15,
   },

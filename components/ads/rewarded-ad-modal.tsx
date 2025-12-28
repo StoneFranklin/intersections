@@ -1,5 +1,7 @@
+import { useThemeScheme } from '@/contexts/theme-context';
+import { ColorScheme } from '@/constants/theme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   ActivityIndicator,
   Modal,
@@ -37,6 +39,9 @@ export function RewardedAdModal({
   onDecline,
   error,
 }: RewardedAdModalProps) {
+  const { colorScheme } = useThemeScheme();
+  const styles = useMemo(() => createStyles(colorScheme), [colorScheme]);
+
   return (
     <Modal
       animationType="fade"
@@ -48,7 +53,7 @@ export function RewardedAdModal({
         <View style={styles.container}>
           {/* Heart Icon */}
           <View style={styles.iconContainer}>
-            <MaterialCommunityIcons name="heart-plus" size={64} color="#ff6b6b" />
+            <MaterialCommunityIcons name="heart-plus" size={64} color={colorScheme.errorLight} />
           </View>
 
           {/* Title */}
@@ -69,7 +74,7 @@ export function RewardedAdModal({
           {/* Loading indicator */}
           {isLoading && (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#4ade80" />
+              <ActivityIndicator size="large" color={colorScheme.success} />
               <Text style={styles.loadingText}>Loading ad...</Text>
             </View>
           )}
@@ -93,7 +98,7 @@ export function RewardedAdModal({
                 <MaterialCommunityIcons
                   name="play-circle"
                   size={24}
-                  color="#ffffff"
+                  color={colorScheme.textPrimary}
                   style={styles.buttonIcon}
                 />
                 <Text style={styles.watchButtonText}>Watch Ad</Text>
@@ -115,16 +120,16 @@ export function RewardedAdModal({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    backgroundColor: colorScheme.overlayDark,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
   },
   container: {
-    backgroundColor: '#1a1a2e',
+    backgroundColor: colorScheme.backgroundSecondary,
     borderRadius: 20,
     padding: 32,
     width: '100%',
@@ -132,7 +137,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     ...Platform.select({
       ios: {
-        shadowColor: '#000',
+        shadowColor: colorScheme.backgroundPrimary,
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
         shadowRadius: 8,
@@ -148,26 +153,26 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#ffffff',
+    color: colorScheme.textPrimary,
     marginBottom: 12,
     textAlign: 'center',
   },
   description: {
     fontSize: 16,
-    color: '#b0b0c0',
+    color: colorScheme.textSecondary,
     textAlign: 'center',
     marginBottom: 24,
     lineHeight: 22,
   },
   errorContainer: {
-    backgroundColor: 'rgba(255, 107, 107, 0.1)',
+    backgroundColor: colorScheme.errorBg,
     borderRadius: 8,
     padding: 12,
     marginBottom: 16,
     width: '100%',
   },
   errorText: {
-    color: '#ff6b6b',
+    color: colorScheme.errorLight,
     fontSize: 14,
     textAlign: 'center',
   },
@@ -176,7 +181,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    color: '#b0b0c0',
+    color: colorScheme.textSecondary,
     fontSize: 16,
     marginTop: 12,
   },
@@ -193,23 +198,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   watchButton: {
-    backgroundColor: '#4ade80',
+    backgroundColor: colorScheme.success,
   },
   buttonIcon: {
     marginRight: 8,
   },
   watchButtonText: {
-    color: '#ffffff',
+    color: colorScheme.textPrimary,
     fontSize: 18,
     fontWeight: 'bold',
   },
   declineButton: {
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: '#404050',
+    borderColor: colorScheme.borderSecondary,
   },
   declineButtonText: {
-    color: '#b0b0c0',
+    color: colorScheme.textSecondary,
     fontSize: 16,
     fontWeight: '600',
   },

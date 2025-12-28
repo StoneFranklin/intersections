@@ -41,10 +41,10 @@ export function LeaderboardScreen({
     <SafeAreaView style={styles.container}>
       <View style={styles.leaderboardScreenHeader}>
         <TouchableOpacity onPress={onBack} style={styles.leaderboardScreenBackButton}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
+          <Ionicons name="arrow-back" size={24} color={colorScheme.textPrimary} />
         </TouchableOpacity>
         <View style={styles.leaderboardScreenTitleContainer}>
-          <MaterialCommunityIcons name="trophy" size={24} color="#ffd700" />
+          <MaterialCommunityIcons name="trophy" size={24} color={colorScheme.gold} />
           <Text style={styles.leaderboardScreenTitle}>Today&apos;s Leaderboard</Text>
         </View>
         <TouchableOpacity
@@ -55,14 +55,14 @@ export function LeaderboardScreen({
           <Ionicons
             name="refresh"
             size={22}
-            color={isRefreshing || loadingFullLeaderboard ? '#666' : '#A855F7'}
+            color={isRefreshing || loadingFullLeaderboard ? colorScheme.textMuted : colorScheme.brandPrimary}
           />
         </TouchableOpacity>
       </View>
 
       {loadingFullLeaderboard && !fullLeaderboardLoaded && fullLeaderboard.length === 0 && (
         <View style={styles.leaderboardScreenLoadingOverlay}>
-          <ActivityIndicator size="large" color="#A855F7" />
+          <ActivityIndicator size="large" color={colorScheme.brandPrimary} />
           <Text style={styles.leaderboardScreenLoadingText}>Loading rankings...</Text>
         </View>
       )}
@@ -70,7 +70,7 @@ export function LeaderboardScreen({
       <View style={{ flex: 1 }}>
         {isRefreshing && fullLeaderboard.length > 0 && (
           <View style={styles.leaderboardScreenRefreshingOverlay}>
-            <ActivityIndicator size="small" color="#A855F7" />
+            <ActivityIndicator size="small" color={colorScheme.brandPrimary} />
           </View>
         )}
 
@@ -107,7 +107,7 @@ export function LeaderboardScreen({
                     style={styles.leaderboardScreenShareButton}
                     onPress={() => shareScore(savedScore, userRank)}
                   >
-                    <Ionicons name="share-outline" size={20} color="#4ade80" />
+                    <Ionicons name="share-outline" size={20} color={colorScheme.success} />
                     <Text style={styles.leaderboardScreenShareText}>Share Score</Text>
                   </TouchableOpacity>
                 </View>
@@ -116,7 +116,7 @@ export function LeaderboardScreen({
           }
           ListEmptyComponent={
             loadingFullLeaderboard ? (
-              <ActivityIndicator size="large" color="#A855F7" style={{ marginVertical: 40 }} />
+              <ActivityIndicator size="large" color={colorScheme.brandPrimary} style={{ marginVertical: 40 }} />
             ) : (
               <Text style={styles.leaderboardEmpty}>No scores yet today. Be the first!</Text>
             )
@@ -130,11 +130,11 @@ export function LeaderboardScreen({
             >
               <View style={styles.leaderboardFullRank}>
                 {entry.rank === 1 ? (
-                  <MaterialCommunityIcons name="medal" size={28} color="#ffd700" />
+                  <MaterialCommunityIcons name="medal" size={28} color={colorScheme.gold} />
                 ) : entry.rank === 2 ? (
-                  <MaterialCommunityIcons name="medal" size={28} color="#c0c0c0" />
+                  <MaterialCommunityIcons name="medal" size={28} color={colorScheme.textSecondary} />
                 ) : entry.rank === 3 ? (
-                  <MaterialCommunityIcons name="medal" size={28} color="#cd7f32" />
+                  <MaterialCommunityIcons name="medal" size={28} color={colorScheme.orange} />
                 ) : (
                   <Text
                     style={styles.leaderboardFullRankText}
@@ -173,7 +173,7 @@ export function LeaderboardScreen({
           )}
           ListFooterComponent={
             loadingFullLeaderboard && fullLeaderboardLoaded ? (
-              <ActivityIndicator size="small" color="#A855F7" style={{ marginVertical: 16 }} />
+              <ActivityIndicator size="small" color={colorScheme.brandPrimary} style={{ marginVertical: 16 }} />
             ) : fullLeaderboardHasMore && fullLeaderboardLoaded ? (
               <TouchableOpacity
                 style={styles.leaderboardCloseButton}

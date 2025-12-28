@@ -72,7 +72,7 @@ export function LeaveGameModal({
 const createStyles = (colorScheme: any) => StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    backgroundColor: colorScheme.overlayDark,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
@@ -86,7 +86,7 @@ const createStyles = (colorScheme: any) => StyleSheet.create({
     alignItems: 'center',
     ...Platform.select({
       ios: {
-        shadowColor: '#000',
+        shadowColor: colorScheme.backgroundPrimary,
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
         shadowRadius: 8,
@@ -107,7 +107,7 @@ const createStyles = (colorScheme: any) => StyleSheet.create({
     textAlign: 'center',
   },
   descriptionContainer: {
-    backgroundColor: 'rgba(0, 0, 0, 0.15)',
+    backgroundColor: colorScheme.overlayLight,
     borderRadius: 12,
     padding: 16,
     marginBottom: 24,
@@ -134,14 +134,14 @@ const createStyles = (colorScheme: any) => StyleSheet.create({
     backgroundColor: colorScheme.brandPrimary,
   },
   stayButtonText: {
-    color: '#ffffff',
+    color: colorScheme.textPrimary,
     fontSize: 18,
     fontWeight: 'bold',
   },
   leaveButton: {
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: colorScheme.border,
+    borderColor: colorScheme.borderSecondary,
   },
   leaveButtonText: {
     color: colorScheme.textSecondary,

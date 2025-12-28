@@ -1,5 +1,7 @@
+import { useThemeScheme } from '@/contexts/theme-context';
+import { ColorScheme } from '@/constants/theme';
 import { LinearGradient } from 'expo-linear-gradient';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View, ViewStyle, TextStyle, ActivityIndicator } from 'react-native';
 
 interface GradientButtonProps {
@@ -14,13 +16,6 @@ interface GradientButtonProps {
   icon?: React.ReactNode;
 }
 
-// Logo-aligned gradient colors
-const GRADIENTS = {
-  primary: ['#FFD700', '#FF9500'] as const,    // Yellow to Orange (logo gradient)
-  secondary: ['#A855F7', '#7C3AED'] as const,  // Purple gradient (logo accent)
-  success: ['#4ade80', '#22c55e'] as const,    // Green gradient
-};
-
 export function GradientButton({
   onPress,
   label,
@@ -32,7 +27,18 @@ export function GradientButton({
   labelStyle,
   icon,
 }: GradientButtonProps) {
-  const gradientColors = GRADIENTS[variant];
+  const { colorScheme } = useThemeScheme();
+  const styles = useMemo(() => createStyles(colorScheme), [colorScheme]);
+
+  // Logo-aligned gradient colors using theme
+  const gradients = {
+    primary: [colorScheme.gold, colorScheme.orange] as const,
+    secondary: [colorScheme.brandPrimary, colorScheme.brandSecondary] as const,
+    success: [colorScheme.success, colorScheme.successDark] as const,
+  };
+
+  const disabledGradient = [colorScheme.backgroundTertiary, colorScheme.backgroundSecondary] as const;
+  const gradientColors = gradients[variant];
 
   return (
     <TouchableOpacity
@@ -42,13 +48,13 @@ export function GradientButton({
       style={[styles.touchable, style]}
     >
       <LinearGradient
-        colors={disabled ? ['#3a3a5e', '#2a2a4e'] : gradientColors}
+        colors={disabled ? disabledGradient : gradientColors}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.gradient}
       >
         {loading ? (
-          <ActivityIndicator size="small" color="#fff" />
+          <ActivityIndicator size="small" color={colorScheme.textPrimary} />
         ) : (
           <View style={styles.content}>
             {icon && <View style={styles.iconContainer}>{icon}</View>}
@@ -74,7 +80,7 @@ export function GradientButton({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
   touchable: {
     borderRadius: 16,
     overflow: 'hidden',
@@ -93,17 +99,17 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#fff',
+    color: colorScheme.textPrimary,
     marginBottom: 4,
   },
   labelDark: {
-    color: '#1a1000',
+    color: colorScheme.warmBlack,
   },
   description: {
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: colorScheme.textSecondary,
   },
   descriptionDark: {
-    color: 'rgba(26, 16, 0, 0.7)',
+    color: colorScheme.warmGray,
   },
 });

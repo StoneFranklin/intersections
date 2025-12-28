@@ -16,7 +16,7 @@ export function HowToPlayScreen({ onBack }: HowToPlayScreenProps) {
     <SafeAreaView style={styles.container}>
       <View style={styles.leaderboardScreenHeader}>
         <TouchableOpacity onPress={onBack} style={styles.leaderboardScreenBackButton}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
+          <Ionicons name="arrow-back" size={24} color={colorScheme.textPrimary} />
         </TouchableOpacity>
         <View style={styles.leaderboardScreenTitleContainer}>
           <Text style={styles.leaderboardScreenTitle}>How to Play</Text>

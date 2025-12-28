@@ -20,7 +20,7 @@ export function CorrectAnswersScreen({ puzzle, onBack, onRetry }: CorrectAnswers
     <SafeAreaView style={styles.container}>
       <View style={styles.leaderboardScreenHeader}>
         <TouchableOpacity onPress={onBack} style={styles.leaderboardScreenBackButton}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
+          <Ionicons name="arrow-back" size={24} color={colorScheme.textPrimary} />
         </TouchableOpacity>
         <View style={styles.leaderboardScreenTitleContainer}>
           <Text style={styles.leaderboardScreenTitle}>Correct Answers</Text>
