@@ -515,7 +515,7 @@ export function GameContent({
                 style={styles.gameCompleteShareButton}
                 onPress={() => shareScore(displayScore, displayRank ?? null)}
               >
-                <Ionicons name="share-outline" size={20} color={colorScheme.success} />
+                <Ionicons name="share-outline" size={20} color={colorScheme.warmBlack} />
                 <Text style={styles.gameCompleteShareButtonText}>Share Score</Text>
               </TouchableOpacity>
             )}
