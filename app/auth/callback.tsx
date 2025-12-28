@@ -75,9 +75,11 @@ export default function AuthCallback() {
 
   return (
     <>
-      <Head>
-        <title>Intersections</title>
-      </Head>
+      {Platform.OS === 'web' && (
+        <Head>
+          <title>Intersections</title>
+        </Head>
+      )}
       <View style={styles.container}>
         <ActivityIndicator size="large" color="#6366f1" />
       </View>

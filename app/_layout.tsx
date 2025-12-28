@@ -60,9 +60,11 @@ export default function RootLayout() {
 
   return (
     <ErrorBoundary>
-      <Head>
-        <title>Intersections</title>
-      </Head>
+      {Platform.OS === 'web' && (
+        <Head>
+          <title>Intersections</title>
+        </Head>
+      )}
       <AuthProvider>
         <AppThemeProvider>
           <SafeAreaProvider>

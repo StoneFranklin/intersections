@@ -1,4 +1,4 @@
-export default {
+  export default {
   expo: {
     name: "IntersectionsGame",
     slug: "intersections",
