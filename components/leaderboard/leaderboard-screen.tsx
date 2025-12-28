@@ -158,7 +158,7 @@ export function LeaderboardScreen({
                   {isCurrentUserEntry(entry) && ' (you)'}
                 </Text>
                 <Text style={styles.leaderboardFullMeta}>
-                  {entry.correctPlacements}/16 correct - {formatTime(entry.timeSeconds)}
+                  {entry.correctPlacements}/16 correct · {entry.mistakes} {entry.mistakes === 1 ? 'life' : 'lives'} lost · {formatTime(entry.timeSeconds)}
                 </Text>
               </View>
               <Text
