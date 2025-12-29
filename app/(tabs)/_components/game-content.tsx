@@ -569,9 +569,12 @@ export function GameContent({
         visible={showRewardedAdModal}
         isLoading={rewardedAd.isLoading}
         isShowing={rewardedAd.isShowing}
+        isAdReady={rewardedAd.isReady}
         onWatchAd={handleWatchAd}
         onDecline={handleDeclineAd}
+        onRetry={rewardedAd.retry}
         error={rewardedAd.error}
+        isNoFill={rewardedAd.isNoFill}
       />
 
       <LeaveGameModal

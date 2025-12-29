@@ -9,8 +9,12 @@ export interface UseRewardedAdReturn {
   isShowing: boolean;
   /** Show the rewarded ad */
   show: () => Promise<boolean>;
+  /** Manually retry loading the ad */
+  retry: () => void;
   /** Error message if ad failed to load */
   error: string | null;
+  /** Whether the error is a no-fill error (no ads available) */
+  isNoFill: boolean;
 }
 
 /**
@@ -86,11 +90,18 @@ export function useRewardedAd(): UseRewardedAdReturn {
     });
   };
 
+  // No-op retry for web since ads are always "ready" (or simulated)
+  const retry = () => {
+    setError(null);
+  };
+
   return {
     isLoading,
     isReady,
     isShowing,
     show,
+    retry,
     error,
+    isNoFill: false, // Web uses simulation fallback, so never truly "no fill"
   };
 }

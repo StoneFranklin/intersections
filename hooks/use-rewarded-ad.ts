@@ -20,6 +20,25 @@ const REWARDED_AD_UNIT_IDS = {
   android: PRODUCTION_AD_UNIT_IDS.android || TestIds.REWARDED,
 };
 
+// Retry configuration
+const MAX_RETRIES = 3;
+const INITIAL_RETRY_DELAY_MS = 2000;
+
+// Error messages that indicate a no-fill situation
+const NO_FILL_ERROR_PATTERNS = [
+  'no fill',
+  'no ad',
+  'no ads',
+  'empty response',
+  'ad failed to load',
+  'ERROR_CODE_NO_FILL',
+];
+
+function isNoFillError(errorMessage: string): boolean {
+  const lowerMessage = errorMessage.toLowerCase();
+  return NO_FILL_ERROR_PATTERNS.some(pattern => lowerMessage.includes(pattern.toLowerCase()));
+}
+
 export interface UseRewardedAdReturn {
   /** Whether the ad is currently loading */
   isLoading: boolean;
@@ -29,21 +48,28 @@ export interface UseRewardedAdReturn {
   isShowing: boolean;
   /** Show the rewarded ad */
   show: () => Promise<boolean>;
+  /** Manually retry loading the ad */
+  retry: () => void;
   /** Error message if ad failed to load */
   error: string | null;
+  /** Whether the error is a no-fill error (no ads available) */
+  isNoFill: boolean;
 }
 
 /**
  * Hook to manage rewarded ads on iOS and Android
- * Uses Google Mobile Ads (AdMob)
+ * Uses Google Mobile Ads (AdMob) with automatic retry on failure
  */
 export function useRewardedAd(): UseRewardedAdReturn {
   const [isLoading, setIsLoading] = useState(false);
   const [isReady, setIsReady] = useState(false);
   const [isShowing, setIsShowing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isNoFill, setIsNoFill] = useState(false);
   const rewardedAdRef = useRef<RewardedAd | null>(null);
   const cleanupFnRef = useRef<(() => void) | null>(null);
+  const retryCountRef = useRef(0);
+  const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Initialize AdMob on first launch
   useEffect(() => {
@@ -52,15 +78,27 @@ export function useRewardedAd(): UseRewardedAdReturn {
     });
   }, []);
 
-  const loadAd = useCallback(() => {
+  const loadAd = useCallback((isRetry = false) => {
     // Clean up previous ad listeners before creating a new one
     if (cleanupFnRef.current) {
       cleanupFnRef.current();
       cleanupFnRef.current = null;
     }
 
+    // Clear any pending retry timeout
+    if (retryTimeoutRef.current) {
+      clearTimeout(retryTimeoutRef.current);
+      retryTimeoutRef.current = null;
+    }
+
+    // Reset retry count if this is a fresh load (not a retry)
+    if (!isRetry) {
+      retryCountRef.current = 0;
+    }
+
     setIsLoading(true);
     setError(null);
+    setIsNoFill(false);
 
     const adUnitId =
       Platform.OS === 'ios' ? REWARDED_AD_UNIT_IDS.ios : REWARDED_AD_UNIT_IDS.android;
@@ -70,15 +108,37 @@ export function useRewardedAd(): UseRewardedAdReturn {
     const unsubscribeLoaded = ad.addAdEventListener(RewardedAdEventType.LOADED, () => {
       setIsLoading(false);
       setIsReady(true);
+      retryCountRef.current = 0; // Reset retry count on success
       rewardedAdRef.current = ad;
     });
 
     const unsubscribeError = ad.addAdEventListener(
       AdEventType.ERROR,
       (err) => {
-        setIsLoading(false);
-        setError(err.message || 'Failed to load ad');
+        const errorMessage = err.message || 'Failed to load ad';
+        const noFill = isNoFillError(errorMessage);
+
         logger.error('Rewarded ad error:', err);
+
+        // If we haven't exceeded max retries, try again with exponential backoff
+        if (retryCountRef.current < MAX_RETRIES) {
+          retryCountRef.current += 1;
+          const delay = INITIAL_RETRY_DELAY_MS * Math.pow(2, retryCountRef.current - 1);
+          logger.log(`Retrying ad load (attempt ${retryCountRef.current}/${MAX_RETRIES}) in ${delay}ms`);
+
+          retryTimeoutRef.current = setTimeout(() => {
+            loadAd(true);
+          }, delay);
+        } else {
+          // Max retries exceeded, show error to user
+          setIsLoading(false);
+          setIsNoFill(noFill);
+          setError(
+            noFill
+              ? 'No ads available right now. Please try again later.'
+              : errorMessage
+          );
+        }
       }
     );
 
@@ -98,6 +158,10 @@ export function useRewardedAd(): UseRewardedAdReturn {
 
     return () => {
       // Cleanup on unmount
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+        retryTimeoutRef.current = null;
+      }
       if (cleanupFnRef.current) {
         cleanupFnRef.current();
         cleanupFnRef.current = null;
@@ -107,6 +171,12 @@ export function useRewardedAd(): UseRewardedAdReturn {
         rewardedAdRef.current = null;
       }
     };
+  }, [loadAd]);
+
+  // Manual retry function for user-initiated retries
+  const retry = useCallback(() => {
+    retryCountRef.current = 0;
+    loadAd();
   }, [loadAd]);
 
   const show = async (): Promise<boolean> => {
@@ -162,6 +232,8 @@ export function useRewardedAd(): UseRewardedAdReturn {
     isReady,
     isShowing,
     show,
+    retry,
     error,
+    isNoFill,
   };
 }
