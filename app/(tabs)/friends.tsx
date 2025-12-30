@@ -1,19 +1,22 @@
 import { FriendsManagementScreen } from '@/components/friends/friends-management-screen';
 import { useAuth } from '@/contexts/auth-context';
 import { getFriendIds, getPendingRequestCount } from '@/data/puzzleApi';
-import { useRouter } from 'expo-router';
-import { useCallback, useEffect } from 'react';
+import { Redirect, useRouter } from 'expo-router';
+import { useCallback } from 'react';
 
 export default function FriendsScreen() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
 
-  // Redirect to home if not logged in
-  useEffect(() => {
-    if (!user) {
-      router.replace('/');
-    }
-  }, [user, router]);
+  // Show nothing while auth is loading
+  if (loading) {
+    return null;
+  }
+
+  // Redirect to home if not logged in (using Redirect component instead of router.replace)
+  if (!user) {
+    return <Redirect href="/" />;
+  }
 
   const handleBack = useCallback(() => {
     router.back();
@@ -32,10 +35,6 @@ export default function FriendsScreen() {
       // Silently fail - data will refresh on next navigation
     }
   }, [user]);
-
-  if (!user) {
-    return null;
-  }
 
   return (
     <FriendsManagementScreen
