@@ -1,12 +1,11 @@
 import { useThemeScheme } from '@/contexts/theme-context';
 import { Friend } from '@/types/friends';
 import { Ionicons } from '@expo/vector-icons';
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
-  Platform,
+  Modal,
   RefreshControl,
   StyleSheet,
   Text,
@@ -35,24 +34,23 @@ export function FriendsList({
   const { colorScheme } = useThemeScheme();
   const styles = useMemo(() => createStyles(colorScheme), [colorScheme]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [friendToRemove, setFriendToRemove] = useState<Friend | null>(null);
 
-  const handleRemovePress = (friend: Friend) => {
-    if (Platform.OS === 'web') {
-      // Simple confirm on web
-      if (confirm(`Remove ${friend.displayName || 'this friend'}?`)) {
-        onRemove(friend.friendshipId);
-      }
-    } else {
-      Alert.alert(
-        'Remove Friend',
-        `Are you sure you want to remove ${friend.displayName || 'this friend'}?`,
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Remove', style: 'destructive', onPress: () => onRemove(friend.friendshipId) },
-        ]
-      );
+  const handleRemovePress = useCallback((friend: Friend) => {
+    setFriendToRemove(friend);
+  }, []);
+
+  const handleConfirmRemove = useCallback(() => {
+    if (friendToRemove) {
+      onRemove(friendToRemove.friendshipId);
+      setFriendToRemove(null);
+      setExpandedId(null);
     }
-  };
+  }, [friendToRemove, onRemove]);
+
+  const handleCancelRemove = useCallback(() => {
+    setFriendToRemove(null);
+  }, []);
 
   if (loading && friends.length === 0) {
     return (
@@ -114,25 +112,65 @@ export function FriendsList({
   };
 
   return (
-    <FlatList
-      data={friends}
-      keyExtractor={item => item.id}
-      renderItem={renderFriend}
-      contentContainerStyle={styles.listContent}
-      refreshControl={
-        <RefreshControl
-          refreshing={isRefreshing}
-          onRefresh={onRefresh}
-          tintColor={colorScheme.brandPrimary}
-          colors={[colorScheme.brandPrimary]}
-        />
-      }
-      ListHeaderComponent={
-        <Text style={styles.listHeader}>
-          {friends.length} {friends.length === 1 ? 'friend' : 'friends'}
-        </Text>
-      }
-    />
+    <>
+      <FlatList
+        data={friends}
+        keyExtractor={item => item.id}
+        renderItem={renderFriend}
+        contentContainerStyle={styles.listContent}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={onRefresh}
+            tintColor={colorScheme.brandPrimary}
+            colors={[colorScheme.brandPrimary]}
+          />
+        }
+        ListHeaderComponent={
+          <Text style={styles.listHeader}>
+            {friends.length} {friends.length === 1 ? 'friend' : 'friends'}
+          </Text>
+        }
+      />
+
+      {/* Remove Friend Confirmation Modal */}
+      <Modal
+        visible={!!friendToRemove}
+        animationType="fade"
+        transparent
+        onRequestClose={handleCancelRemove}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalIconContainer}>
+              <Ionicons name="person-remove" size={32} color={colorScheme.error} />
+            </View>
+            <Text style={styles.modalTitle}>Remove Friend</Text>
+            <Text style={styles.modalMessage}>
+              Are you sure you want to remove{' '}
+              <Text style={styles.modalFriendName}>
+                {friendToRemove?.displayName || 'this friend'}
+              </Text>
+              ?
+            </Text>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={styles.modalCancelButton}
+                onPress={handleCancelRemove}
+              >
+                <Text style={styles.modalCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.modalRemoveButton}
+                onPress={handleConfirmRemove}
+              >
+                <Text style={styles.modalRemoveText}>Remove</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </>
   );
 }
 
@@ -224,5 +262,75 @@ const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     color: colorScheme.error,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: colorScheme.overlayDark,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: colorScheme.backgroundSecondary,
+    borderRadius: 16,
+    padding: 24,
+    maxWidth: 320,
+    width: '100%',
+    alignItems: 'center',
+  },
+  modalIconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: colorScheme.errorBg,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: colorScheme.textPrimary,
+    marginBottom: 8,
+  },
+  modalMessage: {
+    fontSize: 15,
+    color: colorScheme.textSecondary,
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 22,
+  },
+  modalFriendName: {
+    fontWeight: '600',
+    color: colorScheme.textPrimary,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%',
+  },
+  modalCancelButton: {
+    flex: 1,
+    backgroundColor: colorScheme.backgroundTertiary,
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  modalCancelText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colorScheme.textSecondary,
+  },
+  modalRemoveButton: {
+    flex: 1,
+    backgroundColor: colorScheme.error,
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  modalRemoveText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colorScheme.textPrimary,
   },
 });
