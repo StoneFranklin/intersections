@@ -1,3 +1,4 @@
+import { AdFallbackScreen } from '@/components/ads/ad-fallback-screen';
 import { RewardedAdModal } from '@/components/ads/rewarded-ad-modal';
 import { GameGrid, LeaveGameModal, WordTray } from '@/components/game';
 import { LeaderboardEntry, submitScore } from '@/data/puzzleApi';
@@ -109,14 +110,6 @@ export function GameContent({
     setFallbackCountdown(3);
   }, [puzzle]);
 
-  // Handle graceful fallback when ad has an error
-  useEffect(() => {
-    if (showRewardedAdModal && rewardedAd.error && !rewardedAd.isLoading && !isGracefulFallback) {
-      // Start graceful fallback - show placeholder and grant reward
-      setIsGracefulFallback(true);
-      setFallbackCountdown(3);
-    }
-  }, [showRewardedAdModal, rewardedAd.error, rewardedAd.isLoading, isGracefulFallback]);
 
   // Countdown timer for graceful fallback
   useEffect(() => {
@@ -140,16 +133,21 @@ export function GameContent({
   }, [isGracefulFallback, fallbackCountdown, grantExtraLife]);
 
   const handleWatchAd = async () => {
-    const rewarded = await rewardedAd.show();
+    // Close the modal - the ad loading state will show in the modal while loading
+    const result = await rewardedAd.loadAndShow();
 
     setShowRewardedAdModal(false);
 
-    if (rewarded) {
+    if (result.success && result.rewarded) {
+      // User watched the ad and earned the reward
       grantExtraLife();
       setAdOfferDeclined(false);
       haptics.notification(Haptics.NotificationFeedbackType.Success);
     } else {
-      setAdOfferDeclined(true);
+      // Either ad failed to load/show, or user didn't complete it
+      // Go to graceful fallback - don't punish them
+      setIsGracefulFallback(true);
+      setFallbackCountdown(3);
     }
   };
 
@@ -563,6 +561,11 @@ export function GameContent({
     );
   }
 
+  // Full-screen fallback when ad couldn't load but user wanted to watch
+  if (isGracefulFallback) {
+    return <AdFallbackScreen countdown={fallbackCountdown} />;
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -603,14 +606,8 @@ export function GameContent({
         visible={showRewardedAdModal}
         isLoading={rewardedAd.isLoading}
         isShowing={rewardedAd.isShowing}
-        isAdReady={rewardedAd.isReady}
         onWatchAd={handleWatchAd}
         onDecline={handleDeclineAd}
-        onRetry={rewardedAd.retry}
-        error={rewardedAd.error}
-        isNoFill={rewardedAd.isNoFill}
-        isGracefulFallback={isGracefulFallback}
-        fallbackCountdown={fallbackCountdown}
       />
 
       <LeaveGameModal

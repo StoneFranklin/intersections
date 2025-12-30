@@ -20,220 +20,156 @@ const REWARDED_AD_UNIT_IDS = {
   android: PRODUCTION_AD_UNIT_IDS.android || TestIds.REWARDED,
 };
 
-// Retry configuration
-const MAX_RETRIES = 3;
-const INITIAL_RETRY_DELAY_MS = 2000;
+// Timeout for loading ad (in ms)
+const AD_LOAD_TIMEOUT_MS = 10000;
 
-// Error messages that indicate a no-fill situation
-const NO_FILL_ERROR_PATTERNS = [
-  'no fill',
-  'no ad',
-  'no ads',
-  'empty response',
-  'ad failed to load',
-  'ERROR_CODE_NO_FILL',
-];
-
-function isNoFillError(errorMessage: string): boolean {
-  const lowerMessage = errorMessage.toLowerCase();
-  return NO_FILL_ERROR_PATTERNS.some(pattern => lowerMessage.includes(pattern.toLowerCase()));
-}
+export type AdResult =
+  | { success: true; rewarded: boolean }  // Ad shown, rewarded indicates if user completed it
+  | { success: false; reason: 'load_failed' | 'show_failed' | 'timeout' };
 
 export interface UseRewardedAdReturn {
   /** Whether the ad is currently loading */
   isLoading: boolean;
-  /** Whether the ad is ready to show */
-  isReady: boolean;
   /** Whether an ad is currently being shown */
   isShowing: boolean;
-  /** Show the rewarded ad */
-  show: () => Promise<boolean>;
-  /** Manually retry loading the ad */
-  retry: () => void;
-  /** Error message if ad failed to load */
-  error: string | null;
-  /** Whether the error is a no-fill error (no ads available) */
-  isNoFill: boolean;
+  /** Load and show the rewarded ad. Returns result of the attempt. */
+  loadAndShow: () => Promise<AdResult>;
 }
 
 /**
  * Hook to manage rewarded ads on iOS and Android
- * Uses Google Mobile Ads (AdMob) with automatic retry on failure
+ * Loads ad on-demand when user requests to watch
  */
 export function useRewardedAd(): UseRewardedAdReturn {
   const [isLoading, setIsLoading] = useState(false);
-  const [isReady, setIsReady] = useState(false);
   const [isShowing, setIsShowing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isNoFill, setIsNoFill] = useState(false);
-  const rewardedAdRef = useRef<RewardedAd | null>(null);
   const cleanupFnRef = useRef<(() => void) | null>(null);
-  const retryCountRef = useRef(0);
-  const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const adMobInitialized = useRef(false);
 
   // Initialize AdMob on first launch
   useEffect(() => {
-    MobileAds().initialize().catch((err) => {
-      logger.error('Failed to initialize AdMob:', err);
-    });
+    if (!adMobInitialized.current) {
+      adMobInitialized.current = true;
+      MobileAds().initialize().catch((err) => {
+        logger.error('Failed to initialize AdMob:', err);
+      });
+    }
+
+    return () => {
+      // Cleanup on unmount
+      if (cleanupFnRef.current) {
+        cleanupFnRef.current();
+        cleanupFnRef.current = null;
+      }
+    };
   }, []);
 
-  const loadAd = useCallback((isRetry = false) => {
-    // Clean up previous ad listeners before creating a new one
+  const loadAndShow = useCallback(async (): Promise<AdResult> => {
+    // Clean up any previous ad
     if (cleanupFnRef.current) {
       cleanupFnRef.current();
       cleanupFnRef.current = null;
     }
 
-    // Clear any pending retry timeout
-    if (retryTimeoutRef.current) {
-      clearTimeout(retryTimeoutRef.current);
-      retryTimeoutRef.current = null;
-    }
-
-    // Reset retry count if this is a fresh load (not a retry)
-    if (!isRetry) {
-      retryCountRef.current = 0;
-    }
-
     setIsLoading(true);
-    setError(null);
-    setIsNoFill(false);
 
     const adUnitId =
       Platform.OS === 'ios' ? REWARDED_AD_UNIT_IDS.ios : REWARDED_AD_UNIT_IDS.android;
 
     const ad = RewardedAd.createForAdRequest(adUnitId);
 
-    const unsubscribeLoaded = ad.addAdEventListener(RewardedAdEventType.LOADED, () => {
-      setIsLoading(false);
-      setIsReady(true);
-      retryCountRef.current = 0; // Reset retry count on success
-      rewardedAdRef.current = ad;
-    });
+    return new Promise<AdResult>((resolve) => {
+      let resolved = false;
+      let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
-    const unsubscribeError = ad.addAdEventListener(
-      AdEventType.ERROR,
-      (err) => {
-        const errorMessage = err.message || 'Failed to load ad';
-        const noFill = isNoFillError(errorMessage);
+      const cleanup = () => {
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = null;
+        }
+        ad.removeAllListeners();
+      };
 
-        logger.error('Rewarded ad error:', err);
+      cleanupFnRef.current = cleanup;
 
-        // If we haven't exceeded max retries, try again with exponential backoff
-        if (retryCountRef.current < MAX_RETRIES) {
-          retryCountRef.current += 1;
-          const delay = INITIAL_RETRY_DELAY_MS * Math.pow(2, retryCountRef.current - 1);
-          logger.log(`Retrying ad load (attempt ${retryCountRef.current}/${MAX_RETRIES}) in ${delay}ms`);
-
-          retryTimeoutRef.current = setTimeout(() => {
-            loadAd(true);
-          }, delay);
-        } else {
-          // Max retries exceeded, show error to user
+      // Set up timeout
+      timeoutId = setTimeout(() => {
+        if (!resolved) {
+          resolved = true;
           setIsLoading(false);
-          setIsNoFill(noFill);
-          setError(
-            noFill
-              ? 'No ads available right now. Please try again later.'
-              : errorMessage
-          );
+          cleanup();
+          logger.error('Ad load timed out');
+          resolve({ success: false, reason: 'timeout' });
         }
-      }
-    );
+      }, AD_LOAD_TIMEOUT_MS);
 
-    ad.load();
+      // Handle ad loaded - show it immediately
+      const unsubscribeLoaded = ad.addAdEventListener(RewardedAdEventType.LOADED, () => {
+        if (resolved) return;
 
-    // Store cleanup function
-    cleanupFnRef.current = () => {
-      unsubscribeLoaded();
-      unsubscribeError();
-      ad.removeAllListeners();
-    };
-  }, []);
+        setIsLoading(false);
+        setIsShowing(true);
 
-  // Load the ad when component mounts
-  useEffect(() => {
-    loadAd();
+        let earnedReward = false;
 
-    return () => {
-      // Cleanup on unmount
-      if (retryTimeoutRef.current) {
-        clearTimeout(retryTimeoutRef.current);
-        retryTimeoutRef.current = null;
-      }
-      if (cleanupFnRef.current) {
-        cleanupFnRef.current();
-        cleanupFnRef.current = null;
-      }
-      if (rewardedAdRef.current) {
-        rewardedAdRef.current.removeAllListeners();
-        rewardedAdRef.current = null;
-      }
-    };
-  }, [loadAd]);
+        const unsubscribeEarned = ad.addAdEventListener(
+          RewardedAdEventType.EARNED_REWARD,
+          (reward) => {
+            logger.log('User earned reward:', reward);
+            earnedReward = true;
+          }
+        );
 
-  // Manual retry function for user-initiated retries
-  const retry = useCallback(() => {
-    retryCountRef.current = 0;
-    loadAd();
-  }, [loadAd]);
+        const unsubscribeClosed = ad.addAdEventListener(
+          AdEventType.CLOSED,
+          () => {
+            if (resolved) return;
+            resolved = true;
+            setIsShowing(false);
+            unsubscribeEarned();
+            unsubscribeClosed();
+            cleanup();
+            resolve({ success: true, rewarded: earnedReward });
+          }
+        );
 
-  const show = async (): Promise<boolean> => {
-    const rewardedAd = rewardedAdRef.current;
-    if (!rewardedAd || !isReady) {
-      setError('Ad is not ready yet');
-      return false;
-    }
-
-    return new Promise((resolve) => {
-      setIsShowing(true);
-      let earnedReward = false;
-
-      const unsubscribeEarned = rewardedAd.addAdEventListener(
-        RewardedAdEventType.EARNED_REWARD,
-        (reward) => {
-          logger.log('User earned reward:', reward);
-          earnedReward = true;
-          // Don't resolve here - wait for CLOSED event to ensure ad is fully dismissed
-        }
-      );
-
-      const unsubscribeDismissed = rewardedAd.addAdEventListener(
-        AdEventType.CLOSED,
-        () => {
-          // Clean up both listeners
-          unsubscribeEarned();
-          unsubscribeDismissed();
+        try {
+          ad.show();
+        } catch (err) {
+          if (resolved) return;
+          resolved = true;
+          logger.error('Failed to show ad:', err);
           setIsShowing(false);
-          setIsReady(false);
-          // Preload next ad
-          loadAd();
-          // Resolve with whether the user earned a reward
-          resolve(earnedReward);
+          unsubscribeEarned();
+          unsubscribeClosed();
+          cleanup();
+          resolve({ success: false, reason: 'show_failed' });
+        }
+      });
+
+      // Handle load error
+      const unsubscribeError = ad.addAdEventListener(
+        AdEventType.ERROR,
+        (err) => {
+          if (resolved) return;
+          resolved = true;
+          logger.error('Rewarded ad error:', err);
+          setIsLoading(false);
+          unsubscribeLoaded();
+          unsubscribeError();
+          cleanup();
+          resolve({ success: false, reason: 'load_failed' });
         }
       );
 
-      try {
-        rewardedAd.show();
-      } catch (err) {
-        logger.error('Failed to show ad:', err);
-        unsubscribeEarned();
-        unsubscribeDismissed();
-        setIsShowing(false);
-        setError('Failed to show ad');
-        resolve(false);
-      }
+      // Start loading
+      ad.load();
     });
-  };
+  }, []);
 
   return {
     isLoading,
-    isReady,
     isShowing,
-    show,
-    retry,
-    error,
-    isNoFill,
+    loadAndShow,
   };
 }

@@ -1,20 +1,16 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
+
+export type AdResult =
+  | { success: true; rewarded: boolean }  // Ad shown, rewarded indicates if user completed it
+  | { success: false; reason: 'load_failed' | 'show_failed' | 'timeout' };
 
 export interface UseRewardedAdReturn {
   /** Whether the ad is currently loading */
   isLoading: boolean;
-  /** Whether the ad is ready to show */
-  isReady: boolean;
   /** Whether an ad is currently being shown */
   isShowing: boolean;
-  /** Show the rewarded ad */
-  show: () => Promise<boolean>;
-  /** Manually retry loading the ad */
-  retry: () => void;
-  /** Error message if ad failed to load */
-  error: string | null;
-  /** Whether the error is a no-fill error (no ads available) */
-  isNoFill: boolean;
+  /** Load and show the rewarded ad. Returns result of the attempt. */
+  loadAndShow: () => Promise<AdResult>;
 }
 
 /**
@@ -24,84 +20,93 @@ export interface UseRewardedAdReturn {
  */
 export function useRewardedAd(): UseRewardedAdReturn {
   const [isLoading, setIsLoading] = useState(false);
-  const [isReady, setIsReady] = useState(true); // Always ready on web
   const [isShowing, setIsShowing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  const show = async (): Promise<boolean> => {
+  const loadAndShow = useCallback(async (): Promise<AdResult> => {
     return new Promise((resolve) => {
       try {
         // Check if AdSense Ad Placements API is available
         if (typeof window !== 'undefined' && (window as any).adBreak) {
           const adBreak = (window as any).adBreak;
 
-          setIsShowing(true);
+          setIsLoading(true);
+
+          let resolved = false;
+
           adBreak({
             type: 'reward',
             name: 'extra-life',
             beforeReward: (showAdFn: () => void) => {
               // Called before showing the ad - user must call showAdFn to proceed
+              setIsLoading(false);
+              setIsShowing(true);
               showAdFn();
             },
             adDismissed: () => {
               // User dismissed the ad before completion
+              if (resolved) return;
+              resolved = true;
               setIsShowing(false);
               console.log('AdSense: Ad dismissed before completion');
-              resolve(false);
+              resolve({ success: true, rewarded: false });
             },
             adViewed: () => {
               // User watched the full ad - grant reward
+              if (resolved) return;
+              resolved = true;
               setIsShowing(false);
               console.log('AdSense: Ad viewed - Reward granted!');
-              resolve(true);
+              resolve({ success: true, rewarded: true });
             },
             adBreakDone: (placementInfo: any) => {
               // Called when ad break is complete
+              setIsLoading(false);
               setIsShowing(false);
 
-              // If we haven't resolved yet (no adViewed/adDismissed callback)
+              if (resolved) return;
+              resolved = true;
+
               // Check the breakStatus
               if (placementInfo?.breakStatus === 'viewed') {
-                resolve(true);
+                resolve({ success: true, rewarded: true });
               } else if (placementInfo?.breakStatus === 'dismissed') {
-                resolve(false);
+                resolve({ success: true, rewarded: false });
+              } else {
+                // Other statuses: 'notReady', 'timeout', 'error', 'frequencyCapped'
+                resolve({ success: false, reason: 'load_failed' });
               }
-              // Other statuses: 'notReady', 'timeout', 'error', 'frequencyCapped'
             },
           });
         } else {
           // Fallback: simulate ad for development/testing
           console.log('AdSense not available, simulating rewarded ad');
-          setIsShowing(true);
+          setIsLoading(true);
 
-          // Simulate a 3-second video ad
+          // Simulate loading
           setTimeout(() => {
-            setIsShowing(false);
-            console.log('Simulated ad completed - Reward granted!');
-            resolve(true);
-          }, 3000);
+            setIsLoading(false);
+            setIsShowing(true);
+
+            // Simulate a 3-second video ad
+            setTimeout(() => {
+              setIsShowing(false);
+              console.log('Simulated ad completed - Reward granted!');
+              resolve({ success: true, rewarded: true });
+            }, 3000);
+          }, 500);
         }
       } catch (err) {
         console.error('Web ad error:', err);
+        setIsLoading(false);
         setIsShowing(false);
-        setError('Failed to show ad');
-        resolve(false);
+        resolve({ success: false, reason: 'show_failed' });
       }
     });
-  };
-
-  // No-op retry for web since ads are always "ready" (or simulated)
-  const retry = () => {
-    setError(null);
-  };
+  }, []);
 
   return {
     isLoading,
-    isReady,
     isShowing,
-    show,
-    retry,
-    error,
-    isNoFill: false, // Web uses simulation fallback, so never truly "no fill"
+    loadAndShow,
   };
 }

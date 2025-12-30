@@ -20,22 +20,10 @@ interface RewardedAdModalProps {
   isLoading: boolean;
   /** Whether the ad is currently showing */
   isShowing: boolean;
-  /** Whether the ad is ready to show */
-  isAdReady: boolean;
   /** Called when user chooses to watch an ad */
   onWatchAd: () => void;
   /** Called when user declines to watch an ad */
   onDecline: () => void;
-  /** Called when user wants to retry loading an ad */
-  onRetry: () => void;
-  /** Error message if ad failed */
-  error?: string | null;
-  /** Whether the error is specifically a no-fill error */
-  isNoFill?: boolean;
-  /** Whether we're in graceful fallback mode (granting reward due to ad error) */
-  isGracefulFallback?: boolean;
-  /** Countdown seconds remaining before auto-granting reward */
-  fallbackCountdown?: number;
 }
 
 /**
@@ -45,19 +33,11 @@ export function RewardedAdModal({
   visible,
   isLoading,
   isShowing,
-  isAdReady,
   onWatchAd,
   onDecline,
-  onRetry,
-  error,
-  isNoFill,
-  isGracefulFallback,
-  fallbackCountdown,
 }: RewardedAdModalProps) {
   const { colorScheme } = useThemeScheme();
   const styles = useMemo(() => createStyles(colorScheme), [colorScheme]);
-
-  const hasError = !!error && !isGracefulFallback;
 
   return (
     <Modal
@@ -81,7 +61,7 @@ export function RewardedAdModal({
             Watch a short ad to get an extra life and continue playing
           </Text>
 
-          {/* Loading indicator */}
+          {/* Loading indicator - shown while ad is loading */}
           {isLoading && (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color={colorScheme.success} />
@@ -96,79 +76,22 @@ export function RewardedAdModal({
             </View>
           )}
 
-          {/* Graceful fallback - granting reward due to ad unavailability */}
-          {isGracefulFallback && (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color={colorScheme.success} />
-              <Text style={styles.loadingText}>
-                Granting extra life{fallbackCountdown !== undefined ? ` in ${fallbackCountdown}...` : '...'}
-              </Text>
-            </View>
-          )}
-
-          {/* Error state with retry option */}
-          {hasError && !isLoading && !isShowing && (
-            <View style={styles.errorStateContainer}>
-              <View style={styles.errorIconContainer}>
-                <MaterialCommunityIcons
-                  name={isNoFill ? "video-off" : "alert-circle"}
-                  size={32}
-                  color={colorScheme.textSecondary}
-                />
-              </View>
-              <Text style={styles.errorTitle}>
-                {isNoFill ? "No Ads Available" : "Failed to Load Ad"}
-              </Text>
-              <Text style={styles.errorDescription}>
-                {isNoFill
-                  ? "There are no ads to show right now. Try again in a moment."
-                  : error}
-              </Text>
-              <View style={styles.buttonContainer}>
-                {/* Retry Button */}
-                <TouchableOpacity
-                  style={[styles.button, styles.retryButton]}
-                  onPress={onRetry}
-                  activeOpacity={0.7}
-                >
-                  <MaterialCommunityIcons
-                    name="refresh"
-                    size={24}
-                    color={colorScheme.textPrimary}
-                    style={styles.buttonIcon}
-                  />
-                  <Text style={styles.watchButtonText}>Try Again</Text>
-                </TouchableOpacity>
-
-                {/* Decline Button */}
-                <TouchableOpacity
-                  style={[styles.button, styles.declineButton]}
-                  onPress={onDecline}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.declineButtonText}>No Thanks</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          )}
-
-          {/* Action buttons - only show when ad is ready */}
-          {!isLoading && !isShowing && !hasError && (
+          {/* Action buttons - show when not loading/showing */}
+          {!isLoading && !isShowing && (
             <View style={styles.buttonContainer}>
               {/* Watch Ad Button */}
               <TouchableOpacity
-                style={[styles.button, styles.watchButton, !isAdReady && styles.buttonDisabled]}
+                style={[styles.button, styles.watchButton]}
                 onPress={onWatchAd}
                 activeOpacity={0.7}
-                disabled={!isAdReady}
               >
                 <MaterialCommunityIcons
                   name="play-circle"
                   size={24}
-                  color={isAdReady ? colorScheme.textPrimary : colorScheme.textSecondary}
+                  color={colorScheme.textPrimary}
                   style={styles.buttonIcon}
                 />
-                <Text style={[styles.watchButtonText, !isAdReady && styles.buttonTextDisabled]}>
+                <Text style={styles.watchButtonText}>
                   Watch Ad
                 </Text>
               </TouchableOpacity>
@@ -233,33 +156,6 @@ const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
     marginBottom: 24,
     lineHeight: 22,
   },
-  errorStateContainer: {
-    alignItems: 'center',
-    width: '100%',
-  },
-  errorIconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: colorScheme.backgroundPrimary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  errorTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colorScheme.textPrimary,
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  errorDescription: {
-    fontSize: 14,
-    color: colorScheme.textSecondary,
-    textAlign: 'center',
-    marginBottom: 20,
-    lineHeight: 20,
-  },
   loadingContainer: {
     paddingVertical: 20,
     alignItems: 'center',
@@ -283,16 +179,6 @@ const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
   },
   watchButton: {
     backgroundColor: colorScheme.success,
-  },
-  retryButton: {
-    backgroundColor: colorScheme.brandPrimary,
-  },
-  buttonDisabled: {
-    backgroundColor: colorScheme.backgroundPrimary,
-    opacity: 0.6,
-  },
-  buttonTextDisabled: {
-    color: colorScheme.textSecondary,
   },
   buttonIcon: {
     marginRight: 8,
