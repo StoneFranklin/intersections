@@ -1,4 +1,3 @@
-import { FriendsManagementScreen } from '@/components/friends/friends-management-screen';
 import { LeaderboardScreen } from '@/components/leaderboard/leaderboard-screen';
 import { CorrectAnswersScreen } from '@/components/screens/correct-answers-screen';
 import { HowToPlayScreen } from '@/components/screens/how-to-play-screen';
@@ -67,7 +66,6 @@ export default function GameScreen() {
   const [puzzleFetchError, setPuzzleFetchError] = useState<string | null>(null);
 
   // Friends state
-  const [showFriendsScreen, setShowFriendsScreen] = useState(false);
   const [pendingFriendRequestCount, setPendingFriendRequestCount] = useState(0);
   const [friendIds, setFriendIds] = useState<string[]>([]);
 
@@ -172,7 +170,6 @@ export default function GameScreen() {
       setFriendsLeaderboardLoaded(false);
       setFriendsLeaderboardFrom(0);
       setFriendsLeaderboardHasMore(true);
-      setShowFriendsScreen(false);
 
       // If there was a previous user, refresh leaderboard to clear isCurrentUser flags
       if (prevUserForSignOutRef.current) {
@@ -462,26 +459,6 @@ export default function GameScreen() {
       logger.error('Error loading friends leaderboard:', e);
     } finally {
       setLoadingFriendsLeaderboard(false);
-    }
-  };
-
-  const handleFriendsChanged = async () => {
-    if (!user) return;
-    // Reload friend IDs and pending count
-    try {
-      const [count, ids] = await Promise.all([
-        getPendingRequestCount(user.id),
-        getFriendIds(user.id),
-      ]);
-      setPendingFriendRequestCount(count);
-      setFriendIds(ids);
-      // Reset friends leaderboard so it reloads with new friends
-      setFriendsLeaderboard([]);
-      setFriendsLeaderboardLoaded(false);
-      setFriendsLeaderboardFrom(0);
-      setFriendsLeaderboardHasMore(true);
-    } catch (e) {
-      logger.error('Error refreshing friends data:', e);
     }
   };
 
@@ -876,20 +853,6 @@ export default function GameScreen() {
     );
   }
 
-  // Show full-screen friends management
-  if (showFriendsScreen && user) {
-    return (
-      <>
-        <FriendsManagementScreen
-          userId={user.id}
-          onBack={() => setShowFriendsScreen(false)}
-          onFriendsChanged={handleFriendsChanged}
-        />
-        {renderSignInModal()}
-      </>
-    );
-  }
-
   // Show full-screen leaderboard
   if (showLeaderboardScreen) {
     return (
@@ -993,7 +956,6 @@ export default function GameScreen() {
         onRefreshLeaderboard={refreshLeaderboard}
         onShowAnswers={() => setShowAnswersScreen(true)}
         onShowTutorial={() => setShowTutorial(true)}
-        onShowFriends={() => setShowFriendsScreen(true)}
         pendingFriendRequestCount={pendingFriendRequestCount}
         signInWithGoogle={signInWithGoogle}
         signInWithApple={signInWithApple}

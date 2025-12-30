@@ -4,7 +4,7 @@ import { GameScore } from '@/types/game';
 import { logger } from '@/utils/logger';
 import { AntDesign, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { User } from '@supabase/supabase-js';
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import LottieView from 'lottie-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -86,7 +86,6 @@ export interface HomeMenuProps {
   onRefreshLeaderboard: () => void;
   onShowAnswers: () => void;
   onShowTutorial: () => void;
-  onShowFriends: () => void;
 
   pendingFriendRequestCount: number;
 
@@ -136,13 +135,13 @@ export function HomeMenu({
   onRefreshLeaderboard,
   onShowAnswers,
   onShowTutorial,
-  onShowFriends,
   pendingFriendRequestCount,
   signInWithGoogle,
   signInWithApple,
   signOut,
   showEntranceAnimations = false,
 }: HomeMenuProps) {
+  const router = useRouter();
   const displayNameInputRef = useRef<TextInput>(null);
   const lottieRef = useRef<LottieView>(null);
   const [animationPhase, setAnimationPhase] = useState<'intro' | 'loop' | 'tap'>('intro');
@@ -451,7 +450,7 @@ export function HomeMenu({
         <View style={styles.homeHeaderRight}>
           {user ? (
             <>
-              <TouchableOpacity style={styles.headerFriendsButton} onPress={onShowFriends}>
+              <TouchableOpacity style={styles.headerFriendsButton} onPress={() => router.push('/friends')}>
                 <Ionicons name="people" size={22} color={colorScheme.brandPrimary} />
                 {pendingFriendRequestCount > 0 && (
                   <View style={styles.headerFriendsBadge}>

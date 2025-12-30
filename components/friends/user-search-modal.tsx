@@ -199,20 +199,21 @@ export function UserSearchModal({
             <Text style={styles.errorText}>{error}</Text>
           )}
 
-          <FlatList
-            data={searchResults}
-            keyExtractor={item => item.id}
-            renderItem={renderUserItem}
-            style={styles.resultsList}
-            contentContainerStyle={styles.resultsContent}
-            ListEmptyComponent={
-              searchPerformed && !loading ? (
-                <Text style={styles.emptyText}>
-                  No users found matching &quot;{searchQuery}&quot;
-                </Text>
-              ) : null
-            }
-          />
+          {searchResults.length > 0 && (
+            <FlatList
+              data={searchResults}
+              keyExtractor={item => item.id}
+              renderItem={renderUserItem}
+              style={styles.resultsList}
+              contentContainerStyle={styles.resultsContent}
+            />
+          )}
+
+          {searchPerformed && !loading && searchResults.length === 0 && (
+            <Text style={styles.emptyText}>
+              No users found matching &quot;{searchQuery}&quot;
+            </Text>
+          )}
 
           <TouchableOpacity style={styles.cancelButton} onPress={handleClose}>
             <Text style={styles.cancelText}>Cancel</Text>
@@ -290,11 +291,11 @@ const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
     textAlign: 'center',
   },
   resultsList: {
-    flex: 1,
-    minHeight: 100,
+    maxHeight: 300,
+    marginTop: 4,
   },
   resultsContent: {
-    flexGrow: 1,
+    paddingBottom: 4,
   },
   emptyText: {
     color: colorScheme.textMuted,
