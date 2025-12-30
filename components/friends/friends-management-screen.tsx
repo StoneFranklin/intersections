@@ -52,6 +52,7 @@ export function FriendsManagementScreen({
   const [incomingRequests, setIncomingRequests] = useState<FriendRequest[]>([]);
   const [outgoingRequests, setOutgoingRequests] = useState<FriendRequest[]>([]);
   const [loadingRequests, setLoadingRequests] = useState(true);
+  const [isRefreshingRequests, setIsRefreshingRequests] = useState(false);
   const [processingRequestId, setProcessingRequestId] = useState<string | null>(null);
   const [pendingCount, setPendingCount] = useState(0);
 
@@ -71,8 +72,13 @@ export function FriendsManagementScreen({
     }
   }, [userId]);
 
-  const loadRequests = useCallback(async () => {
-    setLoadingRequests(true);
+  const loadRequests = useCallback(async (isRefresh = false) => {
+    if (isRefresh) {
+      setIsRefreshingRequests(true);
+    } else {
+      setLoadingRequests(true);
+    }
+
     try {
       const [requestsData, count] = await Promise.all([
         getFriendRequests(userId),
@@ -83,8 +89,19 @@ export function FriendsManagementScreen({
       setPendingCount(count);
     } finally {
       setLoadingRequests(false);
+      setIsRefreshingRequests(false);
     }
   }, [userId]);
+
+  const handleRefresh = useCallback(async () => {
+    if (activeTab === 'friends') {
+      await loadFriends(true);
+    } else {
+      await loadRequests(true);
+    }
+  }, [activeTab, loadFriends, loadRequests]);
+
+  const isRefreshing = activeTab === 'friends' ? isRefreshingFriends : isRefreshingRequests;
 
   useEffect(() => {
     loadFriends();
@@ -156,12 +173,25 @@ export function FriendsManagementScreen({
           <Ionicons name="people" size={24} color={colorScheme.brandPrimary} />
           <Text style={styles.headerTitle}>Friends</Text>
         </View>
-        <TouchableOpacity
-          onPress={() => setShowSearchModal(true)}
-          style={styles.addButton}
-        >
-          <Ionicons name="person-add" size={22} color={colorScheme.success} />
-        </TouchableOpacity>
+        <View style={styles.headerRight}>
+          <TouchableOpacity
+            onPress={handleRefresh}
+            style={styles.refreshButton}
+            disabled={isRefreshing}
+          >
+            <Ionicons
+              name="refresh"
+              size={20}
+              color={isRefreshing ? colorScheme.textMuted : colorScheme.brandPrimary}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setShowSearchModal(true)}
+            style={styles.addButton}
+          >
+            <Ionicons name="person-add" size={22} color={colorScheme.success} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Tab Bar */}
@@ -254,10 +284,16 @@ const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
     fontWeight: '600',
     color: colorScheme.textPrimary,
   },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  refreshButton: {
+    padding: 8,
+  },
   addButton: {
     padding: 8,
-    width: 44,
-    alignItems: 'center',
   },
   tabBar: {
     flexDirection: 'row',
