@@ -43,6 +43,28 @@ export const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
     fontWeight: '700',
     color: colorScheme.warning,
   },
+  headerFriendsButton: {
+    padding: 8,
+    marginRight: 8,
+    position: 'relative',
+  },
+  headerFriendsBadge: {
+    position: 'absolute',
+    top: 2,
+    right: 2,
+    backgroundColor: colorScheme.error,
+    borderRadius: 8,
+    minWidth: 16,
+    height: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+  },
+  headerFriendsBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: colorScheme.textPrimary,
+  },
   headerProfileButton: {
     padding: 4,
   },

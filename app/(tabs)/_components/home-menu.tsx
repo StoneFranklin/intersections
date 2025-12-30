@@ -450,13 +450,23 @@ export function HomeMenu({
         </View>
         <View style={styles.homeHeaderRight}>
           {user ? (
-            <TouchableOpacity style={styles.headerProfileButton} onPress={() => setShowProfileMenu(true)}>
-              <View style={styles.headerProfileIcon}>
-                <Text style={styles.headerProfileInitial}>
-                  {(displayName || user.email || 'U').charAt(0).toUpperCase()}
-                </Text>
-              </View>
-            </TouchableOpacity>
+            <>
+              <TouchableOpacity style={styles.headerFriendsButton} onPress={onShowFriends}>
+                <Ionicons name="people" size={22} color={colorScheme.brandPrimary} />
+                {pendingFriendRequestCount > 0 && (
+                  <View style={styles.headerFriendsBadge}>
+                    <Text style={styles.headerFriendsBadgeText}>{pendingFriendRequestCount}</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.headerProfileButton} onPress={() => setShowProfileMenu(true)}>
+                <View style={styles.headerProfileIcon}>
+                  <Text style={styles.headerProfileInitial}>
+                    {(displayName || user.email || 'U').charAt(0).toUpperCase()}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            </>
           ) : (
             <TouchableOpacity style={styles.headerSignInButton} onPress={() => setShowSignIn(true)}>
               <Text style={styles.headerSignInText}>Sign In</Text>
@@ -883,22 +893,6 @@ export function HomeMenu({
             >
               <Ionicons name="pencil" size={18} color="#6a9fff" style={styles.profileMenuItemIcon} />
               <Text style={styles.profileMenuItemText}>Edit Display Name</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.profileMenuItem}
-              onPress={() => {
-                setShowProfileMenu(false);
-                onShowFriends();
-              }}
-            >
-              <Ionicons name="people" size={18} color="#6a9fff" style={styles.profileMenuItemIcon} />
-              <Text style={styles.profileMenuItemText}>Friends</Text>
-              {pendingFriendRequestCount > 0 && (
-                <View style={styles.profileMenuBadge}>
-                  <Text style={styles.profileMenuBadgeText}>{pendingFriendRequestCount}</Text>
-                </View>
-              )}
             </TouchableOpacity>
 
             <View style={styles.profileMenuDivider} />
