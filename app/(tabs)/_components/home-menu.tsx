@@ -86,6 +86,9 @@ export interface HomeMenuProps {
   onRefreshLeaderboard: () => void;
   onShowAnswers: () => void;
   onShowTutorial: () => void;
+  onShowFriends: () => void;
+
+  pendingFriendRequestCount: number;
 
   signInWithGoogle: () => Promise<void>;
   signInWithApple: () => Promise<void>;
@@ -133,6 +136,8 @@ export function HomeMenu({
   onRefreshLeaderboard,
   onShowAnswers,
   onShowTutorial,
+  onShowFriends,
+  pendingFriendRequestCount,
   signInWithGoogle,
   signInWithApple,
   signOut,
@@ -878,6 +883,22 @@ export function HomeMenu({
             >
               <Ionicons name="pencil" size={18} color="#6a9fff" style={styles.profileMenuItemIcon} />
               <Text style={styles.profileMenuItemText}>Edit Display Name</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.profileMenuItem}
+              onPress={() => {
+                setShowProfileMenu(false);
+                onShowFriends();
+              }}
+            >
+              <Ionicons name="people" size={18} color="#6a9fff" style={styles.profileMenuItemIcon} />
+              <Text style={styles.profileMenuItemText}>Friends</Text>
+              {pendingFriendRequestCount > 0 && (
+                <View style={styles.profileMenuBadge}>
+                  <Text style={styles.profileMenuBadgeText}>{pendingFriendRequestCount}</Text>
+                </View>
+              )}
             </TouchableOpacity>
 
             <View style={styles.profileMenuDivider} />

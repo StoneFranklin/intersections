@@ -61,7 +61,8 @@
       "Bash(sips:*)",
       "Bash(eas --version:*)",
       "Bash(ls -la \"c:\\\\Users\\\\saf1\\\\Documents\\\\react-native\\\\word-game\\\\components\\\\ads\"\" 2>/dev/null || echo \"No ads directory found \")",
-      "Bash(ls -la \"c:\\\\Users\\\\saf1\\\\Documents\\\\react-native\\\\word-game\\\\hooks\"\" | grep -i \"ad|reward \")"
+      "Bash(ls -la \"c:\\\\Users\\\\saf1\\\\Documents\\\\react-native\\\\word-game\\\\hooks\"\" | grep -i \"ad|reward \")",
+      "Bash(powershell -Command \"\\(Get-Item ''assets\\\\images\\\\intersections-logo.png''\\).Length\")"
     ]
   }
 }

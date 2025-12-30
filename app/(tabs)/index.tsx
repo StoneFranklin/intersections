@@ -1,9 +1,10 @@
+import { FriendsManagementScreen } from '@/components/friends/friends-management-screen';
 import { LeaderboardScreen } from '@/components/leaderboard/leaderboard-screen';
 import { CorrectAnswersScreen } from '@/components/screens/correct-answers-screen';
 import { HowToPlayScreen } from '@/components/screens/how-to-play-screen';
 import { LoadingScreen } from '@/components/screens/loading-screen';
 import { useAuth } from '@/contexts/auth-context';
-import { fetchTodaysPuzzle, getOrCreateProfile, getPercentile, getTodayLeaderboard, getTodayLeaderboardPage, getUserStreak, getUserTodayScore, hasUserCompletedToday, LeaderboardEntry, reconcileScoreOnSignIn, updateDisplayName, updateUserStreak } from '@/data/puzzleApi';
+import { fetchTodaysPuzzle, getFriendIds, getFriendsLeaderboardPage, getOrCreateProfile, getPercentile, getPendingRequestCount, getTodayLeaderboard, getTodayLeaderboardPage, getUserStreak, getUserTodayScore, hasUserCompletedToday, LeaderboardEntry, reconcileScoreOnSignIn, updateDisplayName, updateUserStreak } from '@/data/puzzleApi';
 import { GameScore, Puzzle } from '@/types/game';
 import { getTodayKey, getYesterdayKey } from '@/utils/dateKeys';
 import {
@@ -64,6 +65,19 @@ export default function GameScreen() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [currentGameEnded, setCurrentGameEnded] = useState(false);
   const [puzzleFetchError, setPuzzleFetchError] = useState<string | null>(null);
+
+  // Friends state
+  const [showFriendsScreen, setShowFriendsScreen] = useState(false);
+  const [pendingFriendRequestCount, setPendingFriendRequestCount] = useState(0);
+  const [friendIds, setFriendIds] = useState<string[]>([]);
+
+  // Friends leaderboard state
+  const [leaderboardTab, setLeaderboardTab] = useState<'global' | 'friends'>('global');
+  const [friendsLeaderboard, setFriendsLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [loadingFriendsLeaderboard, setLoadingFriendsLeaderboard] = useState(false);
+  const [friendsLeaderboardLoaded, setFriendsLeaderboardLoaded] = useState(false);
+  const [friendsLeaderboardFrom, setFriendsLeaderboardFrom] = useState(0);
+  const [friendsLeaderboardHasMore, setFriendsLeaderboardHasMore] = useState(true);
 
   // Loading screen state - only show on first render of the session
   const [showLoadingScreen, setShowLoadingScreen] = useState(!hasShownLoadingThisSession);
@@ -151,12 +165,39 @@ export default function GameScreen() {
       setUserRank(null);
       setShowLeaderboardScreen(false);
 
+      // Clear friends state
+      setPendingFriendRequestCount(0);
+      setFriendIds([]);
+      setFriendsLeaderboard([]);
+      setFriendsLeaderboardLoaded(false);
+      setFriendsLeaderboardFrom(0);
+      setFriendsLeaderboardHasMore(true);
+      setShowFriendsScreen(false);
+
       // If there was a previous user, refresh leaderboard to clear isCurrentUser flags
       if (prevUserForSignOutRef.current) {
         logger.log('User signed out, clearing leaderboard state');
         prevUserForSignOutRef.current = null;
       }
     }
+  }, [user]);
+
+  // Load pending friend request count when user logs in
+  useEffect(() => {
+    const loadFriendsData = async () => {
+      if (!user) return;
+      try {
+        const [count, ids] = await Promise.all([
+          getPendingRequestCount(user.id),
+          getFriendIds(user.id),
+        ]);
+        setPendingFriendRequestCount(count);
+        setFriendIds(ids);
+      } catch (e) {
+        logger.error('Error loading friends data:', e);
+      }
+    };
+    loadFriendsData();
   }, [user]);
 
   // Load notification preference
@@ -404,6 +445,46 @@ export default function GameScreen() {
     }
   };
 
+  const loadFriendsLeaderboard = async (opts?: { reset?: boolean }) => {
+    if (!user) return;
+    if (loadingFriendsLeaderboard) return;
+    if (!friendsLeaderboardHasMore && !opts?.reset) return;
+
+    setLoadingFriendsLeaderboard(true);
+    try {
+      const from = opts?.reset ? 0 : friendsLeaderboardFrom;
+      const page = await getFriendsLeaderboardPage({ userId: user.id, from, pageSize: 50 });
+      setFriendsLeaderboard(prev => (opts?.reset ? page.entries : [...prev, ...page.entries]));
+      setFriendsLeaderboardFrom(page.nextFrom);
+      setFriendsLeaderboardHasMore(page.hasMore);
+      setFriendsLeaderboardLoaded(true);
+    } catch (e) {
+      logger.error('Error loading friends leaderboard:', e);
+    } finally {
+      setLoadingFriendsLeaderboard(false);
+    }
+  };
+
+  const handleFriendsChanged = async () => {
+    if (!user) return;
+    // Reload friend IDs and pending count
+    try {
+      const [count, ids] = await Promise.all([
+        getPendingRequestCount(user.id),
+        getFriendIds(user.id),
+      ]);
+      setPendingFriendRequestCount(count);
+      setFriendIds(ids);
+      // Reset friends leaderboard so it reloads with new friends
+      setFriendsLeaderboard([]);
+      setFriendsLeaderboardLoaded(false);
+      setFriendsLeaderboardFrom(0);
+      setFriendsLeaderboardHasMore(true);
+    } catch (e) {
+      logger.error('Error refreshing friends data:', e);
+    }
+  };
+
   // Load leaderboard when puzzle is completed
   useEffect(() => {
     if (user && dailyCompleted && !leaderboardLoaded && !loadingLeaderboard) {
@@ -453,6 +534,17 @@ export default function GameScreen() {
     }
     if (!fullLeaderboardLoaded) {
       await loadFullLeaderboard({ reset: true });
+    }
+    // Load friends leaderboard if user has friends
+    if (friendIds.length > 0 && !friendsLeaderboardLoaded) {
+      await loadFriendsLeaderboard({ reset: true });
+    }
+  };
+
+  const handleLeaderboardTabChange = async (tab: 'global' | 'friends') => {
+    setLeaderboardTab(tab);
+    if (tab === 'friends' && !friendsLeaderboardLoaded) {
+      await loadFriendsLeaderboard({ reset: true });
     }
   };
 
@@ -784,6 +876,20 @@ export default function GameScreen() {
     );
   }
 
+  // Show full-screen friends management
+  if (showFriendsScreen && user) {
+    return (
+      <>
+        <FriendsManagementScreen
+          userId={user.id}
+          onBack={() => setShowFriendsScreen(false)}
+          onFriendsChanged={handleFriendsChanged}
+        />
+        {renderSignInModal()}
+      </>
+    );
+  }
+
   // Show full-screen leaderboard
   if (showLeaderboardScreen) {
     return (
@@ -800,6 +906,14 @@ export default function GameScreen() {
           onRefresh={refreshLeaderboard}
           onLoadMore={() => loadFullLeaderboard()}
           isCurrentUserEntry={isCurrentUserEntry}
+          showFriendsToggle={friendIds.length > 0}
+          activeTab={leaderboardTab}
+          onTabChange={handleLeaderboardTabChange}
+          friendsLeaderboard={friendsLeaderboard}
+          loadingFriendsLeaderboard={loadingFriendsLeaderboard}
+          friendsLeaderboardLoaded={friendsLeaderboardLoaded}
+          friendsLeaderboardHasMore={friendsLeaderboardHasMore}
+          onLoadMoreFriends={() => loadFriendsLeaderboard()}
         />
         {renderSignInModal()}
       </>
@@ -879,6 +993,8 @@ export default function GameScreen() {
         onRefreshLeaderboard={refreshLeaderboard}
         onShowAnswers={() => setShowAnswersScreen(true)}
         onShowTutorial={() => setShowTutorial(true)}
+        onShowFriends={() => setShowFriendsScreen(true)}
+        pendingFriendRequestCount={pendingFriendRequestCount}
         signInWithGoogle={signInWithGoogle}
         signInWithApple={signInWithApple}
         signOut={signOut}
