@@ -82,7 +82,7 @@ export function GameContent({
   const rewardedAd = useRewardedAd();
 
   const isGameOver = gameState.lives <= 0;
-  const shouldShowGameOver = isGameOver && (adOfferDeclined || !showRewardedAdModal) && hasShownAdOffer;
+  const shouldShowGameOver = isGameOver && (adOfferDeclined || !showRewardedAdModal) && hasShownAdOffer && !isGracefulFallback;
   const isGameActive = !isReviewMode && !gameState.isSolved && !isGameOver && !gameEnded;
 
   const isCurrentUserEntry = (entry: LeaderboardEntry): boolean => {
