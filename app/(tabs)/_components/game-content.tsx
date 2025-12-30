@@ -75,6 +75,8 @@ export function GameContent({
   const [hasShownAdOffer, setHasShownAdOffer] = useState(false);
   const [adOfferDeclined, setAdOfferDeclined] = useState(false);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [isGracefulFallback, setIsGracefulFallback] = useState(false);
+  const [fallbackCountdown, setFallbackCountdown] = useState(3);
 
   const rewardedAd = useRewardedAd();
 
@@ -103,7 +105,39 @@ export function GameContent({
   useEffect(() => {
     setHasShownAdOffer(false);
     setAdOfferDeclined(false);
+    setIsGracefulFallback(false);
+    setFallbackCountdown(3);
   }, [puzzle]);
+
+  // Handle graceful fallback when ad has an error
+  useEffect(() => {
+    if (showRewardedAdModal && rewardedAd.error && !rewardedAd.isLoading && !isGracefulFallback) {
+      // Start graceful fallback - show placeholder and grant reward
+      setIsGracefulFallback(true);
+      setFallbackCountdown(3);
+    }
+  }, [showRewardedAdModal, rewardedAd.error, rewardedAd.isLoading, isGracefulFallback]);
+
+  // Countdown timer for graceful fallback
+  useEffect(() => {
+    if (!isGracefulFallback) return;
+
+    if (fallbackCountdown <= 0) {
+      // Grant the reward and close modal
+      setShowRewardedAdModal(false);
+      setIsGracefulFallback(false);
+      grantExtraLife();
+      setAdOfferDeclined(false);
+      haptics.notification(Haptics.NotificationFeedbackType.Success);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setFallbackCountdown(prev => prev - 1);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [isGracefulFallback, fallbackCountdown, grantExtraLife]);
 
   const handleWatchAd = async () => {
     const rewarded = await rewardedAd.show();
@@ -575,6 +609,8 @@ export function GameContent({
         onRetry={rewardedAd.retry}
         error={rewardedAd.error}
         isNoFill={rewardedAd.isNoFill}
+        isGracefulFallback={isGracefulFallback}
+        fallbackCountdown={fallbackCountdown}
       />
 
       <LeaveGameModal

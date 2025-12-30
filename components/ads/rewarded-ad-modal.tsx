@@ -32,6 +32,10 @@ interface RewardedAdModalProps {
   error?: string | null;
   /** Whether the error is specifically a no-fill error */
   isNoFill?: boolean;
+  /** Whether we're in graceful fallback mode (granting reward due to ad error) */
+  isGracefulFallback?: boolean;
+  /** Countdown seconds remaining before auto-granting reward */
+  fallbackCountdown?: number;
 }
 
 /**
@@ -47,11 +51,13 @@ export function RewardedAdModal({
   onRetry,
   error,
   isNoFill,
+  isGracefulFallback,
+  fallbackCountdown,
 }: RewardedAdModalProps) {
   const { colorScheme } = useThemeScheme();
   const styles = useMemo(() => createStyles(colorScheme), [colorScheme]);
 
-  const hasError = !!error;
+  const hasError = !!error && !isGracefulFallback;
 
   return (
     <Modal
@@ -87,6 +93,16 @@ export function RewardedAdModal({
           {isShowing && (
             <View style={styles.loadingContainer}>
               <Text style={styles.loadingText}>Showing ad...</Text>
+            </View>
+          )}
+
+          {/* Graceful fallback - granting reward due to ad unavailability */}
+          {isGracefulFallback && (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={colorScheme.success} />
+              <Text style={styles.loadingText}>
+                Granting extra life{fallbackCountdown !== undefined ? ` in ${fallbackCountdown}...` : '...'}
+              </Text>
             </View>
           )}
 
