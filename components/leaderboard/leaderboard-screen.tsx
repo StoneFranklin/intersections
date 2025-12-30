@@ -8,6 +8,8 @@ import React, { useMemo } from 'react';
 import { ActivityIndicator, FlatList, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+type LeaderboardTab = 'global' | 'friends';
+
 interface LeaderboardScreenProps {
   fullLeaderboard: LeaderboardEntry[];
   loadingFullLeaderboard: boolean;
@@ -20,6 +22,15 @@ interface LeaderboardScreenProps {
   onRefresh: () => void;
   onLoadMore: () => void;
   isCurrentUserEntry: (entry: LeaderboardEntry) => boolean;
+  // Friends leaderboard props
+  showFriendsToggle: boolean;
+  activeTab: LeaderboardTab;
+  onTabChange: (tab: LeaderboardTab) => void;
+  friendsLeaderboard: LeaderboardEntry[];
+  loadingFriendsLeaderboard: boolean;
+  friendsLeaderboardLoaded: boolean;
+  friendsLeaderboardHasMore: boolean;
+  onLoadMoreFriends: () => void;
 }
 
 export function LeaderboardScreen({
@@ -34,9 +45,26 @@ export function LeaderboardScreen({
   onRefresh,
   onLoadMore,
   isCurrentUserEntry,
+  showFriendsToggle,
+  activeTab,
+  onTabChange,
+  friendsLeaderboard,
+  loadingFriendsLeaderboard,
+  friendsLeaderboardLoaded,
+  friendsLeaderboardHasMore,
+  onLoadMoreFriends,
 }: LeaderboardScreenProps) {
   const { colorScheme } = useThemeScheme();
   const styles = useMemo(() => createStyles(colorScheme), [colorScheme]);
+
+  // Determine which data to show based on active tab
+  const isGlobalTab = activeTab === 'global';
+  const currentData = isGlobalTab ? fullLeaderboard : friendsLeaderboard;
+  const currentLoading = isGlobalTab ? loadingFullLeaderboard : loadingFriendsLeaderboard;
+  const currentLoaded = isGlobalTab ? fullLeaderboardLoaded : friendsLeaderboardLoaded;
+  const currentHasMore = isGlobalTab ? fullLeaderboardHasMore : friendsLeaderboardHasMore;
+  const currentLoadMore = isGlobalTab ? onLoadMore : onLoadMoreFriends;
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.leaderboardScreenHeader}>
@@ -50,17 +78,39 @@ export function LeaderboardScreen({
         <TouchableOpacity
           style={styles.leaderboardScreenRefreshButton}
           onPress={onRefresh}
-          disabled={isRefreshing || loadingFullLeaderboard}
+          disabled={isRefreshing || currentLoading}
         >
           <Ionicons
             name="refresh"
             size={22}
-            color={isRefreshing || loadingFullLeaderboard ? colorScheme.textMuted : colorScheme.brandPrimary}
+            color={isRefreshing || currentLoading ? colorScheme.textMuted : colorScheme.brandPrimary}
           />
         </TouchableOpacity>
       </View>
 
-      {loadingFullLeaderboard && !fullLeaderboardLoaded && fullLeaderboard.length === 0 && (
+      {/* Tab Bar for Global/Friends */}
+      {showFriendsToggle && (
+        <View style={styles.leaderboardTabBar}>
+          <TouchableOpacity
+            style={[styles.leaderboardTab, isGlobalTab && styles.leaderboardTabActive]}
+            onPress={() => onTabChange('global')}
+          >
+            <Text style={[styles.leaderboardTabText, isGlobalTab && styles.leaderboardTabTextActive]}>
+              Global
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.leaderboardTab, !isGlobalTab && styles.leaderboardTabActive]}
+            onPress={() => onTabChange('friends')}
+          >
+            <Text style={[styles.leaderboardTabText, !isGlobalTab && styles.leaderboardTabTextActive]}>
+              Friends
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {currentLoading && !currentLoaded && currentData.length === 0 && (
         <View style={styles.leaderboardScreenLoadingOverlay}>
           <ActivityIndicator size="large" color={colorScheme.brandPrimary} />
           <Text style={styles.leaderboardScreenLoadingText}>Loading rankings...</Text>
@@ -68,7 +118,7 @@ export function LeaderboardScreen({
       )}
 
       <View style={{ flex: 1 }}>
-        {isRefreshing && fullLeaderboard.length > 0 && (
+        {isRefreshing && currentData.length > 0 && (
           <View style={styles.leaderboardScreenRefreshingOverlay}>
             <ActivityIndicator size="small" color={colorScheme.brandPrimary} />
           </View>
@@ -77,17 +127,17 @@ export function LeaderboardScreen({
         <FlatList
           style={styles.leaderboardScreenContent}
           contentContainerStyle={styles.leaderboardScreenContentContainer}
-          data={fullLeaderboard}
-          keyExtractor={(item, index) => `${item.rank}-${index}`}
+          data={currentData}
+          keyExtractor={(item, index) => `${activeTab}-${item.rank}-${index}`}
           onEndReached={() => {
-            if (fullLeaderboardHasMore && !loadingFullLeaderboard) {
-              onLoadMore();
+            if (currentHasMore && !currentLoading) {
+              currentLoadMore();
             }
           }}
           onEndReachedThreshold={0.5}
           ListHeaderComponent={
             <>
-              {userRank && (
+              {isGlobalTab && userRank && (
                 <View style={styles.userRankBanner}>
                   <Text style={styles.userRankBannerText}>You are ranked</Text>
                   <Text
@@ -115,10 +165,12 @@ export function LeaderboardScreen({
             </>
           }
           ListEmptyComponent={
-            loadingFullLeaderboard ? (
+            currentLoading ? (
               <ActivityIndicator size="large" color={colorScheme.brandPrimary} style={{ marginVertical: 40 }} />
             ) : (
-              <Text style={styles.leaderboardEmpty}>No scores yet today. Be the first!</Text>
+              <Text style={styles.leaderboardEmpty}>
+                {isGlobalTab ? 'No scores yet today. Be the first!' : 'No friends have played today yet.'}
+              </Text>
             )
           }
           renderItem={({ item: entry }) => (
@@ -172,13 +224,13 @@ export function LeaderboardScreen({
             </View>
           )}
           ListFooterComponent={
-            loadingFullLeaderboard && fullLeaderboardLoaded ? (
+            currentLoading && currentLoaded ? (
               <ActivityIndicator size="small" color={colorScheme.brandPrimary} style={{ marginVertical: 16 }} />
-            ) : fullLeaderboardHasMore && fullLeaderboardLoaded ? (
+            ) : currentHasMore && currentLoaded ? (
               <TouchableOpacity
                 style={styles.leaderboardCloseButton}
-                onPress={onLoadMore}
-                disabled={loadingFullLeaderboard}
+                onPress={currentLoadMore}
+                disabled={currentLoading}
               >
                 <Text style={styles.leaderboardCloseText}>Load more</Text>
               </TouchableOpacity>

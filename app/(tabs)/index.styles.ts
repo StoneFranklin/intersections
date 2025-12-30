@@ -415,6 +415,33 @@ export const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
     width: 40,
     alignItems: 'center',
   },
+  leaderboardTabBar: {
+    flexDirection: 'row',
+    marginHorizontal: 16,
+    marginTop: 12,
+    marginBottom: 8,
+    backgroundColor: colorScheme.backgroundTertiary,
+    borderRadius: 10,
+    padding: 4,
+  },
+  leaderboardTab: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderRadius: 8,
+  },
+  leaderboardTabActive: {
+    backgroundColor: colorScheme.brandPrimary,
+  },
+  leaderboardTabText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: colorScheme.textTertiary,
+  },
+  leaderboardTabTextActive: {
+    color: colorScheme.textPrimary,
+    fontWeight: '600',
+  },
   leaderboardScreenContent: {
     flex: 1,
   },
@@ -1007,6 +1034,20 @@ export const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
   profileMenuItemTextDanger: {
     fontSize: 15,
     color: colorScheme.error,
+  },
+  profileMenuBadge: {
+    backgroundColor: colorScheme.error,
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+  },
+  profileMenuBadgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colorScheme.textPrimary,
   },
   profileMenuSection: {
     paddingHorizontal: 4,

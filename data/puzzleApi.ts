@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import { IntersectionsDailyPuzzle, Puzzle, Word } from "@/types/game";
+import { Friend, FriendRequest, UserSearchResult } from "@/types/friends";
 import { logger } from "@/utils/logger";
 import { validateDisplayName } from "@/utils/displayNameValidation";
 
@@ -905,5 +906,463 @@ export async function reconcileScoreOnSignIn(
     return { action: 'no_change' };
   } finally {
     reconciliationInProgress = null;
+  }
+}
+
+// ================== FRIENDS API ==================
+
+/**
+ * Search for users by display name (for adding friends)
+ * Excludes the current user and returns friendship status
+ */
+export async function searchUsers(
+  currentUserId: string,
+  query: string,
+  limit: number = 20
+): Promise<UserSearchResult[]> {
+  if (!query.trim()) return [];
+
+  try {
+    // Search profiles by display name
+    const { data: profiles, error: profilesError } = await supabase
+      .from('profiles')
+      .select('id, display_name')
+      .ilike('display_name', `%${query}%`)
+      .neq('id', currentUserId)
+      .not('display_name', 'is', null)
+      .limit(limit);
+
+    if (profilesError) {
+      logger.error('Error searching users:', profilesError);
+      return [];
+    }
+
+    if (!profiles || profiles.length === 0) return [];
+
+    // Get friendship status for each user
+    const userIds = profiles.map(p => p.id);
+    const { data: friendships, error: friendshipsError } = await supabase
+      .from('friendships')
+      .select('id, requester_id, addressee_id, status')
+      .or(`requester_id.eq.${currentUserId},addressee_id.eq.${currentUserId}`)
+      .in('requester_id', [currentUserId, ...userIds])
+      .in('addressee_id', [currentUserId, ...userIds]);
+
+    if (friendshipsError) {
+      logger.error('Error fetching friendships for search:', friendshipsError);
+    }
+
+    // Build a map of user ID to friendship status
+    const friendshipMap = new Map<string, UserSearchResult['friendshipStatus']>();
+    if (friendships) {
+      for (const f of friendships) {
+        const otherUserId = f.requester_id === currentUserId ? f.addressee_id : f.requester_id;
+        if (f.status === 'accepted') {
+          friendshipMap.set(otherUserId, 'accepted');
+        } else if (f.status === 'pending') {
+          if (f.requester_id === currentUserId) {
+            friendshipMap.set(otherUserId, 'pending_outgoing');
+          } else {
+            friendshipMap.set(otherUserId, 'pending_incoming');
+          }
+        }
+      }
+    }
+
+    return profiles.map(profile => ({
+      id: profile.id,
+      displayName: profile.display_name || 'Anonymous',
+      friendshipStatus: friendshipMap.get(profile.id) || 'none',
+    }));
+  } catch (e) {
+    logger.error('Error in searchUsers:', e);
+    return [];
+  }
+}
+
+/**
+ * Send a friend request to another user
+ */
+export async function sendFriendRequest(
+  requesterId: string,
+  addresseeId: string
+): Promise<{ success: boolean; error?: string; friendshipId?: string }> {
+  try {
+    // Check if friendship already exists in either direction
+    const { data: existing, error: existingError } = await supabase
+      .from('friendships')
+      .select('id, status, requester_id')
+      .or(`and(requester_id.eq.${requesterId},addressee_id.eq.${addresseeId}),and(requester_id.eq.${addresseeId},addressee_id.eq.${requesterId})`)
+      .maybeSingle();
+
+    if (existingError && existingError.code !== 'PGRST116') {
+      logger.error('Error checking existing friendship:', existingError);
+      return { success: false, error: 'Failed to check existing friendship' };
+    }
+
+    if (existing) {
+      if (existing.status === 'accepted') {
+        return { success: false, error: 'Already friends' };
+      }
+      if (existing.status === 'pending') {
+        if (existing.requester_id === requesterId) {
+          return { success: false, error: 'Friend request already sent' };
+        } else {
+          // They sent us a request - accept it instead
+          const acceptResult = await acceptFriendRequest(existing.id, requesterId);
+          if (acceptResult.success) {
+            return { success: true, friendshipId: existing.id };
+          }
+          return { success: false, error: 'Failed to accept existing request' };
+        }
+      }
+      if (existing.status === 'blocked') {
+        return { success: false, error: 'Cannot send request to this user' };
+      }
+    }
+
+    // Create new friend request
+    const { data, error } = await supabase
+      .from('friendships')
+      .insert({
+        requester_id: requesterId,
+        addressee_id: addresseeId,
+        status: 'pending',
+      })
+      .select('id')
+      .single();
+
+    if (error) {
+      logger.error('Error sending friend request:', error);
+      return { success: false, error: 'Failed to send friend request' };
+    }
+
+    return { success: true, friendshipId: data.id };
+  } catch (e) {
+    logger.error('Error in sendFriendRequest:', e);
+    return { success: false, error: 'An unexpected error occurred' };
+  }
+}
+
+/**
+ * Accept a friend request
+ */
+export async function acceptFriendRequest(
+  friendshipId: string,
+  userId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { error } = await supabase
+      .from('friendships')
+      .update({ status: 'accepted', updated_at: new Date().toISOString() })
+      .eq('id', friendshipId)
+      .eq('addressee_id', userId)
+      .eq('status', 'pending');
+
+    if (error) {
+      logger.error('Error accepting friend request:', error);
+      return { success: false, error: 'Failed to accept friend request' };
+    }
+
+    return { success: true };
+  } catch (e) {
+    logger.error('Error in acceptFriendRequest:', e);
+    return { success: false, error: 'An unexpected error occurred' };
+  }
+}
+
+/**
+ * Decline a friend request
+ */
+export async function declineFriendRequest(
+  friendshipId: string,
+  userId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { error } = await supabase
+      .from('friendships')
+      .delete()
+      .eq('id', friendshipId)
+      .eq('addressee_id', userId)
+      .eq('status', 'pending');
+
+    if (error) {
+      logger.error('Error declining friend request:', error);
+      return { success: false, error: 'Failed to decline friend request' };
+    }
+
+    return { success: true };
+  } catch (e) {
+    logger.error('Error in declineFriendRequest:', e);
+    return { success: false, error: 'An unexpected error occurred' };
+  }
+}
+
+/**
+ * Cancel an outgoing friend request
+ */
+export async function cancelFriendRequest(
+  friendshipId: string,
+  userId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { error } = await supabase
+      .from('friendships')
+      .delete()
+      .eq('id', friendshipId)
+      .eq('requester_id', userId)
+      .eq('status', 'pending');
+
+    if (error) {
+      logger.error('Error canceling friend request:', error);
+      return { success: false, error: 'Failed to cancel friend request' };
+    }
+
+    return { success: true };
+  } catch (e) {
+    logger.error('Error in cancelFriendRequest:', e);
+    return { success: false, error: 'An unexpected error occurred' };
+  }
+}
+
+/**
+ * Remove a friend (unfriend)
+ */
+export async function removeFriend(
+  friendshipId: string,
+  userId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { error } = await supabase
+      .from('friendships')
+      .delete()
+      .eq('id', friendshipId)
+      .eq('status', 'accepted')
+      .or(`requester_id.eq.${userId},addressee_id.eq.${userId}`);
+
+    if (error) {
+      logger.error('Error removing friend:', error);
+      return { success: false, error: 'Failed to remove friend' };
+    }
+
+    return { success: true };
+  } catch (e) {
+    logger.error('Error in removeFriend:', e);
+    return { success: false, error: 'An unexpected error occurred' };
+  }
+}
+
+/**
+ * Get all pending friend requests (incoming and outgoing)
+ */
+export async function getFriendRequests(
+  userId: string
+): Promise<{ incoming: FriendRequest[]; outgoing: FriendRequest[] }> {
+  try {
+    const { data, error } = await supabase
+      .from('friendships')
+      .select('id, requester_id, addressee_id, status, created_at')
+      .eq('status', 'pending')
+      .or(`requester_id.eq.${userId},addressee_id.eq.${userId}`);
+
+    if (error) {
+      logger.error('Error fetching friend requests:', error);
+      return { incoming: [], outgoing: [] };
+    }
+
+    if (!data || data.length === 0) {
+      return { incoming: [], outgoing: [] };
+    }
+
+    // Get all user IDs we need to look up
+    const userIds = data.map(f =>
+      f.requester_id === userId ? f.addressee_id : f.requester_id
+    );
+    const displayNames = await fetchDisplayNames(userIds);
+
+    const incoming: FriendRequest[] = [];
+    const outgoing: FriendRequest[] = [];
+
+    for (const friendship of data) {
+      const isIncoming = friendship.addressee_id === userId;
+      const otherUserId = isIncoming ? friendship.requester_id : friendship.addressee_id;
+
+      const request: FriendRequest = {
+        id: friendship.id,
+        user: {
+          id: otherUserId,
+          displayName: displayNames.get(otherUserId) || null,
+        },
+        status: friendship.status,
+        createdAt: friendship.created_at,
+        direction: isIncoming ? 'incoming' : 'outgoing',
+      };
+
+      if (isIncoming) {
+        incoming.push(request);
+      } else {
+        outgoing.push(request);
+      }
+    }
+
+    return { incoming, outgoing };
+  } catch (e) {
+    logger.error('Error in getFriendRequests:', e);
+    return { incoming: [], outgoing: [] };
+  }
+}
+
+/**
+ * Get all accepted friends
+ */
+export async function getFriends(userId: string): Promise<Friend[]> {
+  try {
+    const { data, error } = await supabase
+      .from('friendships')
+      .select('id, requester_id, addressee_id')
+      .eq('status', 'accepted')
+      .or(`requester_id.eq.${userId},addressee_id.eq.${userId}`);
+
+    if (error) {
+      logger.error('Error fetching friends:', error);
+      return [];
+    }
+
+    if (!data || data.length === 0) {
+      return [];
+    }
+
+    // Get the "other" user IDs
+    const friendUserIds = data.map(f =>
+      f.requester_id === userId ? f.addressee_id : f.requester_id
+    );
+    const displayNames = await fetchDisplayNames(friendUserIds);
+
+    return data.map(friendship => {
+      const friendId = friendship.requester_id === userId
+        ? friendship.addressee_id
+        : friendship.requester_id;
+      return {
+        id: friendId,
+        displayName: displayNames.get(friendId) || null,
+        friendshipId: friendship.id,
+      };
+    });
+  } catch (e) {
+    logger.error('Error in getFriends:', e);
+    return [];
+  }
+}
+
+/**
+ * Get friend IDs for filtering leaderboard
+ */
+export async function getFriendIds(userId: string): Promise<string[]> {
+  try {
+    const { data, error } = await supabase
+      .from('friendships')
+      .select('requester_id, addressee_id')
+      .eq('status', 'accepted')
+      .or(`requester_id.eq.${userId},addressee_id.eq.${userId}`);
+
+    if (error) {
+      logger.error('Error fetching friend IDs:', error);
+      return [];
+    }
+
+    if (!data) return [];
+
+    return data.map(f =>
+      f.requester_id === userId ? f.addressee_id : f.requester_id
+    );
+  } catch (e) {
+    logger.error('Error in getFriendIds:', e);
+    return [];
+  }
+}
+
+/**
+ * Get today's friends leaderboard (paginated)
+ */
+export async function getFriendsLeaderboardPage(params: {
+  userId: string;
+  from?: number;
+  pageSize?: number;
+}): Promise<{ entries: LeaderboardEntry[]; hasMore: boolean; nextFrom: number }> {
+  const { userId, from = 0, pageSize = 50 } = params;
+  const puzzleDate = getTodayDateString();
+
+  try {
+    // Get friend IDs
+    const friendIds = await getFriendIds(userId);
+
+    // Include self in the leaderboard
+    const userIdsToInclude = [userId, ...friendIds];
+
+    if (userIdsToInclude.length === 0) {
+      return { entries: [], hasMore: false, nextFrom: from };
+    }
+
+    const { data, error } = await supabase
+      .from('puzzle_scores')
+      .select('score, time_seconds, correct_placements, mistakes, user_id')
+      .eq('puzzle_date', puzzleDate)
+      .in('user_id', userIdsToInclude)
+      .order('score', { ascending: false })
+      .order('time_seconds', { ascending: true })
+      .range(from, from + pageSize);
+
+    if (error) {
+      logger.error('Error fetching friends leaderboard:', error);
+      return { entries: [], hasMore: false, nextFrom: from };
+    }
+
+    const rows = data || [];
+    const hasMore = rows.length > pageSize;
+    const pageRows = rows.slice(0, pageSize);
+
+    const userIds = pageRows
+      .filter(r => r.user_id)
+      .map(r => r.user_id as string);
+
+    const displayNames = await fetchDisplayNames(userIds);
+
+    const entries: LeaderboardEntry[] = pageRows.map((row, index) => ({
+      rank: from + index + 1,
+      score: row.score,
+      timeSeconds: row.time_seconds,
+      correctPlacements: row.correct_placements || 0,
+      mistakes: row.mistakes || 0,
+      displayName: row.user_id ? displayNames.get(row.user_id) || null : null,
+      isCurrentUser: row.user_id === userId,
+    }));
+
+    return { entries, hasMore, nextFrom: from + pageRows.length };
+  } catch (e) {
+    logger.error('Error in getFriendsLeaderboardPage:', e);
+    return { entries: [], hasMore: false, nextFrom: from };
+  }
+}
+
+/**
+ * Get count of pending incoming requests (for badge)
+ */
+export async function getPendingRequestCount(userId: string): Promise<number> {
+  try {
+    const { count, error } = await supabase
+      .from('friendships')
+      .select('*', { count: 'exact', head: true })
+      .eq('addressee_id', userId)
+      .eq('status', 'pending');
+
+    if (error) {
+      logger.error('Error fetching pending request count:', error);
+      return 0;
+    }
+
+    return count || 0;
+  } catch (e) {
+    logger.error('Error in getPendingRequestCount:', e);
+    return 0;
   }
 }
