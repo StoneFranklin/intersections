@@ -520,10 +520,13 @@ export default function GameScreen() {
     return () => clearInterval(intervalId);
   }, [dailyCompleted, leaderboardLoaded, isPlaying, showLeaderboardScreen, lastLeaderboardRefresh, user]);
 
-  const openLeaderboard = async () => {
+  const openLeaderboard = async (tab?: 'global' | 'friends') => {
     if (!user) {
       setShowSignIn(true);
       return;
+    }
+    if (tab) {
+      setLeaderboardTab(tab);
     }
     setShowLeaderboardScreen(true);
     if (!leaderboardLoaded) {
@@ -532,8 +535,8 @@ export default function GameScreen() {
     if (!fullLeaderboardLoaded) {
       await loadFullLeaderboard({ reset: true });
     }
-    // Load friends leaderboard if user has friends
-    if (friendIds.length > 0 && !friendsLeaderboardLoaded) {
+    // Load friends leaderboard if user has friends or if friends tab requested
+    if ((friendIds.length > 0 || tab === 'friends') && !friendsLeaderboardLoaded) {
       await loadFriendsLeaderboard({ reset: true });
     }
   };
@@ -948,6 +951,11 @@ export default function GameScreen() {
         savedScore={savedScore}
         isRefreshing={isRefreshing}
         puzzleFetchError={puzzleFetchError}
+        friendsLeaderboard={friendsLeaderboard}
+        loadingFriendsLeaderboard={loadingFriendsLeaderboard}
+        friendsLeaderboardLoaded={friendsLeaderboardLoaded}
+        hasFriends={friendIds.length > 0}
+        onLoadFriendsLeaderboard={() => loadFriendsLeaderboard({ reset: true })}
         showSignIn={showSignIn}
         setShowSignIn={setShowSignIn}
         signingIn={signingIn}

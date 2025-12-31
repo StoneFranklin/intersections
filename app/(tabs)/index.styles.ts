@@ -1904,5 +1904,31 @@ export const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
     color: colorScheme.textTertiary,
     fontSize: 14,
   },
+  homeLeaderboardTabBar: {
+    flexDirection: 'row',
+    marginTop: 8,
+    width: '80%',
+    backgroundColor: colorScheme.backgroundTertiary,
+    borderRadius: 6,
+    padding: 2,
+  },
+  homeLeaderboardTab: {
+    flex: 1,
+    paddingVertical: 3,
+    alignItems: 'center',
+    borderRadius: 4,
+  },
+  homeLeaderboardTabActive: {
+    backgroundColor: colorScheme.brandPrimary,
+  },
+  homeLeaderboardTabText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: colorScheme.textTertiary,
+  },
+  homeLeaderboardTabTextActive: {
+    color: colorScheme.textPrimary,
+    fontWeight: '600',
+  },
 });
 
