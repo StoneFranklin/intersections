@@ -274,6 +274,25 @@ export const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
     fontWeight: '600',
     color: colorScheme.textTertiary,
   },
+  leaderboardCompactAvatar: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: colorScheme.brandSecondary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 8,
+  },
+  leaderboardCompactAvatarImage: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+  },
+  leaderboardCompactAvatarText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colorScheme.textPrimary,
+  },
   leaderboardCompactName: {
     flex: 1,
     fontSize: 14,

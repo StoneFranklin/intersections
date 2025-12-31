@@ -737,6 +737,18 @@ export function HomeMenu({
                                     <MaterialCommunityIcons name="medal" size={20} color="#cd7f32" />
                                   )}
                                 </View>
+                                <View style={styles.leaderboardCompactAvatar}>
+                                  {entry.avatarUrl ? (
+                                    <Image
+                                      source={{ uri: entry.avatarUrl }}
+                                      style={styles.leaderboardCompactAvatarImage}
+                                    />
+                                  ) : (
+                                    <Text style={styles.leaderboardCompactAvatarText}>
+                                      {(entry.displayName || 'A').charAt(0).toUpperCase()}
+                                    </Text>
+                                  )}
+                                </View>
                                 <Text
                                   style={[
                                     styles.leaderboardCompactName,
@@ -774,6 +786,18 @@ export function HomeMenu({
                                     >
                                       #{userRank}
                                     </Text>
+                                  </View>
+                                  <View style={styles.leaderboardCompactAvatar}>
+                                    {avatarUrl ? (
+                                      <Image
+                                        source={{ uri: avatarUrl }}
+                                        style={styles.leaderboardCompactAvatarImage}
+                                      />
+                                    ) : (
+                                      <Text style={styles.leaderboardCompactAvatarText}>
+                                        {(displayName || 'A').charAt(0).toUpperCase()}
+                                      </Text>
+                                    )}
                                   </View>
                                   <Text
                                     style={[styles.leaderboardCompactName, styles.leaderboardCompactNameCurrentUser]}
@@ -830,6 +854,18 @@ export function HomeMenu({
                                       minimumFontScale={0.8}
                                     >
                                       #{entry.rank}
+                                    </Text>
+                                  )}
+                                </View>
+                                <View style={styles.leaderboardCompactAvatar}>
+                                  {entry.avatarUrl ? (
+                                    <Image
+                                      source={{ uri: entry.avatarUrl }}
+                                      style={styles.leaderboardCompactAvatarImage}
+                                    />
+                                  ) : (
+                                    <Text style={styles.leaderboardCompactAvatarText}>
+                                      {(entry.displayName || 'A').charAt(0).toUpperCase()}
                                     </Text>
                                   )}
                                 </View>
