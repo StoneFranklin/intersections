@@ -10,6 +10,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ActivityIndicator,
   Animated,
+  Image,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -42,6 +43,7 @@ let hasPlayedEntranceAnimations = false;
 export interface HomeMenuProps {
   user: User | null;
   displayName: string | null;
+  avatarUrl: string | null;
   streak: number;
   loading: boolean;
   dailyCompleted: boolean;
@@ -106,6 +108,7 @@ export interface HomeMenuProps {
 export function HomeMenu({
   user,
   displayName,
+  avatarUrl,
   streak,
   loading,
   dailyCompleted,
@@ -158,6 +161,7 @@ export function HomeMenu({
   const lottieRef = useRef<LottieView>(null);
   const [animationPhase, setAnimationPhase] = useState<'intro' | 'loop' | 'tap'>('intro');
   const [homeLeaderboardTab, setHomeLeaderboardTab] = useState<'global' | 'friends'>('global');
+  const [avatarLoadError, setAvatarLoadError] = useState(false);
   const hasStarted = useRef(false);
   const { colorScheme } = useThemeScheme();
   const { width } = useWindowDimensions();
@@ -257,6 +261,11 @@ export function HomeMenu({
     }, 150);
     return () => clearTimeout(focusTimer);
   }, [showDisplayNameModal]);
+
+  // Reset avatar error state when avatarUrl changes
+  useEffect(() => {
+    setAvatarLoadError(false);
+  }, [avatarUrl]);
 
   const playSegment = useCallback((start: number, end: number) => {
     if (!lottieRef.current) return;
@@ -473,9 +482,17 @@ export function HomeMenu({
               </TouchableOpacity>
               <TouchableOpacity style={styles.headerProfileButton} onPress={() => setShowProfileMenu(true)}>
                 <View style={styles.headerProfileIcon}>
-                  <Text style={styles.headerProfileInitial}>
-                    {(displayName || user.email || 'U').charAt(0).toUpperCase()}
-                  </Text>
+                  {avatarUrl && !avatarLoadError ? (
+                    <Image
+                      source={{ uri: avatarUrl }}
+                      style={styles.headerProfileImage}
+                      onError={() => setAvatarLoadError(true)}
+                    />
+                  ) : (
+                    <Text style={styles.headerProfileInitial}>
+                      {(displayName || user.email || 'U').charAt(0).toUpperCase()}
+                    </Text>
+                  )}
                 </View>
               </TouchableOpacity>
             </>
@@ -1006,9 +1023,17 @@ export function HomeMenu({
           <View style={styles.profileMenuModal}>
             <View style={styles.profileMenuHeader}>
               <View style={styles.profileMenuAvatar}>
-                <Text style={styles.profileMenuAvatarText}>
-                  {(displayName || user?.email || 'U').charAt(0).toUpperCase()}
-                </Text>
+                {avatarUrl && !avatarLoadError ? (
+                  <Image
+                    source={{ uri: avatarUrl }}
+                    style={styles.profileMenuAvatarImage}
+                    onError={() => setAvatarLoadError(true)}
+                  />
+                ) : (
+                  <Text style={styles.profileMenuAvatarText}>
+                    {(displayName || user?.email || 'U').charAt(0).toUpperCase()}
+                  </Text>
+                )}
               </View>
               <View style={styles.profileMenuInfo}>
                 <Text style={styles.profileMenuName}>{displayName || 'No display name'}</Text>

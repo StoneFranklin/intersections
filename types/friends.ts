@@ -24,5 +24,6 @@ export interface Friend {
 export interface UserSearchResult {
   id: string;
   displayName: string;
+  avatarUrl: string | null;
   friendshipStatus: 'none' | 'pending_outgoing' | 'pending_incoming' | 'accepted';
 }

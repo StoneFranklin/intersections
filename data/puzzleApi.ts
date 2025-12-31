@@ -678,11 +678,11 @@ export async function getTodayLeaderboard(currentUserId?: string): Promise<Leade
 /**
  * Get or create user profile
  */
-export async function getOrCreateProfile(userId: string): Promise<{ displayName: string | null } | null> {
+export async function getOrCreateProfile(userId: string): Promise<{ displayName: string | null; avatarUrl: string | null } | null> {
   try {
     const { data, error } = await supabase
       .from('profiles')
-      .select('display_name')
+      .select('display_name, avatar_url')
       .eq('id', userId)
       .maybeSingle();
 
@@ -696,14 +696,14 @@ export async function getOrCreateProfile(userId: string): Promise<{ displayName:
       const { error: insertError } = await supabase
         .from('profiles')
         .insert({ id: userId });
-      
+
       if (insertError) {
         logger.error('Error creating profile:', insertError);
       }
-      return { displayName: null };
+      return { displayName: null, avatarUrl: null };
     }
 
-    return { displayName: data.display_name };
+    return { displayName: data.display_name, avatarUrl: data.avatar_url };
   } catch (e) {
     logger.error('Error in getOrCreateProfile:', e);
     return null;
@@ -934,7 +934,7 @@ export async function searchUsers(
     // Search profiles by display name
     const { data: profiles, error: profilesError } = await supabase
       .from('profiles')
-      .select('id, display_name')
+      .select('id, display_name, avatar_url')
       .ilike('display_name', `%${query}%`)
       .neq('id', currentUserId)
       .not('display_name', 'is', null)
@@ -980,6 +980,7 @@ export async function searchUsers(
     return profiles.map(profile => ({
       id: profile.id,
       displayName: profile.display_name || 'Anonymous',
+      avatarUrl: profile.avatar_url || null,
       friendshipStatus: friendshipMap.get(profile.id) || 'none',
     }));
   } catch (e) {

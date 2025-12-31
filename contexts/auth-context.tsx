@@ -22,17 +22,27 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Ensure user has a profile row (creates one if missing)
-async function ensureProfile(userId: string) {
+// Also updates avatar_url from OAuth provider metadata
+async function ensureProfile(userId: string, avatarUrl?: string | null) {
   try {
     const { data } = await supabase
       .from('profiles')
-      .select('id')
+      .select('id, avatar_url')
       .eq('id', userId)
       .maybeSingle();
 
     if (!data) {
       // Create profile if it doesn't exist
-      await supabase.from('profiles').insert({ id: userId });
+      await supabase.from('profiles').insert({
+        id: userId,
+        avatar_url: avatarUrl || null,
+      });
+    } else if (avatarUrl && !data.avatar_url) {
+      // Update avatar_url if we have one from OAuth but profile doesn't have one yet
+      await supabase
+        .from('profiles')
+        .update({ avatar_url: avatarUrl })
+        .eq('id', userId);
     }
   } catch (e) {
     logger.error('Error ensuring profile:', e);
@@ -109,7 +119,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        ensureProfile(session.user.id);
+        // Extract avatar URL from OAuth provider metadata
+        const avatarUrl = session.user.user_metadata?.avatar_url ||
+                         session.user.user_metadata?.picture || null;
+        ensureProfile(session.user.id, avatarUrl);
       }
       setLoading(false);
     });
@@ -122,7 +135,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(session?.user ?? null);
         // Create profile on sign in
         if (event === 'SIGNED_IN' && session?.user) {
-          ensureProfile(session.user.id);
+          // Extract avatar URL from OAuth provider metadata
+          const avatarUrl = session.user.user_metadata?.avatar_url ||
+                           session.user.user_metadata?.picture || null;
+          ensureProfile(session.user.id, avatarUrl);
         }
         setLoading(false);
       }

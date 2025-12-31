@@ -75,11 +75,17 @@ export const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
     backgroundColor: colorScheme.brandSecondary,
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'hidden',
   },
   headerProfileInitial: {
     fontSize: 16,
     fontWeight: '600',
     color: colorScheme.textPrimary,
+  },
+  headerProfileImage: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
   },
   headerSignInButton: {
     backgroundColor: colorScheme.gold,
@@ -1030,11 +1036,17 @@ export const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
     backgroundColor: colorScheme.brandSecondary,
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'hidden',
   },
   profileMenuAvatarText: {
     fontSize: 20,
     fontWeight: '600',
     color: colorScheme.textPrimary,
+  },
+  profileMenuAvatarImage: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
   },
   profileMenuInfo: {
     flex: 1,

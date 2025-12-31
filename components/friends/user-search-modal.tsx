@@ -6,6 +6,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
+  Image,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -139,9 +140,16 @@ export function UserSearchModal({
   const renderUserItem = useCallback(({ item }: { item: UserSearchResult }) => (
     <View style={styles.userItem}>
       <View style={styles.userAvatar}>
-        <Text style={styles.userAvatarText}>
-          {item.displayName.charAt(0).toUpperCase()}
-        </Text>
+        {item.avatarUrl ? (
+          <Image
+            source={{ uri: item.avatarUrl }}
+            style={styles.userAvatarImage}
+          />
+        ) : (
+          <Text style={styles.userAvatarText}>
+            {item.displayName.charAt(0).toUpperCase()}
+          </Text>
+        )}
       </View>
       <Text style={styles.userName} numberOfLines={1}>
         {item.displayName}
@@ -324,6 +332,11 @@ const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: colorScheme.textPrimary,
+  },
+  userAvatarImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
   },
   userName: {
     flex: 1,

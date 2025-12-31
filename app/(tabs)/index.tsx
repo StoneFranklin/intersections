@@ -93,8 +93,9 @@ export default function GameScreen() {
     return false;
   };
 
-  // Display name state
+  // Display name and avatar state
   const [displayName, setDisplayName] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [showDisplayNameModal, setShowDisplayNameModal] = useState(false);
   const [displayNameInput, setDisplayNameInput] = useState('');
   const [savingDisplayName, setSavingDisplayName] = useState(false);
@@ -147,12 +148,17 @@ export default function GameScreen() {
             // Show modal only if we don't already have a local display name
             setShowDisplayNameModal(true);
           }
+          // Set avatar URL from profile
+          if (profile.avatarUrl) {
+            setAvatarUrl(profile.avatarUrl);
+          }
         }
       });
       prevUserForSignOutRef.current = user.id;
     } else {
-      // User signed out - clear display name and refresh leaderboard
+      // User signed out - clear display name, avatar, and refresh leaderboard
       setDisplayName(null);
+      setAvatarUrl(null);
       displayNameRef.current = null;
       setLeaderboard([]);
       setLeaderboardLoaded(false);
@@ -944,6 +950,7 @@ export default function GameScreen() {
       <HomeMenu
         user={user}
         displayName={displayName}
+        avatarUrl={avatarUrl}
         streak={streak}
         loading={loading}
         dailyCompleted={dailyCompleted}
