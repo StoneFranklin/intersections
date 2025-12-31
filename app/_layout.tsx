@@ -106,7 +106,7 @@ function RootLayoutContent() {
         if (data?.type === 'friend_request') {
           router.push('/friends');
         } else if (data?.type === 'puzzle_completion') {
-          router.push('/explore');
+          router.push('/');
         }
       }
     });
@@ -118,7 +118,7 @@ function RootLayoutContent() {
         if (data?.type === 'friend_request') {
           router.push('/friends');
         } else if (data?.type === 'puzzle_completion') {
-          router.push('/explore');
+          router.push('/');
         }
       }
     );
