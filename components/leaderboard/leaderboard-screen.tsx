@@ -139,21 +139,7 @@ export function LeaderboardScreen({
             <>
               {isGlobalTab && userRank && (
                 <View style={styles.userRankBanner}>
-                  <Text style={styles.userRankBannerText}>You are ranked</Text>
-                  <Text
-                    style={styles.userRankBannerValue}
-                    numberOfLines={1}
-                    adjustsFontSizeToFit
-                    minimumFontScale={0.8}
-                  >
-                    #{userRank} in the world
-                  </Text>
-                </View>
-              )}
-              {!isGlobalTab && friendsLeaderboardLoaded && (() => {
-                const friendsRank = friendsLeaderboard.find(e => isCurrentUserEntry(e))?.rank;
-                return friendsRank ? (
-                  <View style={styles.userRankBanner}>
+                  <View style={styles.userRankBannerContent}>
                     <Text style={styles.userRankBannerText}>You are ranked</Text>
                     <Text
                       style={styles.userRankBannerValue}
@@ -161,23 +147,45 @@ export function LeaderboardScreen({
                       adjustsFontSizeToFit
                       minimumFontScale={0.8}
                     >
-                      #{friendsRank} among friends
+                      #{userRank} in the world
                     </Text>
+                  </View>
+                  {savedScore && (
+                    <TouchableOpacity
+                      style={styles.userRankShareButton}
+                      onPress={() => shareScore(savedScore, userRank)}
+                    >
+                      <Ionicons name="share-outline" size={18} color={colorScheme.success} />
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )}
+              {!isGlobalTab && friendsLeaderboardLoaded && (() => {
+                const friendsRank = friendsLeaderboard.find(e => isCurrentUserEntry(e))?.rank;
+                return friendsRank ? (
+                  <View style={styles.userRankBanner}>
+                    <View style={styles.userRankBannerContent}>
+                      <Text style={styles.userRankBannerText}>You are ranked</Text>
+                      <Text
+                        style={styles.userRankBannerValue}
+                        numberOfLines={1}
+                        adjustsFontSizeToFit
+                        minimumFontScale={0.8}
+                      >
+                        #{friendsRank} among friends
+                      </Text>
+                    </View>
+                    {savedScore && (
+                      <TouchableOpacity
+                        style={styles.userRankShareButton}
+                        onPress={() => shareScore(savedScore, userRank)}
+                      >
+                        <Ionicons name="share-outline" size={18} color={colorScheme.success} />
+                      </TouchableOpacity>
+                    )}
                   </View>
                 ) : null;
               })()}
-
-              {savedScore && (
-                <View style={styles.leaderboardScreenActions}>
-                  <TouchableOpacity
-                    style={styles.leaderboardScreenShareButton}
-                    onPress={() => shareScore(savedScore, userRank)}
-                  >
-                    <Ionicons name="share-outline" size={20} color={colorScheme.success} />
-                    <Text style={styles.leaderboardScreenShareText}>Share Score</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
             </>
           }
           ListEmptyComponent={
