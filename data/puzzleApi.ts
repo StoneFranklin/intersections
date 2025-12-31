@@ -713,32 +713,40 @@ export async function getOrCreateProfile(userId: string): Promise<{ displayName:
 /**
  * Update user's display name
  */
-export async function updateDisplayName(userId: string, displayName: string): Promise<boolean> {
+export type UpdateDisplayNameResult =
+  | { success: true }
+  | { success: false; error: 'invalid' | 'taken' | 'unknown' };
+
+export async function updateDisplayName(userId: string, displayName: string): Promise<UpdateDisplayNameResult> {
   try {
     const validation = validateDisplayName(displayName);
     if (!validation.ok) {
       logger.warn('Invalid display name rejected by validation:', validation.error);
-      return false;
+      return { success: false, error: 'invalid' };
     }
 
     const { error } = await supabase
       .from('profiles')
-      .upsert({ 
-        id: userId, 
-        display_name: validation.normalized 
-      }, { 
-        onConflict: 'id' 
+      .upsert({
+        id: userId,
+        display_name: validation.normalized
+      }, {
+        onConflict: 'id'
       });
 
     if (error) {
       logger.error('Error updating display name:', error);
-      return false;
+      // Check for unique constraint violation (PostgreSQL error code 23505)
+      if (error.code === '23505') {
+        return { success: false, error: 'taken' };
+      }
+      return { success: false, error: 'unknown' };
     }
 
-    return true;
+    return { success: true };
   } catch (e) {
     logger.error('Error in updateDisplayName:', e);
-    return false;
+    return { success: false, error: 'unknown' };
   }
 }
 

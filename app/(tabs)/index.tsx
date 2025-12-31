@@ -360,11 +360,11 @@ export default function GameScreen() {
       setDisplayNameError(validation.error || 'Invalid display name.');
       return;
     }
-    
+
     setSavingDisplayName(true);
     try {
-      const success = await updateDisplayName(user.id, validation.normalized);
-      if (success) {
+      const result = await updateDisplayName(user.id, validation.normalized);
+      if (result.success) {
         setDisplayName(validation.normalized);
         displayNameRef.current = validation.normalized;
         setShowDisplayNameModal(false);
@@ -376,7 +376,11 @@ export default function GameScreen() {
           displayNameRef.current = refreshedProfile.displayName;
         }
       } else {
-        setDisplayNameError('Unable to save that display name.');
+        if (result.error === 'taken') {
+          setDisplayNameError('That username is already taken.');
+        } else {
+          setDisplayNameError('Unable to save that display name.');
+        }
       }
     } finally {
       setSavingDisplayName(false);
