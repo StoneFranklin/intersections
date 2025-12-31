@@ -5,7 +5,7 @@ import type { GameScore } from '@/types/game';
 import { formatTime, shareScore } from '@/utils/share';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import React, { useMemo } from 'react';
-import { ActivityIndicator, FlatList, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, FlatList, Image, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 type LeaderboardTab = 'global' | 'friends';
@@ -219,6 +219,18 @@ export function LeaderboardScreen({
                     minimumFontScale={0.8}
                   >
                     #{entry.rank}
+                  </Text>
+                )}
+              </View>
+              <View style={styles.leaderboardAvatar}>
+                {entry.avatarUrl ? (
+                  <Image
+                    source={{ uri: entry.avatarUrl }}
+                    style={styles.leaderboardAvatarImage}
+                  />
+                ) : (
+                  <Text style={styles.leaderboardAvatarText}>
+                    {(entry.displayName || 'A').charAt(0).toUpperCase()}
                   </Text>
                 )}
               </View>

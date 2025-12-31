@@ -65,7 +65,14 @@
       "Bash(powershell -Command \"\\(Get-Item ''assets\\\\images\\\\intersections-logo.png''\\).Length\")",
       "Bash(dir /s /b \"C:\\\\Users\\\\saf1\\\\Documents\\\\electron\\\\puzzle-manager\\\\*.ts\" \"C:\\\\Users\\\\saf1\\\\Documents\\\\electron\\\\puzzle-manager\\\\*.tsx\" \"C:\\\\Users\\\\saf1\\\\Documents\\\\electron\\\\puzzle-manager\\\\*.json\" \"C:\\\\Users\\\\saf1\\\\Documents\\\\electron\\\\puzzle-manager\\\\*.css\" \"C:\\\\Users\\\\saf1\\\\Documents\\\\electron\\\\puzzle-manager\\\\*.html\")",
       "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\saf1\\\\Documents\\\\electron\\\\puzzle-manager\" -Recurse -Include *.ts,*.tsx,*.json,*.css,*.html)",
-      "Bash(Select-Object -ExpandProperty FullName)"
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(dir \"C:\\\\Program Files\\\\Android\\\\Android Studio\")",
+      "Bash(\"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\\\\bin\\\\java.exe\" -version)",
+      "Bash(cmd /c \"\"\"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\\\\bin\\\\java.exe\"\" -version\")",
+      "Bash(cmd /c \"dir \"\"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\\\\bin\\\\java.exe\"\"\")",
+      "Bash(cmd /c \"dir \"\"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\\\\bin\"\"\")",
+      "Bash(powershell -Command \"Get-ChildItem ''C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\\\\bin'' | Select-Object -First 10\")",
+      "Bash(powershell -Command \"Get-ChildItem ''C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\\\\bin\\\\*.exe'' | Select-Object Name\")"
     ]
   }
 }

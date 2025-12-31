@@ -440,6 +440,7 @@ export interface LeaderboardEntry {
   correctPlacements: number;
   mistakes: number;
   displayName: string | null;
+  avatarUrl: string | null;
   isCurrentUser: boolean;
 }
 
@@ -575,17 +576,21 @@ export async function getTodayLeaderboardPage(params?: {
       .filter(r => r.user_id)
       .map(r => r.user_id as string);
 
-    const displayNames = await fetchDisplayNames(userIds);
+    const userProfiles = await fetchUserProfiles(userIds);
 
-    const entries: LeaderboardEntry[] = pageRows.map((row, index) => ({
-      rank: from + index + 1,
-      score: row.score,
-      timeSeconds: row.time_seconds,
-      correctPlacements: row.correct_placements || 0,
-      mistakes: row.mistakes || 0,
-      displayName: row.user_id ? displayNames.get(row.user_id) || null : null,
-      isCurrentUser: currentUserId ? row.user_id === currentUserId : false,
-    }));
+    const entries: LeaderboardEntry[] = pageRows.map((row, index) => {
+      const profile = row.user_id ? userProfiles.get(row.user_id) : null;
+      return {
+        rank: from + index + 1,
+        score: row.score,
+        timeSeconds: row.time_seconds,
+        correctPlacements: row.correct_placements || 0,
+        mistakes: row.mistakes || 0,
+        displayName: profile?.displayName || null,
+        avatarUrl: profile?.avatarUrl || null,
+        isCurrentUser: currentUserId ? row.user_id === currentUserId : false,
+      };
+    });
 
     return { entries, hasMore, nextFrom: from + pageRows.length };
   } catch (e) {
@@ -643,43 +648,31 @@ export async function getTodayLeaderboard(currentUserId?: string): Promise<Leade
       })
       .slice(0, 10);
 
-    // Get display names for users who have user_id
+    // Get user profiles for users who have user_id
     const userIds = sortedEntries
       .filter(e => e.user_id)
       .map(e => e.user_id as string);
-    
-    logger.log('Fetching display names for user IDs:', userIds);
-    
-    const displayNames = new Map<string, string>();
-    if (userIds.length > 0) {
-      // Query each profile individually to debug RLS issues
-      for (const userId of userIds) {
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('id, display_name')
-          .eq('id', userId)
-          .maybeSingle();
-        
-        logger.log(`Profile for ${userId}:`, { profile, error: profileError });
-        
-        if (profile?.display_name) {
-          displayNames.set(profile.id, profile.display_name);
-        }
-      }
-    }
-    
-    logger.log('Display names map:', Object.fromEntries(displayNames));
+
+    logger.log('Fetching user profiles for user IDs:', userIds);
+
+    const userProfiles = await fetchUserProfiles(userIds);
+
+    logger.log('User profiles map:', Object.fromEntries(userProfiles));
 
     // Build leaderboard entries
-    const leaderboard: LeaderboardEntry[] = sortedEntries.map((entry, index) => ({
-      rank: index + 1,
-      score: entry.score,
-      timeSeconds: entry.time_seconds,
-      correctPlacements: entry.correct_placements || 0,
-      mistakes: entry.mistakes || 0,
-      displayName: entry.user_id ? displayNames.get(entry.user_id) || null : null,
-      isCurrentUser: currentUserId ? entry.user_id === currentUserId : false,
-    }));
+    const leaderboard: LeaderboardEntry[] = sortedEntries.map((entry, index) => {
+      const profile = entry.user_id ? userProfiles.get(entry.user_id) : null;
+      return {
+        rank: index + 1,
+        score: entry.score,
+        timeSeconds: entry.time_seconds,
+        correctPlacements: entry.correct_placements || 0,
+        mistakes: entry.mistakes || 0,
+        displayName: profile?.displayName || null,
+        avatarUrl: profile?.avatarUrl || null,
+        isCurrentUser: currentUserId ? entry.user_id === currentUserId : false,
+      };
+    });
 
     // If current user is logged in and not in top 10, find their position
     if (currentUserId) {
@@ -703,12 +696,13 @@ export async function getTodayLeaderboard(currentUserId?: string): Promise<Leade
 
         if (userEntry) {
           const rank = await getScoreRank(puzzleDate, userEntry.score, userEntry.time_seconds);
-          if (!displayNames.has(currentUserId)) {
-            const extraNames = await fetchDisplayNames([currentUserId]);
-            for (const [id, name] of extraNames.entries()) {
-              displayNames.set(id, name);
+          if (!userProfiles.has(currentUserId)) {
+            const extraProfiles = await fetchUserProfiles([currentUserId]);
+            for (const [id, profile] of extraProfiles.entries()) {
+              userProfiles.set(id, profile);
             }
           }
+          const currentUserProfile = userProfiles.get(currentUserId);
 
           leaderboard.push({
             rank,
@@ -716,7 +710,8 @@ export async function getTodayLeaderboard(currentUserId?: string): Promise<Leade
             timeSeconds: userEntry.time_seconds,
             correctPlacements: userEntry.correct_placements || 0,
             mistakes: userEntry.mistakes || 0,
-            displayName: displayNames.get(currentUserId) || null,
+            displayName: currentUserProfile?.displayName || null,
+            avatarUrl: currentUserProfile?.avatarUrl || null,
             isCurrentUser: true,
           });
         }
@@ -1393,17 +1388,21 @@ export async function getFriendsLeaderboardPage(params: {
       .filter(r => r.user_id)
       .map(r => r.user_id as string);
 
-    const displayNames = await fetchDisplayNames(userIds);
+    const userProfiles = await fetchUserProfiles(userIds);
 
-    const entries: LeaderboardEntry[] = pageRows.map((row, index) => ({
-      rank: from + index + 1,
-      score: row.score,
-      timeSeconds: row.time_seconds,
-      correctPlacements: row.correct_placements || 0,
-      mistakes: row.mistakes || 0,
-      displayName: row.user_id ? displayNames.get(row.user_id) || null : null,
-      isCurrentUser: row.user_id === userId,
-    }));
+    const entries: LeaderboardEntry[] = pageRows.map((row, index) => {
+      const profile = row.user_id ? userProfiles.get(row.user_id) : null;
+      return {
+        rank: from + index + 1,
+        score: row.score,
+        timeSeconds: row.time_seconds,
+        correctPlacements: row.correct_placements || 0,
+        mistakes: row.mistakes || 0,
+        displayName: profile?.displayName || null,
+        avatarUrl: profile?.avatarUrl || null,
+        isCurrentUser: row.user_id === userId,
+      };
+    });
 
     return { entries, hasMore, nextFrom: from + pageRows.length };
   } catch (e) {

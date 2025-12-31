@@ -585,6 +585,25 @@ export const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
   leaderboardFullScoreCurrentUser: {
     color: colorScheme.brandPrimary,
   },
+  leaderboardAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colorScheme.brandSecondary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 8,
+  },
+  leaderboardAvatarImage: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+  },
+  leaderboardAvatarText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colorScheme.textPrimary,
+  },
   leaderboardScreenActions: {
     marginTop: 24,
     gap: 12,
