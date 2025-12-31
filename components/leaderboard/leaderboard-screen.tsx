@@ -150,6 +150,22 @@ export function LeaderboardScreen({
                   </Text>
                 </View>
               )}
+              {!isGlobalTab && friendsLeaderboardLoaded && (() => {
+                const friendsRank = friendsLeaderboard.find(e => isCurrentUserEntry(e))?.rank;
+                return friendsRank ? (
+                  <View style={styles.userRankBanner}>
+                    <Text style={styles.userRankBannerText}>You are ranked</Text>
+                    <Text
+                      style={styles.userRankBannerValue}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.8}
+                    >
+                      #{friendsRank} among friends
+                    </Text>
+                  </View>
+                ) : null;
+              })()}
 
               {savedScore && (
                 <View style={styles.leaderboardScreenActions}>
