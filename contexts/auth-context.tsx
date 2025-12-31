@@ -61,7 +61,6 @@ async function registerUserPushToken(userId: string) {
 
     // Get the Expo Push Token
     const pushToken = await getExpoPushToken();
-
     if (pushToken) {
       await registerPushToken(userId, pushToken);
     }
@@ -84,6 +83,8 @@ async function unregisterUserPushToken(userId: string) {
 // Extract session from URL (handles both hash and query params)
 function extractSessionFromUrl(url: string): { accessToken: string | null; refreshToken: string | null } {
   try {
+    logger.log('Parsing URL for tokens:', url);
+
     // For exp:// URLs, we need to handle them specially
     // The hash/params might be after the path
     let hashPart = '';
@@ -93,6 +94,7 @@ function extractSessionFromUrl(url: string): { accessToken: string | null; refre
     const hashIndex = url.indexOf('#');
     if (hashIndex !== -1) {
       hashPart = url.substring(hashIndex + 1);
+      logger.log('Hash part:', hashPart);
     }
 
     // Check if there's a ? in the URL
@@ -100,6 +102,7 @@ function extractSessionFromUrl(url: string): { accessToken: string | null; refre
     if (queryIndex !== -1) {
       const endIndex = hashIndex !== -1 ? hashIndex : url.length;
       queryPart = url.substring(queryIndex + 1, endIndex);
+      logger.log('Query part:', queryPart);
     }
 
     // Try hash fragment first (implicit flow)
@@ -107,6 +110,7 @@ function extractSessionFromUrl(url: string): { accessToken: string | null; refre
       const hashParams = new URLSearchParams(hashPart);
       const accessToken = hashParams.get('access_token');
       const refreshToken = hashParams.get('refresh_token');
+      logger.log('From hash - access_token exists:', !!accessToken);
       if (accessToken) {
         return { accessToken, refreshToken };
       }
@@ -117,11 +121,13 @@ function extractSessionFromUrl(url: string): { accessToken: string | null; refre
       const queryParams = new URLSearchParams(queryPart);
       const accessToken = queryParams.get('access_token');
       const refreshToken = queryParams.get('refresh_token');
+      logger.log('From query - access_token exists:', !!accessToken);
       if (accessToken) {
         return { accessToken, refreshToken };
       }
     }
 
+    logger.log('No tokens found in URL');
     return { accessToken: null, refreshToken: null };
   } catch (e) {
     logger.error('Error parsing URL:', e);
@@ -139,20 +145,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isMountedRef.current = true;
 
     // Get initial session
-    supabase.auth.getSession().then(async ({ data: { session }, error }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!isMountedRef.current) return;
-
-      // Handle invalid session (e.g., expired refresh token)
-      if (error) {
-        logger.error('Error getting initial session:', error);
-        // Sign out to clear the invalid session
-        await supabase.auth.signOut();
-        setSession(null);
-        setUser(null);
-        setLoading(false);
-        return;
-      }
-
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
@@ -163,13 +157,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Register push token for push notifications
         registerUserPushToken(session.user.id);
       }
-      setLoading(false);
-    }).catch(async (error) => {
-      logger.error('Exception getting initial session:', error);
-      // Clear any invalid session state
-      await supabase.auth.signOut();
-      setSession(null);
-      setUser(null);
       setLoading(false);
     });
 
@@ -195,31 +182,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for deep links (for OAuth callback on native)
     const handleDeepLink = async (event: { url: string }) => {
       if (!isMountedRef.current) return;
-      if (event.url.includes('auth/callback') || event.url.includes('access_token') || event.url.includes('code=')) {
-        // First try PKCE code exchange (preferred)
-        try {
-          const url = new URL(event.url);
-          const code = url.searchParams.get('code');
-          if (code) {
-            const { error } = await supabase.auth.exchangeCodeForSession(code);
-            if (error) {
-              logger.error('Deep link PKCE exchange error:', error);
-            }
-            return;
-          }
-        } catch (e) {
-          logger.error('Error parsing deep link URL:', e);
-        }
-
-        // Fallback to token extraction
+      logger.log('Deep link received:', event.url);
+      if (event.url.includes('auth/callback') || event.url.includes('access_token')) {
         const { accessToken, refreshToken } = extractSessionFromUrl(event.url);
-        if (accessToken && refreshToken) {
+        if (accessToken) {
+          logger.log('Setting session from deep link...');
           await supabase.auth.setSession({
             access_token: accessToken,
-            refresh_token: refreshToken,
+            refresh_token: refreshToken || '',
           });
-        } else if (accessToken) {
-          logger.error('Deep link has access token but no refresh token');
         }
       }
     };
@@ -264,7 +235,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } else {
       // Native: Use Supabase OAuth with custom scheme redirect
       try {
+        // For development/production builds, use the custom scheme
+        // This will be: intersections://auth/callback
         const redirectTo = 'intersections://auth/callback';
+        logger.log('Native redirect URL:', redirectTo);
 
         // Get the OAuth URL from Supabase
         const { data, error } = await supabase.auth.signInWithOAuth({
@@ -282,44 +256,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (error) throw error;
         if (!data.url) throw new Error('No OAuth URL returned');
 
+        logger.log('Opening Supabase OAuth URL...');
+
         // Open browser for authentication
         const result = await WebBrowser.openAuthSessionAsync(
           data.url,
           redirectTo
         );
 
+        logger.log('Auth result:', result.type);
+
         if (result.type === 'success' && result.url) {
+          logger.log('Success URL:', result.url);
+
           // Extract tokens from the redirect URL
           const { accessToken, refreshToken } = extractSessionFromUrl(result.url);
 
-          // First, try to get code for PKCE flow (preferred on native)
-          const resultUrl = new URL(result.url);
-          const code = resultUrl.searchParams.get('code');
-
-          if (code) {
-            const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
-            if (exchangeError) {
-              logger.error('Exchange error:', exchangeError);
-              Alert.alert('Sign In Error', exchangeError.message);
-            }
-          } else if (accessToken && refreshToken) {
-            // Only use setSession if we have BOTH tokens
+          if (accessToken) {
+            logger.log('Found access token, setting session...');
             const { error: sessionError } = await supabase.auth.setSession({
               access_token: accessToken,
-              refresh_token: refreshToken,
+              refresh_token: refreshToken || '',
             });
 
             if (sessionError) {
               logger.error('Session error:', sessionError);
               Alert.alert('Sign In Error', sessionError.message);
+            } else {
+              logger.log('Session set successfully!');
             }
-          } else if (accessToken) {
-            // We have access token but no refresh token - this won't work well
-            logger.error('Found access token but no refresh token - cannot set session properly');
-            Alert.alert('Sign In Error', 'Authentication incomplete. Please try again.');
           } else {
-            Alert.alert('Sign In Error', 'No authentication data received. Please try again.');
+            // Try to get code for PKCE flow
+            const url = new URL(result.url);
+            const code = url.searchParams.get('code');
+            if (code) {
+              logger.log('Found auth code, exchanging...');
+              const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+              if (exchangeError) {
+                logger.error('Exchange error:', exchangeError);
+                Alert.alert('Sign In Error', exchangeError.message);
+              }
+            } else {
+              logger.log('No token or code found in URL');
+            }
           }
+        } else if (result.type === 'dismiss' || result.type === 'cancel') {
+          logger.log('User dismissed/cancelled');
         }
       } catch (error) {
         logger.error('Native sign in error:', error);
