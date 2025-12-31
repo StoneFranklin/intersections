@@ -121,6 +121,7 @@ export function GameContent({
       setIsGracefulFallback(false);
       grantExtraLife();
       setAdOfferDeclined(false);
+      setHasShownAdOffer(false); // Allow another ad offer if they lose again
       haptics.notification(Haptics.NotificationFeedbackType.Success);
       return;
     }
@@ -142,6 +143,7 @@ export function GameContent({
       // User watched the ad and earned the reward
       grantExtraLife();
       setAdOfferDeclined(false);
+      setHasShownAdOffer(false); // Allow another ad offer if they lose again
       haptics.notification(Haptics.NotificationFeedbackType.Success);
     } else {
       // Either ad failed to load/show, or user didn't complete it
