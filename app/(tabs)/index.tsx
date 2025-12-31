@@ -399,10 +399,7 @@ export default function GameScreen() {
     if (!user) return;
     if (loadingLeaderboard && !opts?.forceRefresh) return;
 
-    // If force refresh, mark as refreshing but keep existing data visible
-    if (opts?.forceRefresh) {
-      setIsRefreshing(true);
-    } else {
+    if (!opts?.forceRefresh) {
       setLoadingLeaderboard(true);
     }
 
@@ -438,17 +435,25 @@ export default function GameScreen() {
       logger.error('Error loading leaderboard:', e);
     } finally {
       setLoadingLeaderboard(false);
-      setIsRefreshing(false);
     }
   };
 
   // Refresh leaderboard data (keeps existing data visible during refresh)
   const refreshLeaderboard = async () => {
     if (!user) return;
-    await loadLeaderboard({ forceRefresh: true });
-    // Also refresh the full leaderboard if it was loaded
-    if (fullLeaderboardLoaded) {
-      await loadFullLeaderboard({ reset: true });
+    setIsRefreshing(true);
+    try {
+      await loadLeaderboard({ forceRefresh: true });
+      // Also refresh the full leaderboard if it was loaded
+      if (fullLeaderboardLoaded) {
+        await loadFullLeaderboard({ reset: true });
+      }
+      // Also refresh friends leaderboard if it was loaded
+      if (friendsLeaderboardLoaded) {
+        await loadFriendsLeaderboard({ reset: true });
+      }
+    } finally {
+      setIsRefreshing(false);
     }
   };
 

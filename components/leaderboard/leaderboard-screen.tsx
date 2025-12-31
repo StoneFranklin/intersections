@@ -110,15 +110,8 @@ export function LeaderboardScreen({
         </View>
       )}
 
-      {currentLoading && !currentLoaded && currentData.length === 0 && (
-        <View style={styles.leaderboardScreenLoadingOverlay}>
-          <ActivityIndicator size="large" color={colorScheme.brandPrimary} />
-          <Text style={styles.leaderboardScreenLoadingText}>Loading rankings...</Text>
-        </View>
-      )}
-
       <View style={{ flex: 1 }}>
-        {isRefreshing && currentData.length > 0 && (
+        {(isRefreshing || (currentLoading && !currentLoaded)) && (
           <View style={styles.leaderboardScreenRefreshingOverlay}>
             <ActivityIndicator size="small" color={colorScheme.brandPrimary} />
           </View>
@@ -189,9 +182,7 @@ export function LeaderboardScreen({
             </>
           }
           ListEmptyComponent={
-            currentLoading ? (
-              <ActivityIndicator size="large" color={colorScheme.brandPrimary} style={{ marginVertical: 40 }} />
-            ) : (
+            currentLoading ? null : (
               <Text style={styles.leaderboardEmpty}>
                 {isGlobalTab ? 'No scores yet today. Be the first!' : 'No friends have played today yet.'}
               </Text>
@@ -260,7 +251,7 @@ export function LeaderboardScreen({
             </View>
           )}
           ListFooterComponent={
-            currentLoading && currentLoaded ? (
+            currentLoading && currentLoaded && !isRefreshing ? (
               <ActivityIndicator size="small" color={colorScheme.brandPrimary} style={{ marginVertical: 16 }} />
             ) : currentHasMore && currentLoaded ? (
               <TouchableOpacity
