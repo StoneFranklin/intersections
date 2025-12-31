@@ -225,7 +225,7 @@ Deno.serve(async (req) => {
         if (score > friendScore) {
           // User beat their friend
           title = `${userName} beat your score!`
-          body = `They scored ${score} on today's puzzle. Can you do better?`
+          body = `They scored ${score} on today's puzzle.`
         } else {
           // Friend is still ahead
           title = `${userName} completed today's puzzle`
