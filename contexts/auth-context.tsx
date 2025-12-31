@@ -1,5 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/utils/logger';
+import { getExpoPushToken, setupNotificationChannels } from '@/utils/pushNotificationService';
+import { registerPushToken, unregisterPushToken } from '@/data/puzzleApi';
 import { Session, User } from '@supabase/supabase-js';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Linking from 'expo-linking';
@@ -46,6 +48,35 @@ async function ensureProfile(userId: string, avatarUrl?: string | null) {
     }
   } catch (e) {
     logger.error('Error ensuring profile:', e);
+  }
+}
+
+// Register push token for the user
+async function registerUserPushToken(userId: string) {
+  if (Platform.OS === 'web') return;
+
+  try {
+    // Set up notification channels for Android
+    await setupNotificationChannels();
+
+    // Get the Expo Push Token
+    const pushToken = await getExpoPushToken();
+    if (pushToken) {
+      await registerPushToken(userId, pushToken);
+    }
+  } catch (e) {
+    logger.error('Error registering push token:', e);
+  }
+}
+
+// Unregister push token for the user (on sign out)
+async function unregisterUserPushToken(userId: string) {
+  if (Platform.OS === 'web') return;
+
+  try {
+    await unregisterPushToken(userId);
+  } catch (e) {
+    logger.error('Error unregistering push token:', e);
   }
 }
 
@@ -114,7 +145,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isMountedRef.current = true;
 
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!isMountedRef.current) return;
       setSession(session);
       setUser(session?.user ?? null);
@@ -123,6 +154,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const avatarUrl = session.user.user_metadata?.avatar_url ||
                          session.user.user_metadata?.picture || null;
         ensureProfile(session.user.id, avatarUrl);
+        // Register push token for push notifications
+        registerUserPushToken(session.user.id);
       }
       setLoading(false);
     });
@@ -133,12 +166,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!isMountedRef.current) return;
         setSession(session);
         setUser(session?.user ?? null);
-        // Create profile on sign in
+        // Create profile and register push token on sign in
         if (event === 'SIGNED_IN' && session?.user) {
           // Extract avatar URL from OAuth provider metadata
           const avatarUrl = session.user.user_metadata?.avatar_url ||
                            session.user.user_metadata?.picture || null;
           ensureProfile(session.user.id, avatarUrl);
+          // Register push token for push notifications
+          registerUserPushToken(session.user.id);
         }
         setLoading(false);
       }
@@ -302,6 +337,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signOut = async () => {
+    // Unregister push token before signing out
+    if (user) {
+      await unregisterUserPushToken(user.id);
+    }
     const { error } = await supabase.auth.signOut();
     if (error) {
       logger.error('Error signing out:', error.message);

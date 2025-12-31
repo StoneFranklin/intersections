@@ -1433,3 +1433,54 @@ export async function getPendingRequestCount(userId: string): Promise<number> {
     return 0;
   }
 }
+
+// ================== PUSH NOTIFICATIONS API ==================
+
+/**
+ * Register or update the user's Expo Push Token
+ */
+export async function registerPushToken(
+  userId: string,
+  pushToken: string
+): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('profiles')
+      .update({ expo_push_token: pushToken })
+      .eq('id', userId);
+
+    if (error) {
+      logger.error('Error registering push token:', error);
+      return false;
+    }
+
+    logger.log('Push token registered successfully');
+    return true;
+  } catch (e) {
+    logger.error('Error in registerPushToken:', e);
+    return false;
+  }
+}
+
+/**
+ * Unregister the user's push token (on logout)
+ */
+export async function unregisterPushToken(userId: string): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('profiles')
+      .update({ expo_push_token: null })
+      .eq('id', userId);
+
+    if (error) {
+      logger.error('Error unregistering push token:', error);
+      return false;
+    }
+
+    logger.log('Push token unregistered successfully');
+    return true;
+  } catch (e) {
+    logger.error('Error in unregisterPushToken:', e);
+    return false;
+  }
+}

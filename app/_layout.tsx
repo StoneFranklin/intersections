@@ -2,13 +2,15 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { AuthProvider } from '@/contexts/auth-context';
 import { AppThemeProvider, useThemeScheme } from '@/contexts/theme-context';
 import { requestNotificationPermissions, scheduleNotificationForToday } from '@/utils/notificationService';
+import { parseNotificationData } from '@/utils/pushNotificationService';
 import { DarkTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
+import * as Notifications from 'expo-notifications';
+import { Stack, useRouter } from 'expo-router';
 import Head from 'expo-router/head';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -78,6 +80,8 @@ export default function RootLayout() {
 
 function RootLayoutContent() {
   const { colorScheme } = useThemeScheme();
+  const router = useRouter();
+  const notificationResponseListener = useRef<Notifications.EventSubscription>();
 
   const navigationTheme = useMemo(
     () => ({
@@ -90,6 +94,41 @@ function RootLayoutContent() {
     }),
     [colorScheme]
   );
+
+  // Handle notification responses (when user taps on a notification)
+  useEffect(() => {
+    if (Platform.OS === 'web') return;
+
+    // Handle notification that was tapped while app was in background/killed
+    Notifications.getLastNotificationResponseAsync().then((response) => {
+      if (response) {
+        const data = parseNotificationData(response);
+        if (data?.type === 'friend_request') {
+          router.push('/friends');
+        } else if (data?.type === 'puzzle_completion') {
+          router.push('/explore');
+        }
+      }
+    });
+
+    // Handle notification taps while app is running
+    notificationResponseListener.current = Notifications.addNotificationResponseReceivedListener(
+      (response) => {
+        const data = parseNotificationData(response);
+        if (data?.type === 'friend_request') {
+          router.push('/friends');
+        } else if (data?.type === 'puzzle_completion') {
+          router.push('/explore');
+        }
+      }
+    );
+
+    return () => {
+      if (notificationResponseListener.current) {
+        Notifications.removeNotificationSubscription(notificationResponseListener.current);
+      }
+    };
+  }, [router]);
 
   return (
     <View style={[styles.container, { backgroundColor: colorScheme.backgroundPrimary }]}>
