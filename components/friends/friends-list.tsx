@@ -5,6 +5,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
+  Image,
   Modal,
   RefreshControl,
   StyleSheet,
@@ -92,9 +93,16 @@ export function FriendsList({
         activeOpacity={0.7}
       >
         <View style={styles.friendAvatar}>
-          <Text style={styles.friendAvatarText}>
-            {(item.displayName || 'A').charAt(0).toUpperCase()}
-          </Text>
+          {item.avatarUrl ? (
+            <Image
+              source={{ uri: item.avatarUrl }}
+              style={styles.friendAvatarImage}
+            />
+          ) : (
+            <Text style={styles.friendAvatarText}>
+              {(item.displayName || 'A').charAt(0).toUpperCase()}
+            </Text>
+          )}
         </View>
         <View style={styles.friendInfo}>
           <Text style={styles.friendName} numberOfLines={1}>
@@ -248,6 +256,11 @@ const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: colorScheme.textPrimary,
+  },
+  friendAvatarImage: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
   },
   friendInfo: {
     flex: 1,

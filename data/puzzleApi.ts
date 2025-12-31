@@ -487,6 +487,61 @@ async function fetchDisplayNames(userIds: string[]): Promise<Map<string, string>
   return displayNames;
 }
 
+interface UserProfile {
+  displayName: string | null;
+  avatarUrl: string | null;
+}
+
+async function fetchUserProfiles(userIds: string[]): Promise<Map<string, UserProfile>> {
+  const profiles = new Map<string, UserProfile>();
+  const uniqueUserIds = Array.from(new Set(userIds)).filter(Boolean);
+
+  if (uniqueUserIds.length === 0) return profiles;
+
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, display_name, avatar_url')
+      .in('id', uniqueUserIds);
+
+    if (!error && data) {
+      for (const profile of data) {
+        if (profile?.id) {
+          profiles.set(profile.id, {
+            displayName: profile.display_name || null,
+            avatarUrl: profile.avatar_url || null,
+          });
+        }
+      }
+      return profiles;
+    }
+  } catch {
+    // Fall through to per-user queries below
+  }
+
+  // Fallback to per-user queries (keeps working even if RLS behaves unexpectedly on .in())
+  for (const userId of uniqueUserIds) {
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id, display_name, avatar_url')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (profile) {
+        profiles.set(profile.id, {
+          displayName: profile.display_name || null,
+          avatarUrl: profile.avatar_url || null,
+        });
+      }
+    } catch {
+      // Ignore individual lookup failures
+    }
+  }
+
+  return profiles;
+}
+
 export async function getTodayLeaderboardPage(params?: {
   from?: number;
   pageSize?: number;
@@ -1187,7 +1242,7 @@ export async function getFriendRequests(
     const userIds = data.map(f =>
       f.requester_id === userId ? f.addressee_id : f.requester_id
     );
-    const displayNames = await fetchDisplayNames(userIds);
+    const profiles = await fetchUserProfiles(userIds);
 
     const incoming: FriendRequest[] = [];
     const outgoing: FriendRequest[] = [];
@@ -1195,12 +1250,14 @@ export async function getFriendRequests(
     for (const friendship of data) {
       const isIncoming = friendship.addressee_id === userId;
       const otherUserId = isIncoming ? friendship.requester_id : friendship.addressee_id;
+      const profile = profiles.get(otherUserId);
 
       const request: FriendRequest = {
         id: friendship.id,
         user: {
           id: otherUserId,
-          displayName: displayNames.get(otherUserId) || null,
+          displayName: profile?.displayName || null,
+          avatarUrl: profile?.avatarUrl || null,
         },
         status: friendship.status,
         createdAt: friendship.created_at,
@@ -1245,15 +1302,17 @@ export async function getFriends(userId: string): Promise<Friend[]> {
     const friendUserIds = data.map(f =>
       f.requester_id === userId ? f.addressee_id : f.requester_id
     );
-    const displayNames = await fetchDisplayNames(friendUserIds);
+    const profiles = await fetchUserProfiles(friendUserIds);
 
     return data.map(friendship => {
       const friendId = friendship.requester_id === userId
         ? friendship.addressee_id
         : friendship.requester_id;
+      const profile = profiles.get(friendId);
       return {
         id: friendId,
-        displayName: displayNames.get(friendId) || null,
+        displayName: profile?.displayName || null,
+        avatarUrl: profile?.avatarUrl || null,
         friendshipId: friendship.id,
       };
     });

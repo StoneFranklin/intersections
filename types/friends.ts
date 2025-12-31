@@ -9,6 +9,7 @@ export interface FriendRequest {
   user: {
     id: string;
     displayName: string | null;
+    avatarUrl: string | null;
   };
   status: FriendshipStatus;
   createdAt: string;
@@ -18,6 +19,7 @@ export interface FriendRequest {
 export interface Friend {
   id: string;
   displayName: string | null;
+  avatarUrl: string | null;
   friendshipId: string;
 }
 

@@ -5,6 +5,7 @@ import React, { useMemo } from 'react';
 import {
   ActivityIndicator,
   FlatList,
+  Image,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -57,9 +58,16 @@ export function FriendRequestsList({
     return (
       <View style={styles.requestItem}>
         <View style={styles.userAvatar}>
-          <Text style={styles.userAvatarText}>
-            {(item.user.displayName || 'U').charAt(0).toUpperCase()}
-          </Text>
+          {item.user.avatarUrl ? (
+            <Image
+              source={{ uri: item.user.avatarUrl }}
+              style={styles.userAvatarImage}
+            />
+          ) : (
+            <Text style={styles.userAvatarText}>
+              {(item.user.displayName || 'U').charAt(0).toUpperCase()}
+            </Text>
+          )}
         </View>
         <View style={styles.requestInfo}>
           <Text style={styles.userName} numberOfLines={1}>
@@ -96,9 +104,16 @@ export function FriendRequestsList({
     return (
       <View style={styles.requestItem}>
         <View style={styles.userAvatar}>
-          <Text style={styles.userAvatarText}>
-            {(item.user.displayName || 'U').charAt(0).toUpperCase()}
-          </Text>
+          {item.user.avatarUrl ? (
+            <Image
+              source={{ uri: item.user.avatarUrl }}
+              style={styles.userAvatarImage}
+            />
+          ) : (
+            <Text style={styles.userAvatarText}>
+              {(item.user.displayName || 'U').charAt(0).toUpperCase()}
+            </Text>
+          )}
         </View>
         <View style={styles.requestInfo}>
           <Text style={styles.userName} numberOfLines={1}>
@@ -221,6 +236,11 @@ const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: colorScheme.textPrimary,
+  },
+  userAvatarImage: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
   },
   requestInfo: {
     flex: 1,
