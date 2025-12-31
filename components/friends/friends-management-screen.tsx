@@ -42,11 +42,13 @@ export function FriendsManagementScreen({
 
   const [activeTab, setActiveTab] = useState<TabType>('friends');
   const [showSearchModal, setShowSearchModal] = useState(false);
+  const [focusKey, setFocusKey] = useState(0);
 
-  // Reset to friends tab when screen comes into focus
+  // Reset to friends tab and reset child component state when screen comes into focus
   useFocusEffect(
     useCallback(() => {
       setActiveTab('friends');
+      setFocusKey(prev => prev + 1);
     }, [])
   );
 
@@ -233,6 +235,7 @@ export function FriendsManagementScreen({
             onRefresh={() => loadFriends(true)}
             isRefreshing={isRefreshingFriends}
             removingId={removingFriendId}
+            resetKey={focusKey}
           />
         ) : (
           <FriendRequestsList

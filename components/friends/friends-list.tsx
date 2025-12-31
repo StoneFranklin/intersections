@@ -21,6 +21,7 @@ interface FriendsListProps {
   onRefresh: () => void;
   isRefreshing: boolean;
   removingId: string | null;
+  resetKey?: number;
 }
 
 export function FriendsList({
@@ -30,11 +31,18 @@ export function FriendsList({
   onRefresh,
   isRefreshing,
   removingId,
+  resetKey,
 }: FriendsListProps) {
   const { colorScheme } = useThemeScheme();
   const styles = useMemo(() => createStyles(colorScheme), [colorScheme]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [friendToRemove, setFriendToRemove] = useState<Friend | null>(null);
+
+  // Reset expanded state when resetKey changes (e.g., on screen focus)
+  React.useEffect(() => {
+    setExpandedId(null);
+    setFriendToRemove(null);
+  }, [resetKey]);
 
   const handleRemovePress = useCallback((friend: Friend) => {
     setFriendToRemove(friend);
