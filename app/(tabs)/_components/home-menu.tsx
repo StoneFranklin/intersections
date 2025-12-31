@@ -1073,7 +1073,6 @@ export function HomeMenu({
               </View>
               <View style={styles.profileMenuInfo}>
                 <Text style={styles.profileMenuName}>{displayName || 'No display name'}</Text>
-                <Text style={styles.profileMenuEmail}>{user?.email}</Text>
               </View>
             </View>
 
