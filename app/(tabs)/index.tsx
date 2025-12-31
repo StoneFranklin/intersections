@@ -21,14 +21,14 @@ import { logger } from '@/utils/logger';
 import { areNotificationsEnabled, scheduleDailyNotification, setNotificationsEnabled } from '@/utils/notificationService';
 import { AntDesign, Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { useEffect, useRef, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Modal, Platform, Text, TouchableOpacity, View } from 'react-native';
 
 import { GameContent } from './_components/game-content';
 import { HomeMenu } from './_components/home-menu';
 import { createStyles } from './index.styles';
 import { useThemeScheme } from '@/contexts/theme-context';
-import { useMemo } from 'react';
 
 // Track if loading screen has been shown this session (persists across component remounts)
 let hasShownLoadingThisSession = false;
@@ -196,6 +196,26 @@ export default function GameScreen() {
     };
     loadFriendsData();
   }, [user]);
+
+  // Refresh friend request count when screen comes into focus (e.g., returning from friends screen)
+  useFocusEffect(
+    useCallback(() => {
+      if (!user) return;
+      const refreshFriendsData = async () => {
+        try {
+          const [count, ids] = await Promise.all([
+            getPendingRequestCount(user.id),
+            getFriendIds(user.id),
+          ]);
+          setPendingFriendRequestCount(count);
+          setFriendIds(ids);
+        } catch (e) {
+          // Silently fail - not critical
+        }
+      };
+      refreshFriendsData();
+    }, [user])
+  );
 
   // Load notification preference
   useEffect(() => {

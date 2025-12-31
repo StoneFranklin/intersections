@@ -10,6 +10,7 @@ import {
 } from '@/data/puzzleApi';
 import { Friend, FriendRequest } from '@/types/friends';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   StyleSheet,
@@ -41,6 +42,13 @@ export function FriendsManagementScreen({
 
   const [activeTab, setActiveTab] = useState<TabType>('friends');
   const [showSearchModal, setShowSearchModal] = useState(false);
+
+  // Reset to friends tab when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      setActiveTab('friends');
+    }, [])
+  );
 
   // Friends data
   const [friends, setFriends] = useState<Friend[]>([]);
