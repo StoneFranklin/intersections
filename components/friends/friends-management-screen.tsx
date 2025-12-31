@@ -102,12 +102,8 @@ export function FriendsManagementScreen({
   }, [userId]);
 
   const handleRefresh = useCallback(async () => {
-    if (activeTab === 'friends') {
-      await loadFriends(true);
-    } else {
-      await loadRequests(true);
-    }
-  }, [activeTab, loadFriends, loadRequests]);
+    await Promise.all([loadFriends(true), loadRequests(true)]);
+  }, [loadFriends, loadRequests]);
 
   const isRefreshing = activeTab === 'friends' ? isRefreshingFriends : isRefreshingRequests;
 
