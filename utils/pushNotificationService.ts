@@ -13,6 +13,17 @@ export async function getExpoPushToken(): Promise<string | null> {
   }
 
   try {
+    // On Android, we need to set up a default notification channel BEFORE
+    // requesting the push token, otherwise getExpoPushTokenAsync can fail
+    if (Platform.OS === 'android') {
+      await Notifications.setNotificationChannelAsync('default', {
+        name: 'Default',
+        importance: Notifications.AndroidImportance.MAX,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: '#6366f1',
+      });
+    }
+
     // Check if we have permission
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
     let finalStatus = existingStatus;

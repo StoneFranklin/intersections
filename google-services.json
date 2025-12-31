@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "945329830166",
+    "project_id": "intersections-c259e",
+    "storage_bucket": "intersections-c259e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:945329830166:android:aac1673bb423130bd97837",
+        "android_client_info": {
+          "package_name": "com.stonefranklin.intersections"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDTx-8Ff7zidyKFrFbM8bOCwhIrc-Cjaos"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

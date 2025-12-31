@@ -28,7 +28,8 @@
       edgeToEdgeEnabled: true,
       predictiveBackGestureEnabled: false,
       package: "com.stonefranklin.intersections",
-      name: "Intersections"
+      name: "Intersections",
+      googleServicesFile: "./google-services.json"
     },
     web: {
       bundler: "metro",
