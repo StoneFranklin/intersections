@@ -9,8 +9,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { Link, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 
+import { createStyles as createSharedStyles } from '@/app/(tabs)/index.styles';
 import { ArchiveCalendar } from '@/components/archive';
 import { useAuth } from '@/contexts/auth-context';
 import { useThemeScheme } from '@/contexts/theme-context';
@@ -25,6 +26,11 @@ export default function ArchiveScreen() {
   const { user } = useAuth();
   const router = useRouter();
   const styles = useMemo(() => createStyles(colorScheme), [colorScheme]);
+  const sharedStyles = useMemo(() => createSharedStyles(colorScheme), [colorScheme]);
+
+  const handleBack = useCallback(() => {
+    router.back();
+  }, [router]);
 
   const today = new Date();
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
@@ -97,7 +103,17 @@ export default function ArchiveScreen() {
   const availableCount = availableDates.size;
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
+    <SafeAreaView style={styles.container}>
+      <View style={sharedStyles.leaderboardScreenHeader}>
+        <TouchableOpacity onPress={handleBack} style={sharedStyles.leaderboardScreenBackButton}>
+          <Ionicons name="arrow-back" size={24} color={colorScheme.textPrimary} />
+        </TouchableOpacity>
+        <View style={sharedStyles.leaderboardScreenTitleContainer}>
+          <MaterialCommunityIcons name="calendar" size={24} color={colorScheme.brandPrimary} />
+          <Text style={sharedStyles.leaderboardScreenTitle}>Puzzle Archive</Text>
+        </View>
+        <View style={{ width: 40 }} />
+      </View>
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.content}

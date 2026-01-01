@@ -73,7 +73,12 @@
       "Bash(cmd /c \"dir \"\"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\\\\bin\"\"\")",
       "Bash(powershell -Command \"Get-ChildItem ''C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\\\\bin'' | Select-Object -First 10\")",
       "Bash(powershell -Command \"Get-ChildItem ''C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\\\\bin\\\\*.exe'' | Select-Object Name\")",
-      "Bash(npm run android:*)"
+      "Bash(npm run android:*)",
+      "Bash(\"/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/java\" -version)",
+      "Bash(zsh -c 'source ~/.zshrc && echo \"\"JAVA_HOME: $JAVA_HOME\"\" && echo \"\"ANDROID_HOME: $ANDROID_HOME\"\" && java -version 2>&1 | head -1 && which adb')",
+      "Bash(export JAVA_HOME=\"/Applications/Android Studio.app/Contents/jbr/Contents/Home\")",
+      "Bash(export ANDROID_HOME=\"$HOME/Library/Android/sdk\")",
+      "Bash($HOME/Library/Android/sdk/platform-tools/adb --version)"
     ]
   }
 }

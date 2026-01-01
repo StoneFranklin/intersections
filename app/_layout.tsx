@@ -150,9 +150,8 @@ function RootLayoutContent() {
           <Stack.Screen
             name="archive"
             options={{
-              headerShown: true,
+              headerShown: false,
               title: 'Puzzle Archive',
-              headerTitleAlign: 'center',
             }}
             listeners={({ navigation }) => ({
               beforeRemove: (e) => {
