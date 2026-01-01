@@ -166,7 +166,10 @@ const createStyles = (colorScheme: any) =>
       width: '100%',
     },
     header: {
-      marginBottom: 20,
+      paddingHorizontal: 20,
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: colorScheme.borderPrimary,
     },
     backButton: {
       paddingVertical: 8,
@@ -176,7 +179,7 @@ const createStyles = (colorScheme: any) =>
     },
     backButtonText: {
       fontSize: 16,
-      color: '#A855F7',
+      color: colorScheme.brandPrimary,
     },
     titleSection: {
       marginBottom: 40,

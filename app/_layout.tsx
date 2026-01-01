@@ -143,7 +143,21 @@ function RootLayoutContent() {
           <Stack.Screen name="auth" options={{ headerShown: false, title: 'Intersections' }} />
           <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
           <Stack.Screen name="how-to-play" options={{ headerShown: true, title: 'How to Play', headerTitleAlign: 'center' }} />
-          <Stack.Screen name="archive" options={{ headerShown: true, title: 'Puzzle Archive', headerTitleAlign: 'center' }} />
+          <Stack.Screen
+            name="archive"
+            options={{
+              headerShown: true,
+              title: 'Puzzle Archive',
+              headerTitleAlign: 'center',
+              headerBackTitleVisible: false,
+            }}
+            listeners={({ navigation }) => ({
+              beforeRemove: (e) => {
+                e.preventDefault();
+                navigation.navigate('(tabs)' as never);
+              },
+            })}
+          />
           <Stack.Screen name="practice" options={{ headerShown: false, title: 'Practice' }} />
           <Stack.Screen name="privacy" options={{ headerShown: false, title: 'Privacy Policy' }} />
           <Stack.Screen name="terms" options={{ headerShown: false, title: 'Terms of Service' }} />

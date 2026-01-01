@@ -224,10 +224,12 @@ export function PracticeGameContent({
           </View>
 
           <View style={styles.actionButtons}>
-            <TouchableOpacity style={styles.retryButton} onPress={onRetry}>
-              <Ionicons name="refresh" size={20} color={colorScheme.backgroundPrimary} />
-              <Text style={styles.retryButtonText}>Try Again</Text>
-            </TouchableOpacity>
+            {!isWin && (
+              <TouchableOpacity style={styles.retryButton} onPress={onRetry}>
+                <Ionicons name="refresh" size={20} color={colorScheme.backgroundPrimary} />
+                <Text style={styles.retryButtonText}>Try Again</Text>
+              </TouchableOpacity>
+            )}
 
             <TouchableOpacity style={styles.backButton} onPress={onBack}>
               <Ionicons name="arrow-back" size={20} color={colorScheme.brandPrimary} />
