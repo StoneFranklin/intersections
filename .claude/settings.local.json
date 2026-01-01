@@ -72,7 +72,8 @@
       "Bash(cmd /c \"dir \"\"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\\\\bin\\\\java.exe\"\"\")",
       "Bash(cmd /c \"dir \"\"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\\\\bin\"\"\")",
       "Bash(powershell -Command \"Get-ChildItem ''C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\\\\bin'' | Select-Object -First 10\")",
-      "Bash(powershell -Command \"Get-ChildItem ''C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\\\\bin\\\\*.exe'' | Select-Object Name\")"
+      "Bash(powershell -Command \"Get-ChildItem ''C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\\\\bin\\\\*.exe'' | Select-Object Name\")",
+      "Bash(npm run android:*)"
     ]
   }
 }

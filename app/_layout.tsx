@@ -133,11 +133,15 @@ function RootLayoutContent() {
   return (
     <View style={[styles.container, { backgroundColor: colorScheme.backgroundPrimary }]}>
       <ThemeProvider value={navigationTheme}>
-        <Stack screenOptions={{ 
+        <Stack screenOptions={{
           contentStyle: { backgroundColor: colorScheme.backgroundPrimary },
-          headerStyle: { backgroundColor: colorScheme.backgroundPrimary },
+          headerStyle: {
+            backgroundColor: colorScheme.backgroundPrimary,
+            borderBottomColor: colorScheme.borderPrimary,
+            borderBottomWidth: 1,
+          },
           headerTintColor: colorScheme.textPrimary,
-          headerShadowVisible: true,
+          headerShadowVisible: false,
         }}>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="auth" options={{ headerShown: false, title: 'Intersections' }} />

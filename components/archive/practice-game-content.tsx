@@ -20,6 +20,7 @@ import { CellPosition, GameScore, Puzzle } from '@/types/game';
 import { PracticeCompletion } from '@/types/archive';
 import { haptics } from '@/utils/haptics';
 import { formatTime } from '@/utils/share';
+import { createStyles as createGameStyles } from '@/app/(tabs)/index.styles';
 
 interface PracticeGameContentProps {
   puzzle: Puzzle;
@@ -28,6 +29,7 @@ interface PracticeGameContentProps {
   onBack: () => void;
   onComplete: (score: GameScore) => void;
   onRetry: () => void;
+  onShowTutorial: () => void;
   previousCompletion: PracticeCompletion | null;
   gameEnded: boolean;
   savedScore: GameScore | null;
@@ -40,11 +42,13 @@ export function PracticeGameContent({
   onBack,
   onComplete,
   onRetry,
+  onShowTutorial,
   previousCompletion,
   gameEnded,
   savedScore,
 }: PracticeGameContentProps) {
   const { colorScheme } = useThemeScheme();
+  const gameStyles = useMemo(() => createGameStyles(colorScheme), [colorScheme]);
   const styles = useMemo(() => createStyles(colorScheme), [colorScheme]);
 
   const {
@@ -243,18 +247,22 @@ export function PracticeGameContent({
 
   // Show active game
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={handleLeaveRequest} style={styles.headerBackButton}>
+    <SafeAreaView style={gameStyles.container}>
+      <View style={gameStyles.header}>
+        <TouchableOpacity onPress={handleLeaveRequest} style={gameStyles.headerBackButton}>
           <Ionicons name="chevron-back" size={28} color={colorScheme.textPrimary} />
         </TouchableOpacity>
-        <View style={styles.headerCenter}>
-          <Text style={styles.timerText}>{formatTime(elapsedTime)}</Text>
+        <View style={gameStyles.headerCenter}>
+          <Text style={gameStyles.timerText}>{formatTime(elapsedTime)}</Text>
         </View>
-        <View style={styles.headerPlaceholder} />
+        <TouchableOpacity onPress={onShowTutorial} style={gameStyles.headerHelpButton}>
+          <View style={gameStyles.helpCircle}>
+            <Text style={gameStyles.headerHelpIcon}>?</Text>
+          </View>
+        </TouchableOpacity>
       </View>
 
-      <View style={styles.gridContainer}>
+      <View style={gameStyles.gridContainer}>
         <GameGrid
           puzzle={puzzle}
           getWordAtCell={getWordAtCell}
@@ -265,10 +273,10 @@ export function PracticeGameContent({
         />
       </View>
 
-      <View style={styles.livesContainer}>
-        <Text style={styles.livesLabel}>Lives</Text>
+      <View style={gameStyles.livesContainer}>
+        <Text style={gameStyles.livesLabel}>Lives</Text>
         {[1, 2, 3].map((i) => (
-          <View key={i} style={[styles.heart, i <= gameState.lives ? styles.heartFilled : styles.heartEmpty]} />
+          <View key={i} style={[gameStyles.heart, i <= gameState.lives ? gameStyles.heartFilled : gameStyles.heartEmpty]} />
         ))}
       </View>
 
