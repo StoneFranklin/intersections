@@ -10,6 +10,7 @@ import { logger } from '@/utils/logger';
 import { formatTime, shareScore } from '@/utils/share';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Platform, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -30,8 +31,6 @@ export interface GameContentProps {
   leaderboard: LeaderboardEntry[];
   leaderboardLoaded: boolean;
   loadingLeaderboard: boolean;
-  onOpenLeaderboard: () => void;
-  onShowTutorial: () => void;
   onShowSignIn: () => void;
   gameEnded: boolean;
 }
@@ -48,12 +47,11 @@ export function GameContent({
   leaderboard,
   leaderboardLoaded,
   loadingLeaderboard,
-  onOpenLeaderboard,
-  onShowTutorial,
   onShowSignIn,
   gameEnded,
 }: GameContentProps) {
   const { colorScheme } = useThemeScheme();
+  const router = useRouter();
   const styles = useMemo(() => createStyles(colorScheme), [colorScheme]);
   const {
     gameState,
@@ -387,7 +385,7 @@ export function GameContent({
           </View>
 
           {userId ? (
-            <TouchableOpacity style={styles.gameCompleteLeaderboardCard} onPress={onOpenLeaderboard} activeOpacity={0.8}>
+            <TouchableOpacity style={styles.gameCompleteLeaderboardCard} onPress={() => router.push('/leaderboard' as any)} activeOpacity={0.8}>
               <View style={styles.gameCompleteLeaderboardHeader}>
                 <View style={styles.gameCompleteLeaderboardHeaderLeft}>
                   <MaterialCommunityIcons name="trophy" size={20} color={colorScheme.gold} />
@@ -547,11 +545,7 @@ export function GameContent({
         <View style={styles.headerCenter}>
           <Text style={styles.timerText}>{formatTime(elapsedTime)}</Text>
         </View>
-        <TouchableOpacity onPress={onShowTutorial} style={styles.headerHelpButton}>
-          <View style={styles.helpCircle}>
-            <Text style={styles.headerHelpIcon}>?</Text>
-          </View>
-        </TouchableOpacity>
+        <View style={styles.headerPlaceholder} />
       </View>
 
       <View style={styles.gridContainer}>

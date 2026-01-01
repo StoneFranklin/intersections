@@ -9,6 +9,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { useRouter } from 'expo-router';
 
 import { RewardedAdModal } from '@/components/ads/rewarded-ad-modal';
 import { AdFallbackScreen } from '@/components/ads/ad-fallback-screen';
@@ -29,7 +30,6 @@ interface PracticeGameContentProps {
   onBack: () => void;
   onComplete: (score: GameScore) => void;
   onRetry: () => void;
-  onShowTutorial: () => void;
   previousCompletion: PracticeCompletion | null;
   gameEnded: boolean;
   savedScore: GameScore | null;
@@ -42,12 +42,12 @@ export function PracticeGameContent({
   onBack,
   onComplete,
   onRetry,
-  onShowTutorial,
   previousCompletion,
   gameEnded,
   savedScore,
 }: PracticeGameContentProps) {
   const { colorScheme } = useThemeScheme();
+  const router = useRouter();
   const gameStyles = useMemo(() => createGameStyles(colorScheme), [colorScheme]);
   const styles = useMemo(() => createStyles(colorScheme), [colorScheme]);
 
@@ -255,11 +255,7 @@ export function PracticeGameContent({
         <View style={gameStyles.headerCenter}>
           <Text style={gameStyles.timerText}>{formatTime(elapsedTime)}</Text>
         </View>
-        <TouchableOpacity onPress={onShowTutorial} style={gameStyles.headerHelpButton}>
-          <View style={gameStyles.helpCircle}>
-            <Text style={gameStyles.headerHelpIcon}>?</Text>
-          </View>
-        </TouchableOpacity>
+        <View style={gameStyles.headerPlaceholder} />
       </View>
 
       <View style={gameStyles.gridContainer}>

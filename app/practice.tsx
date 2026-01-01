@@ -9,7 +9,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import { PracticeGameContent, PracticePreviewModal } from '@/components/archive';
-import { HowToPlayScreen } from '@/components/screens/how-to-play-screen';
 import { useAuth } from '@/contexts/auth-context';
 import { useThemeScheme } from '@/contexts/theme-context';
 import { fetchPuzzleForDate, getPracticeScore, upsertPracticeScore } from '@/data/puzzleApi';
@@ -34,7 +33,6 @@ export default function PracticeScreen() {
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [gameKey, setGameKey] = useState(0); // Key to force remount of game component
-  const [showTutorial, setShowTutorial] = useState(false);
 
   const loadPuzzle = useCallback(async () => {
     if (!puzzleDate) {
@@ -96,7 +94,8 @@ export default function PracticeScreen() {
   }, [puzzleDate, user?.id]);
 
   const handleBack = useCallback(() => {
-    router.push('/archive');
+    // Go back to the archive screen (which preserves its month state)
+    router.back();
   }, [router]);
 
   const handlePlay = useCallback(() => {
@@ -111,17 +110,9 @@ export default function PracticeScreen() {
 
   const handleCancelPreview = useCallback(() => {
     setShowPreviewModal(false);
-    // Use back() to go back to the archive screen
+    // Go back to the archive screen (which preserves its month state)
     router.back();
   }, [router]);
-
-  const handleShowTutorial = useCallback(() => {
-    setShowTutorial(true);
-  }, []);
-
-  const handleHideTutorial = useCallback(() => {
-    setShowTutorial(false);
-  }, []);
 
   const formattedDate = useMemo(() => {
     if (!puzzleDate) return '';
@@ -158,10 +149,6 @@ export default function PracticeScreen() {
     );
   }
 
-  if (showTutorial) {
-    return <HowToPlayScreen onBack={handleHideTutorial} />;
-  }
-
   return (
     <>
       {!isPlaying && (
@@ -189,7 +176,6 @@ export default function PracticeScreen() {
           onBack={handleBack}
           onComplete={handleComplete}
           onRetry={handlePlay}
-          onShowTutorial={handleShowTutorial}
           previousCompletion={previousCompletion}
           gameEnded={gameEnded}
           savedScore={savedScore}

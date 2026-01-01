@@ -142,25 +142,19 @@ function RootLayoutContent() {
           },
           headerTintColor: colorScheme.textPrimary,
           headerShadowVisible: false,
+          // Enable iOS swipe-back gesture for all screens
+          gestureEnabled: true,
+          fullScreenGestureEnabled: true,
+          animation: 'slide_from_right',
         }}>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="auth" options={{ headerShown: false, title: 'Intersections' }} />
           <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-          <Stack.Screen name="how-to-play" options={{ headerShown: true, title: 'How to Play', headerTitleAlign: 'center' }} />
-          <Stack.Screen
-            name="archive"
-            options={{
-              headerShown: false,
-              title: 'Puzzle Archive',
-            }}
-            listeners={({ navigation }) => ({
-              beforeRemove: (e) => {
-                e.preventDefault();
-                navigation.navigate('(tabs)' as never);
-              },
-            })}
-          />
+          <Stack.Screen name="how-to-play" options={{ headerShown: false, title: 'How to Play' }} />
+          <Stack.Screen name="leaderboard" options={{ headerShown: false, title: 'Leaderboard' }} />
+          <Stack.Screen name="archive" options={{ headerShown: false, title: 'Puzzle Archive' }} />
           <Stack.Screen name="practice" options={{ headerShown: false, title: 'Practice' }} />
+          <Stack.Screen name="friends" options={{ headerShown: false, title: 'Friends' }} />
           <Stack.Screen name="privacy" options={{ headerShown: false, title: 'Privacy Policy' }} />
           <Stack.Screen name="terms" options={{ headerShown: false, title: 'Terms of Service' }} />
           <Stack.Screen name="about" options={{ headerShown: false, title: 'About' }} />

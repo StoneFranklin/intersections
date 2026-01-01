@@ -1,8 +1,6 @@
-import { LeaderboardScreen } from '@/components/leaderboard/leaderboard-screen';
-import { HowToPlayScreen } from '@/components/screens/how-to-play-screen';
 import { LoadingScreen } from '@/components/screens/loading-screen';
 import { useAuth } from '@/contexts/auth-context';
-import { fetchTodaysPuzzle, getAvailablePuzzleDates, getFriendIds, getFriendsLeaderboardPage, getOrCreateProfile, getPercentile, getPendingRequestCount, getPracticeCompletionDates, getTodayLeaderboard, getTodayLeaderboardPage, getUserStreak, getUserTodayScore, hasUserCompletedToday, LeaderboardEntry, reconcileScoreOnSignIn, updateDisplayName, updateUserStreak } from '@/data/puzzleApi';
+import { fetchTodaysPuzzle, getAvailablePuzzleDates, getFriendIds, getFriendsLeaderboardPage, getOrCreateProfile, getPercentile, getPendingRequestCount, getPracticeCompletionDates, getTodayLeaderboard, getUserStreak, getUserTodayScore, hasUserCompletedToday, LeaderboardEntry, reconcileScoreOnSignIn, updateDisplayName, updateUserStreak } from '@/data/puzzleApi';
 import { GameScore, Puzzle } from '@/types/game';
 import { getTodayKey, getYesterdayKey } from '@/utils/dateKeys';
 import {
@@ -20,7 +18,7 @@ import { logger } from '@/utils/logger';
 import { areNotificationsEnabled, scheduleDailyNotification, setNotificationsEnabled } from '@/utils/notificationService';
 import { AntDesign, Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useNavigation } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Modal, Platform, Text, TouchableOpacity, View } from 'react-native';
 
@@ -42,21 +40,14 @@ export default function GameScreen() {
   const [savedScore, setSavedScore] = useState<GameScore | null>(null);
   const [dailyCompleted, setDailyCompleted] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [showTutorialScreen, setShowTutorial] = useState(false);
   const [streak, setStreak] = useState(0);
   const [showSignIn, setShowSignIn] = useState(false);
   const [signingIn, setSigningIn] = useState(false);
   const [signingInWithApple, setSigningInWithApple] = useState(false);
-  const [showLeaderboardScreen, setShowLeaderboardScreen] = useState(false);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loadingLeaderboard, setLoadingLeaderboard] = useState(false);
   const [userRank, setUserRank] = useState<number | null>(null);
   const [leaderboardLoaded, setLeaderboardLoaded] = useState(false);
-  const [fullLeaderboard, setFullLeaderboard] = useState<LeaderboardEntry[]>([]);
-  const [loadingFullLeaderboard, setLoadingFullLeaderboard] = useState(false);
-  const [fullLeaderboardLoaded, setFullLeaderboardLoaded] = useState(false);
-  const [fullLeaderboardFrom, setFullLeaderboardFrom] = useState(0);
-  const [fullLeaderboardHasMore, setFullLeaderboardHasMore] = useState(true);
   const [todaysPuzzle, setTodaysPuzzle] = useState<Puzzle | null>(null);
   const [lastLeaderboardRefresh, setLastLeaderboardRefresh] = useState<number>(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -68,7 +59,6 @@ export default function GameScreen() {
   const [friendIds, setFriendIds] = useState<string[]>([]);
 
   // Friends leaderboard state
-  const [leaderboardTab, setLeaderboardTab] = useState<'global' | 'friends'>('global');
   const [friendsLeaderboard, setFriendsLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loadingFriendsLeaderboard, setLoadingFriendsLeaderboard] = useState(false);
   const [friendsLeaderboardLoaded, setFriendsLeaderboardLoaded] = useState(false);
@@ -108,6 +98,15 @@ export default function GameScreen() {
   // Archive completion percentage state
   const [archiveCompletionPercentage, setArchiveCompletionPercentage] = useState<number | null>(null);
 
+  // Get navigation to control gesture
+  const navigation = useNavigation();
+
+  // Disable swipe-back gesture while playing the daily puzzle
+  useEffect(() => {
+    navigation.getParent()?.setOptions({
+      gestureEnabled: !isPlaying,
+    });
+  }, [isPlaying, navigation]);
 
   // Check if sign-in banner was dismissed
   useEffect(() => {
@@ -163,12 +162,7 @@ export default function GameScreen() {
       displayNameRef.current = null;
       setLeaderboard([]);
       setLeaderboardLoaded(false);
-      setFullLeaderboard([]);
-      setFullLeaderboardLoaded(false);
-      setFullLeaderboardFrom(0);
-      setFullLeaderboardHasMore(true);
       setUserRank(null);
-      setShowLeaderboardScreen(false);
 
       // Clear friends state
       setPendingFriendRequestCount(0);
@@ -473,36 +467,12 @@ export default function GameScreen() {
     setIsRefreshing(true);
     try {
       await loadLeaderboard({ forceRefresh: true });
-      // Also refresh the full leaderboard if it was loaded
-      if (fullLeaderboardLoaded) {
-        await loadFullLeaderboard({ reset: true });
-      }
       // Also refresh friends leaderboard if it was loaded
       if (friendsLeaderboardLoaded) {
         await loadFriendsLeaderboard({ reset: true });
       }
     } finally {
       setIsRefreshing(false);
-    }
-  };
-
-  const loadFullLeaderboard = async (opts?: { reset?: boolean }) => {
-    if (!user) return;
-    if (loadingFullLeaderboard) return;
-    if (!fullLeaderboardHasMore && !opts?.reset) return;
-
-    setLoadingFullLeaderboard(true);
-    try {
-      const from = opts?.reset ? 0 : fullLeaderboardFrom;
-      const page = await getTodayLeaderboardPage({ from, pageSize: 50, currentUserId: user?.id });
-      setFullLeaderboard(prev => (opts?.reset ? page.entries : [...prev, ...page.entries]));
-      setFullLeaderboardFrom(page.nextFrom);
-      setFullLeaderboardHasMore(page.hasMore);
-      setFullLeaderboardLoaded(true);
-    } catch (e) {
-      logger.error('Error loading full leaderboard:', e);
-    } finally {
-      setLoadingFullLeaderboard(false);
     }
   };
 
@@ -539,16 +509,12 @@ export default function GameScreen() {
       // Reset and reload to get fresh user identification
       setLeaderboardLoaded(false);
       setUserRank(null);
-      setFullLeaderboard([]);
-      setFullLeaderboardLoaded(false);
-      setFullLeaderboardFrom(0);
-      setFullLeaderboardHasMore(true);
     }
   }, [user?.id]);
 
   // Auto-refresh leaderboard every 60 seconds when on home screen and puzzle is completed
   useEffect(() => {
-    if (!user || !dailyCompleted || !leaderboardLoaded || isPlaying || showLeaderboardScreen) {
+    if (!user || !dailyCompleted || !leaderboardLoaded || isPlaying) {
       return;
     }
 
@@ -562,35 +528,8 @@ export default function GameScreen() {
     }, REFRESH_INTERVAL);
 
     return () => clearInterval(intervalId);
-  }, [dailyCompleted, leaderboardLoaded, isPlaying, showLeaderboardScreen, lastLeaderboardRefresh, user]);
+  }, [dailyCompleted, leaderboardLoaded, isPlaying, lastLeaderboardRefresh, user]);
 
-  const openLeaderboard = async (tab?: 'global' | 'friends') => {
-    if (!user) {
-      setShowSignIn(true);
-      return;
-    }
-    if (tab) {
-      setLeaderboardTab(tab);
-    }
-    setShowLeaderboardScreen(true);
-    if (!leaderboardLoaded) {
-      await loadLeaderboard();
-    }
-    if (!fullLeaderboardLoaded) {
-      await loadFullLeaderboard({ reset: true });
-    }
-    // Load friends leaderboard if user has friends or if friends tab requested
-    if ((friendIds.length > 0 || tab === 'friends') && !friendsLeaderboardLoaded) {
-      await loadFriendsLeaderboard({ reset: true });
-    }
-  };
-
-  const handleLeaderboardTabChange = async (tab: 'global' | 'friends') => {
-    setLeaderboardTab(tab);
-    if (tab === 'friends' && !friendsLeaderboardLoaded) {
-      await loadFriendsLeaderboard({ reset: true });
-    }
-  };
 
   // Check if today's puzzle was already completed and load streak
   useEffect(() => {
@@ -920,46 +859,6 @@ export default function GameScreen() {
     );
   }
 
-  // Show full-screen leaderboard
-  if (showLeaderboardScreen) {
-    return (
-      <>
-        <LeaderboardScreen
-          fullLeaderboard={fullLeaderboard}
-          loadingFullLeaderboard={loadingFullLeaderboard}
-          fullLeaderboardLoaded={fullLeaderboardLoaded}
-          fullLeaderboardHasMore={fullLeaderboardHasMore}
-          isRefreshing={isRefreshing}
-          userRank={userRank}
-          savedScore={savedScore}
-          onBack={() => setShowLeaderboardScreen(false)}
-          onRefresh={refreshLeaderboard}
-          onLoadMore={() => loadFullLeaderboard()}
-          isCurrentUserEntry={isCurrentUserEntry}
-          showFriendsToggle={friendIds.length > 0}
-          activeTab={leaderboardTab}
-          onTabChange={handleLeaderboardTabChange}
-          friendsLeaderboard={friendsLeaderboard}
-          loadingFriendsLeaderboard={loadingFriendsLeaderboard}
-          friendsLeaderboardLoaded={friendsLeaderboardLoaded}
-          friendsLeaderboardHasMore={friendsLeaderboardHasMore}
-          onLoadMoreFriends={() => loadFriendsLeaderboard()}
-        />
-        {renderSignInModal()}
-      </>
-    );
-  }
-
-  // Show full-screen how to play
-  if (showTutorialScreen) {
-    return (
-      <>
-        <HowToPlayScreen onBack={() => setShowTutorial(false)} />
-        {renderSignInModal()}
-      </>
-    );
-  }
-
   // Show main menu
   if (!isPlaying || !puzzle) {
     return (
@@ -1007,9 +906,7 @@ export default function GameScreen() {
         onDismissSignInBanner={dismissSignInBanner}
         isCurrentUserEntry={isCurrentUserEntry}
         onPlayDaily={handlePlayDaily}
-        onOpenLeaderboard={openLeaderboard}
         onRefreshLeaderboard={refreshLeaderboard}
-        onShowTutorial={() => setShowTutorial(true)}
         pendingFriendRequestCount={pendingFriendRequestCount}
         signInWithGoogle={signInWithGoogle}
         signInWithApple={signInWithApple}
@@ -1034,8 +931,6 @@ export default function GameScreen() {
         leaderboard={leaderboard}
         leaderboardLoaded={leaderboardLoaded}
         loadingLeaderboard={loadingLeaderboard}
-        onOpenLeaderboard={openLeaderboard}
-        onShowTutorial={() => setShowTutorial(true)}
         onShowSignIn={() => setShowSignIn(true)}
         gameEnded={currentGameEnded}
       />

@@ -91,9 +91,7 @@ export interface HomeMenuProps {
   isCurrentUserEntry: (entry: LeaderboardEntry) => boolean;
 
   onPlayDaily: () => void;
-  onOpenLeaderboard: (tab?: 'global' | 'friends') => void;
   onRefreshLeaderboard: () => void;
-  onShowTutorial: () => void;
 
   pendingFriendRequestCount: number;
 
@@ -146,9 +144,7 @@ export function HomeMenu({
   onDismissSignInBanner,
   isCurrentUserEntry,
   onPlayDaily,
-  onOpenLeaderboard,
   onRefreshLeaderboard,
-  onShowTutorial,
   pendingFriendRequestCount,
   signInWithGoogle,
   signInWithApple,
@@ -626,7 +622,7 @@ export function HomeMenu({
                 {user ? (
                   <TouchableOpacity
                     style={styles.completedContainer}
-                    onPress={() => onOpenLeaderboard(homeLeaderboardTab)}
+                    onPress={() => router.push('/leaderboard' as any)}
                     activeOpacity={0.8}
                   >
                     <View style={styles.completedHeader}>
@@ -947,7 +943,7 @@ export function HomeMenu({
           </Animated.View>
 
           <View style={styles.secondaryButtonsRow}>
-            <TouchableOpacity style={styles.secondaryButton} onPress={onShowTutorial}>
+            <TouchableOpacity style={styles.secondaryButton} onPress={() => router.push('/how-to-play')}>
               <Ionicons name="help-circle-outline" size={20} color={colorScheme.brandPrimary} />
               <Text style={styles.secondaryButtonText}>How to Play</Text>
             </TouchableOpacity>
