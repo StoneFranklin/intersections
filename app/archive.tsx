@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 
 import { ArchiveCalendar } from '@/components/archive';
 import { useAuth } from '@/contexts/auth-context';
@@ -98,26 +98,11 @@ export default function ArchiveScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.push('/')}>
-          <Ionicons name="arrow-back" size={20} color={colorScheme.brandPrimary} />
-          <Text style={styles.backButtonText}>Back</Text>
-        </TouchableOpacity>
-      </View>
-
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.titleSection}>
-          <MaterialCommunityIcons name="archive" size={40} color={colorScheme.brandPrimary} />
-          <Text style={styles.title}>Puzzle Archive</Text>
-          <Text style={styles.subtitle}>
-            Practice with past puzzles. No leaderboard, no streaks - just for fun!
-          </Text>
-        </View>
-
         {loading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={colorScheme.brandPrimary} />
@@ -157,17 +142,6 @@ export default function ArchiveScreen() {
                 canGoNext={canGoNext}
               />
             </View>
-
-            <View style={styles.infoSection}>
-              <View style={styles.infoCard}>
-                <Ionicons name="information-circle-outline" size={20} color={colorScheme.info} />
-                <Text style={styles.infoText}>
-                  {user
-                    ? "Tap any available date to play that day's puzzle. Your practice scores won't affect your streak or leaderboard ranking."
-                    : "Sign in to track your practice progress across devices. You can still play practice puzzles without signing in."}
-                </Text>
-              </View>
-            </View>
           </>
         )}
       </ScrollView>
@@ -181,46 +155,42 @@ const createStyles = (colorScheme: any) =>
       flex: 1,
       backgroundColor: colorScheme.backgroundPrimary,
     },
-    header: {
-      paddingHorizontal: 16,
-      paddingVertical: 8,
-    },
-    backButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 8,
-      paddingVertical: 8,
-    },
-    backButtonText: {
-      fontSize: 16,
-      color: colorScheme.brandPrimary,
-    },
     scrollView: {
       flex: 1,
     },
     content: {
-      padding: 16,
-      paddingBottom: 40,
-      maxWidth: 600,
+      padding: 20,
+      paddingBottom: 60,
+      maxWidth: 800,
       alignSelf: 'center',
       width: '100%',
     },
-    titleSection: {
+    header: {
+      marginBottom: 20,
+    },
+    backButton: {
+      paddingVertical: 8,
+      flexDirection: 'row',
       alignItems: 'center',
-      marginBottom: 24,
       gap: 8,
     },
+    backButtonText: {
+      fontSize: 16,
+      color: '#A855F7',
+    },
+    titleSection: {
+      marginBottom: 40,
+      paddingTop: 20,
+    },
     title: {
-      fontSize: 28,
+      fontSize: 32,
       fontWeight: 'bold',
       color: colorScheme.textPrimary,
-      marginTop: 8,
+      marginBottom: 8,
     },
     subtitle: {
-      fontSize: 14,
+      fontSize: 18,
       color: colorScheme.textSecondary,
-      textAlign: 'center',
-      paddingHorizontal: 20,
     },
     loadingContainer: {
       padding: 40,

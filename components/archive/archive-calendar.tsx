@@ -272,7 +272,7 @@ export function ArchiveCalendar({
         </View>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: colorScheme.success }]} />
-          <Text style={styles.legendText}>Solved (16/16)</Text>
+          <Text style={styles.legendText}>Solved</Text>
         </View>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: colorScheme.warning, opacity: 0.3 }]} />
