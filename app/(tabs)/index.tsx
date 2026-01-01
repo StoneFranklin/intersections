@@ -1,5 +1,4 @@
 import { LeaderboardScreen } from '@/components/leaderboard/leaderboard-screen';
-import { CorrectAnswersScreen } from '@/components/screens/correct-answers-screen';
 import { HowToPlayScreen } from '@/components/screens/how-to-play-screen';
 import { LoadingScreen } from '@/components/screens/loading-screen';
 import { useAuth } from '@/contexts/auth-context';
@@ -58,7 +57,6 @@ export default function GameScreen() {
   const [fullLeaderboardLoaded, setFullLeaderboardLoaded] = useState(false);
   const [fullLeaderboardFrom, setFullLeaderboardFrom] = useState(0);
   const [fullLeaderboardHasMore, setFullLeaderboardHasMore] = useState(true);
-  const [showAnswersScreen, setShowAnswersScreen] = useState(false);
   const [todaysPuzzle, setTodaysPuzzle] = useState<Puzzle | null>(null);
   const [lastLeaderboardRefresh, setLastLeaderboardRefresh] = useState<number>(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -921,24 +919,6 @@ export default function GameScreen() {
     );
   }
 
-  // Show full-screen correct answers
-  if (showAnswersScreen) {
-    return (
-      <>
-        <CorrectAnswersScreen
-          puzzle={todaysPuzzle || puzzle}
-          onBack={() => setShowAnswersScreen(false)}
-          onRetry={async () => {
-            const puzzleData = await fetchTodaysPuzzle();
-            if (puzzleData) {
-              setTodaysPuzzle(puzzleData);
-            }
-          }}
-        />
-        {renderSignInModal()}
-      </>
-    );
-  }
   // Show full-screen how to play
   if (showTutorialScreen) {
     return (
@@ -998,7 +978,6 @@ export default function GameScreen() {
         onPlayDaily={handlePlayDaily}
         onOpenLeaderboard={openLeaderboard}
         onRefreshLeaderboard={refreshLeaderboard}
-        onShowAnswers={() => setShowAnswersScreen(true)}
         onShowTutorial={() => setShowTutorial(true)}
         pendingFriendRequestCount={pendingFriendRequestCount}
         signInWithGoogle={signInWithGoogle}
@@ -1023,7 +1002,6 @@ export default function GameScreen() {
         leaderboard={leaderboard}
         leaderboardLoaded={leaderboardLoaded}
         loadingLeaderboard={loadingLeaderboard}
-        onShowAnswersModal={() => setShowAnswersScreen(true)}
         onOpenLeaderboard={openLeaderboard}
         onShowTutorial={() => setShowTutorial(true)}
         onShowSignIn={() => setShowSignIn(true)}

@@ -1,6 +1,7 @@
 import { supabase } from "@/lib/supabase";
 import { IntersectionsDailyPuzzle, Puzzle, Word } from "@/types/game";
 import { Friend, FriendRequest, UserSearchResult } from "@/types/friends";
+import { PracticeCompletion } from "@/types/archive";
 import { logger } from "@/utils/logger";
 import { validateDisplayName } from "@/utils/displayNameValidation";
 
@@ -176,6 +177,11 @@ export async function submitScore(
     if (insertError || !data) {
       logger.error('Error submitting score:', insertError);
       return null;
+    }
+
+    // Also upsert into practice_scores for archive tracking (if user is signed in)
+    if (userId) {
+      await upsertPracticeScore(userId, puzzleDate, score, timeSeconds, mistakes, correctPlacements);
     }
 
     // Calculate percentile and rank
@@ -376,7 +382,7 @@ export async function updateUserStreak(
  */
 export async function hasUserCompletedToday(userId: string): Promise<boolean> {
   const puzzleDate = getTodayDateString();
-  
+
   try {
     const { count, error } = await supabase
       .from('puzzle_scores')
@@ -1482,5 +1488,238 @@ export async function unregisterPushToken(userId: string): Promise<boolean> {
   } catch (e) {
     logger.error('Error in unregisterPushToken:', e);
     return false;
+  }
+}
+
+// ================== ARCHIVE/PRACTICE API ==================
+
+/**
+ * Fetch a puzzle for a specific date (for archive/practice mode)
+ */
+export async function fetchPuzzleForDate(date: string): Promise<Puzzle | null> {
+  const dbPuzzle = await getDailyPuzzle(date);
+
+  if (!dbPuzzle) {
+    return null;
+  }
+
+  return convertToPuzzle(dbPuzzle);
+}
+
+/**
+ * Get all available puzzle dates (dates that have puzzles in the database)
+ * Returns dates from the earliest puzzle up to today
+ */
+export async function getAvailablePuzzleDates(): Promise<string[]> {
+  try {
+    const today = getTodayDateString();
+
+    const { data, error } = await supabase
+      .from('daily_puzzle')
+      .select('puzzle_date')
+      .lte('puzzle_date', today)
+      .order('puzzle_date', { ascending: false });
+
+    if (error) {
+      logger.error('Error fetching available puzzle dates:', error);
+      return [];
+    }
+
+    return (data || []).map(row => row.puzzle_date);
+  } catch (e) {
+    logger.error('Error in getAvailablePuzzleDates:', e);
+    return [];
+  }
+}
+
+/**
+ * Get the date range for available puzzles
+ */
+export async function getPuzzleDateRange(): Promise<{ earliest: string | null; latest: string }> {
+  try {
+    const today = getTodayDateString();
+
+    const { data, error } = await supabase
+      .from('daily_puzzle')
+      .select('puzzle_date')
+      .lte('puzzle_date', today)
+      .order('puzzle_date', { ascending: true })
+      .limit(1);
+
+    if (error || !data || data.length === 0) {
+      return { earliest: null, latest: today };
+    }
+
+    return { earliest: data[0].puzzle_date, latest: today };
+  } catch (e) {
+    logger.error('Error in getPuzzleDateRange:', e);
+    return { earliest: null, latest: getTodayDateString() };
+  }
+}
+
+/**
+ * Check if a puzzle exists for a specific date
+ */
+export async function puzzleExistsForDate(date: string): Promise<boolean> {
+  try {
+    const { count, error } = await supabase
+      .from('daily_puzzle')
+      .select('*', { count: 'exact', head: true })
+      .eq('puzzle_date', date);
+
+    if (error) {
+      logger.error('Error checking puzzle existence:', error);
+      return false;
+    }
+
+    return (count || 0) > 0;
+  } catch (e) {
+    logger.error('Error in puzzleExistsForDate:', e);
+    return false;
+  }
+}
+
+/**
+ * Upsert a practice score to the practice_scores table.
+ * If no record exists, creates one. If record exists, updates only if the new score is better.
+ * This is called both when completing daily puzzles and when playing from archive.
+ */
+export async function upsertPracticeScore(
+  userId: string,
+  puzzleDate: string,
+  score: number,
+  timeSeconds: number,
+  mistakes: number,
+  correctPlacements: number
+): Promise<{ success: boolean }> {
+  try {
+    // First, check if a record exists
+    const { data: existing, error: fetchError } = await supabase
+      .from('practice_scores')
+      .select('id, best_score, attempts')
+      .eq('user_id', userId)
+      .eq('puzzle_date', puzzleDate)
+      .maybeSingle();
+
+    if (fetchError) {
+      logger.error('Error checking existing practice score:', fetchError);
+      return { success: false };
+    }
+
+    if (existing) {
+      // Record exists - update if new score is better, always increment attempts
+      const shouldUpdateScore = score > existing.best_score;
+
+      const updateData: any = {
+        attempts: existing.attempts + 1,
+        last_played_at: new Date().toISOString(),
+      };
+
+      if (shouldUpdateScore) {
+        updateData.best_score = score;
+        updateData.best_time_seconds = timeSeconds;
+        updateData.best_mistakes = mistakes;
+        updateData.best_correct_placements = correctPlacements;
+      }
+
+      const { error: updateError } = await supabase
+        .from('practice_scores')
+        .update(updateData)
+        .eq('id', existing.id);
+
+      if (updateError) {
+        logger.error('Error updating practice score:', updateError);
+        return { success: false };
+      }
+    } else {
+      // No record exists - insert new one
+      const { error: insertError } = await supabase
+        .from('practice_scores')
+        .insert({
+          user_id: userId,
+          puzzle_date: puzzleDate,
+          best_score: score,
+          best_time_seconds: timeSeconds,
+          best_mistakes: mistakes,
+          best_correct_placements: correctPlacements,
+          attempts: 1,
+        });
+
+      if (insertError) {
+        logger.error('Error inserting practice score:', insertError);
+        return { success: false };
+      }
+    }
+
+    return { success: true };
+  } catch (e) {
+    logger.error('Error in upsertPracticeScore:', e);
+    return { success: false };
+  }
+}
+
+/**
+ * Get all dates where user has a practice_scores record (for archive calendar)
+ * This includes both daily puzzle completions and archive plays
+ */
+export async function getPracticeCompletionDates(userId?: string): Promise<Map<string, { correctPlacements: number; score: number }>> {
+  try {
+    if (!userId) {
+      return new Map();
+    }
+
+    const { data, error } = await supabase
+      .from('practice_scores')
+      .select('puzzle_date, best_correct_placements, best_score')
+      .eq('user_id', userId);
+
+    if (error) {
+      logger.error('Error fetching practice completion dates:', error);
+      return new Map();
+    }
+
+    const scoresMap = new Map<string, { correctPlacements: number; score: number }>();
+    (data || []).forEach(row => {
+      scoresMap.set(row.puzzle_date, {
+        correctPlacements: row.best_correct_placements,
+        score: row.best_score,
+      });
+    });
+
+    return scoresMap;
+  } catch (e) {
+    logger.error('Error in getPracticeCompletionDates:', e);
+    return new Map();
+  }
+}
+
+/**
+ * Get practice score record for a specific date
+ */
+export async function getPracticeScore(userId: string, puzzleDate: string): Promise<PracticeCompletion | null> {
+  try {
+    const { data, error } = await supabase
+      .from('practice_scores')
+      .select('puzzle_date, best_score, best_time_seconds, best_mistakes, best_correct_placements, attempts, first_completed_at')
+      .eq('user_id', userId)
+      .eq('puzzle_date', puzzleDate)
+      .maybeSingle();
+
+    if (error || !data) {
+      return null;
+    }
+
+    return {
+      puzzleDate: data.puzzle_date,
+      completedAt: data.first_completed_at,
+      score: data.best_score,
+      timeSeconds: data.best_time_seconds,
+      mistakes: data.best_mistakes,
+      correctPlacements: data.best_correct_placements,
+      completed: data.best_correct_placements === 16,
+    };
+  } catch (e) {
+    logger.error('Error in getPracticeScore:', e);
+    return null;
   }
 }

@@ -725,7 +725,7 @@ export const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
   leaderboardPreviewScoreCurrentUser: {
     color: colorScheme.brandPrimary,
   },
-  // How to play button
+  // How to play button (legacy - kept for compatibility)
   howToPlayButton: {
     marginTop: 16,
     width: '100%',
@@ -742,6 +742,31 @@ export const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
   },
   howToPlayText: {
     fontSize: 15,
+    fontWeight: '600',
+    color: colorScheme.brandPrimary,
+  },
+  // Secondary buttons row (How to Play + Archive)
+  secondaryButtonsRow: {
+    marginTop: 16,
+    width: '100%',
+    maxWidth: 400,
+    flexDirection: 'row',
+    gap: 12,
+  },
+  secondaryButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colorScheme.borderPrimary,
+    backgroundColor: colorScheme.backgroundSecondary,
+    paddingVertical: 14,
+    gap: 8,
+  },
+  secondaryButtonText: {
+    fontSize: 14,
     fontWeight: '600',
     color: colorScheme.brandPrimary,
   },

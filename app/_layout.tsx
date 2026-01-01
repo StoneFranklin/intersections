@@ -138,6 +138,8 @@ function RootLayoutContent() {
           <Stack.Screen name="auth" options={{ headerShown: false, title: 'Intersections' }} />
           <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
           <Stack.Screen name="how-to-play" options={{ headerShown: false, title: 'How to Play' }} />
+          <Stack.Screen name="archive" options={{ headerShown: false, title: 'Puzzle Archive' }} />
+          <Stack.Screen name="practice" options={{ headerShown: false, title: 'Practice' }} />
           <Stack.Screen name="privacy" options={{ headerShown: false, title: 'Privacy Policy' }} />
           <Stack.Screen name="terms" options={{ headerShown: false, title: 'Terms of Service' }} />
           <Stack.Screen name="about" options={{ headerShown: false, title: 'About' }} />

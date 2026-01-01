@@ -30,7 +30,6 @@ export interface GameContentProps {
   leaderboard: LeaderboardEntry[];
   leaderboardLoaded: boolean;
   loadingLeaderboard: boolean;
-  onShowAnswersModal: () => void;
   onOpenLeaderboard: () => void;
   onShowTutorial: () => void;
   onShowSignIn: () => void;
@@ -49,7 +48,6 @@ export function GameContent({
   leaderboard,
   leaderboardLoaded,
   loadingLeaderboard,
-  onShowAnswersModal,
   onOpenLeaderboard,
   onShowTutorial,
   onShowSignIn,
@@ -346,27 +344,6 @@ export function GameContent({
               </Text>
             </View>
           )}
-
-          <Text style={styles.reviewSubtitle}>Correct Answers</Text>
-
-          <View style={styles.reviewGridContainer}>
-            <GameGrid
-              puzzle={puzzle}
-              getWordAtCell={(pos) => {
-                const rowCat = puzzle.rowCategories[pos.rowIndex];
-                const colCat = puzzle.colCategories[pos.colIndex];
-                return (
-                  puzzle.words.find(
-                    (w) => w.correctRowId === rowCat.id && w.correctColId === colCat.id
-                  ) || null
-                );
-              }}
-              isCellCorrect={() => true}
-              selectedWordId={null}
-              onCellPress={() => {}}
-              onCellLongPress={() => {}}
-            />
-          </View>
         </ScrollView>
       </SafeAreaView>
     );
@@ -539,11 +516,6 @@ export function GameContent({
           )}
 
           <View style={styles.gameCompleteActions}>
-            <TouchableOpacity style={styles.gameCompleteActionButton} onPress={onShowAnswersModal}>
-              <Ionicons name="grid-outline" size={20} color={colorScheme.brandPrimary} />
-              <Text style={styles.gameCompleteActionButtonText}>View Correct Answers</Text>
-            </TouchableOpacity>
-
             {displayScore && (
               <TouchableOpacity
                 style={styles.gameCompleteShareButton}
