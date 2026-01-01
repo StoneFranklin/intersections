@@ -153,7 +153,6 @@ function RootLayoutContent() {
               headerShown: true,
               title: 'Puzzle Archive',
               headerTitleAlign: 'center',
-              headerBackTitleVisible: false,
             }}
             listeners={({ navigation }) => ({
               beforeRemove: (e) => {

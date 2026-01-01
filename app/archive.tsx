@@ -97,7 +97,7 @@ export default function ArchiveScreen() {
   const availableCount = availableDates.size;
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['bottom']}>
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.content}
@@ -166,10 +166,7 @@ const createStyles = (colorScheme: any) =>
       width: '100%',
     },
     header: {
-      paddingHorizontal: 20,
-      paddingVertical: 12,
-      borderBottomWidth: 1,
-      borderBottomColor: colorScheme.borderPrimary,
+      marginBottom: 20,
     },
     backButton: {
       paddingVertical: 8,
