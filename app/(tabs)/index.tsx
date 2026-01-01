@@ -2,7 +2,7 @@ import { LeaderboardScreen } from '@/components/leaderboard/leaderboard-screen';
 import { HowToPlayScreen } from '@/components/screens/how-to-play-screen';
 import { LoadingScreen } from '@/components/screens/loading-screen';
 import { useAuth } from '@/contexts/auth-context';
-import { fetchTodaysPuzzle, getFriendIds, getFriendsLeaderboardPage, getOrCreateProfile, getPercentile, getPendingRequestCount, getTodayLeaderboard, getTodayLeaderboardPage, getUserStreak, getUserTodayScore, hasUserCompletedToday, LeaderboardEntry, reconcileScoreOnSignIn, updateDisplayName, updateUserStreak } from '@/data/puzzleApi';
+import { fetchTodaysPuzzle, getAvailablePuzzleDates, getFriendIds, getFriendsLeaderboardPage, getOrCreateProfile, getPercentile, getPendingRequestCount, getPracticeCompletionDates, getTodayLeaderboard, getTodayLeaderboardPage, getUserStreak, getUserTodayScore, hasUserCompletedToday, LeaderboardEntry, reconcileScoreOnSignIn, updateDisplayName, updateUserStreak } from '@/data/puzzleApi';
 import { GameScore, Puzzle } from '@/types/game';
 import { getTodayKey, getYesterdayKey } from '@/utils/dateKeys';
 import {
@@ -104,6 +104,9 @@ export default function GameScreen() {
 
   // Notification settings state
   const [notificationsEnabled, setNotificationsEnabledState] = useState(true);
+
+  // Archive completion percentage state
+  const [archiveCompletionPercentage, setArchiveCompletionPercentage] = useState<number | null>(null);
 
 
   // Check if sign-in banner was dismissed
@@ -218,6 +221,34 @@ export default function GameScreen() {
         }
       };
       refreshFriendsData();
+    }, [user])
+  );
+
+  // Load archive completion percentage
+  useFocusEffect(
+    useCallback(() => {
+      if (!user) {
+        setArchiveCompletionPercentage(null);
+        return;
+      }
+      const loadArchiveCompletion = async () => {
+        try {
+          const [available, completed] = await Promise.all([
+            getAvailablePuzzleDates(),
+            getPracticeCompletionDates(user.id),
+          ]);
+          const completedCount = Array.from(completed.values()).filter(
+            puzzle => puzzle.correctPlacements === 16
+          ).length;
+          const availableCount = available.length;
+          const percentage = availableCount > 0 ? Math.round((completedCount / availableCount) * 100) : 0;
+          setArchiveCompletionPercentage(percentage);
+        } catch (e) {
+          // Silently fail - not critical
+          setArchiveCompletionPercentage(null);
+        }
+      };
+      loadArchiveCompletion();
     }, [user])
   );
 
@@ -984,6 +1015,7 @@ export default function GameScreen() {
         signInWithApple={signInWithApple}
         signOut={signOut}
         showEntranceAnimations={loadingComplete}
+        archiveCompletionPercentage={archiveCompletionPercentage}
       />
     );
   }
