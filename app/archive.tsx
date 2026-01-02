@@ -1,24 +1,24 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  ActivityIndicator,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+    ActivityIndicator,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { createStyles as createSharedStyles } from '@/app/(tabs)/index.styles';
 import { ArchiveCalendar } from '@/components/archive';
 import { useAuth } from '@/contexts/auth-context';
 import { useThemeScheme } from '@/contexts/theme-context';
 import {
-  getAvailablePuzzleDates,
-  getPracticeCompletionDates,
-  getTodayDateString,
+    getAvailablePuzzleDates,
+    getPracticeCompletionDates,
+    getTodayDateString,
 } from '@/data/puzzleApi';
 
 export default function ArchiveScreen() {

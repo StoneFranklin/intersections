@@ -615,7 +615,7 @@ export const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
   },
   leaderboardFullInfo: {
     flex: 1,
-    marginLeft: 0,
+    marginLeft: 8,
   },
   leaderboardFullNameRow: {
     flexDirection: 'row',
@@ -638,8 +638,6 @@ export const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     borderColor: colorScheme.brandPrimary,
-    marginLeft: 8,
-    marginRight: 8,
   },
   leaderboardLevelText: {
     fontSize: 11,

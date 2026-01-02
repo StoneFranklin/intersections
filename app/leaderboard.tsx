@@ -335,13 +335,13 @@ export default function LeaderboardPage() {
                   </Text>
                 )}
               </View>
-              {entry.level && (
-                <View style={styles.leaderboardLevelBadge}>
-                  <Text style={styles.leaderboardLevelText}>Lv {entry.level}</Text>
-                </View>
-              )}
               <View style={styles.leaderboardFullInfo}>
                 <View style={styles.leaderboardFullNameRow}>
+                  {entry.level && (
+                    <View style={styles.leaderboardLevelBadge}>
+                      <Text style={styles.leaderboardLevelText}>Lv {entry.level}</Text>
+                    </View>
+                  )}
                   <Text
                     style={[
                       styles.leaderboardFullName,

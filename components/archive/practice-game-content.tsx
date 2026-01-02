@@ -1,31 +1,31 @@
-import React, { useCallback, useEffect, useMemo, useState, useRef } from 'react';
-import {
-  Animated,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+    Animated,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { RewardedAdModal } from '@/components/ads/rewarded-ad-modal';
+import { createStyles as createGameStyles } from '@/app/(tabs)/index.styles';
 import { AdFallbackScreen } from '@/components/ads/ad-fallback-screen';
 import { DoubleXPModal } from '@/components/ads/double-xp-modal';
+import { RewardedAdModal } from '@/components/ads/rewarded-ad-modal';
 import { GameGrid, WordTray } from '@/components/game';
-import { useGameState } from '@/hooks/use-game-state';
-import { useRewardedAd } from '@/hooks/use-rewarded-ad';
 import { useThemeScheme } from '@/contexts/theme-context';
 import { useXP } from '@/contexts/xp-context';
-import { CellPosition, GameScore, Puzzle } from '@/types/game';
+import { useGameState } from '@/hooks/use-game-state';
+import { useRewardedAd } from '@/hooks/use-rewarded-ad';
 import { PracticeCompletion } from '@/types/archive';
+import { CellPosition, GameScore, Puzzle } from '@/types/game';
 import { haptics } from '@/utils/haptics';
 import { formatTime } from '@/utils/share';
 import { calculateXP } from '@/utils/xp';
-import { createStyles as createGameStyles } from '@/app/(tabs)/index.styles';
 
 interface PracticeGameContentProps {
   puzzle: Puzzle;
