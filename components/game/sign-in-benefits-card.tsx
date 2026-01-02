@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Button } from '@/components/ui/button';
 
 interface SignInBenefitsCardProps {
   onSignInPress: () => void;
@@ -35,16 +36,12 @@ export function SignInBenefitsCard({ onSignInPress }: SignInBenefitsCardProps) {
           </View>
         </View>
 
-        <Pressable
-          style={({ pressed }) => [
-            styles.button,
-            pressed && styles.buttonPressed
-          ]}
+        <Button
+          text="Sign In"
+          icon="login"
           onPress={onSignInPress}
-        >
-          <MaterialCommunityIcons name="login" size={20} color="#000000" />
-          <Text style={styles.buttonText}>Sign In</Text>
-        </Pressable>
+          glow
+        />
       </View>
     </View>
   );
@@ -98,31 +95,5 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     lineHeight: 20,
     flex: 1,
-  },
-  button: {
-    backgroundColor: '#FFD700',
-    paddingHorizontal: 32,
-    paddingVertical: 16,
-    borderRadius: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    shadowColor: '#FFD700',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  buttonPressed: {
-    opacity: 0.85,
-    transform: [{ scale: 0.98 }],
-  },
-  buttonText: {
-    color: '#000000',
-    fontSize: 16,
-    fontWeight: '700',
-    textAlign: 'center',
-    letterSpacing: 0.3,
   },
 });

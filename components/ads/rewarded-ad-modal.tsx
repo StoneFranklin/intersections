@@ -8,10 +8,10 @@ import {
   Platform,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Button } from '@/components/ui/button';
 
 interface RewardedAdModalProps {
   /** Whether the modal is visible */
@@ -80,30 +80,24 @@ export function RewardedAdModal({
           {!isLoading && !isShowing && (
             <View style={styles.buttonContainer}>
               {/* Watch Ad Button */}
-              <TouchableOpacity
-                style={[styles.button, styles.watchButton]}
+              <Button
+                text="Watch Ad"
+                icon="play-circle"
+                iconSize={24}
+                backgroundColor={colorScheme.success}
+                textColor={colorScheme.textPrimary}
                 onPress={onWatchAd}
-                activeOpacity={0.7}
-              >
-                <MaterialCommunityIcons
-                  name="play-circle"
-                  size={24}
-                  color={colorScheme.textPrimary}
-                  style={styles.buttonIcon}
-                />
-                <Text style={styles.watchButtonText}>
-                  Watch Ad
-                </Text>
-              </TouchableOpacity>
+              />
 
               {/* Decline Button */}
-              <TouchableOpacity
-                style={[styles.button, styles.declineButton]}
+              <Button
+                text="No Thanks"
+                variant="outlined"
+                backgroundColor={colorScheme.borderSecondary}
+                textColor={colorScheme.textSecondary}
                 onPress={onDecline}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.declineButtonText}>No Thanks</Text>
-              </TouchableOpacity>
+                textStyle={{ fontSize: 16, fontWeight: '600' }}
+              />
             </View>
           )}
         </View>
@@ -168,34 +162,5 @@ const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
   buttonContainer: {
     width: '100%',
     gap: 12,
-  },
-  button: {
-    borderRadius: 12,
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
-  },
-  watchButton: {
-    backgroundColor: colorScheme.success,
-  },
-  buttonIcon: {
-    marginRight: 8,
-  },
-  watchButtonText: {
-    color: colorScheme.textPrimary,
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  declineButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: colorScheme.borderSecondary,
-  },
-  declineButtonText: {
-    color: colorScheme.textSecondary,
-    fontSize: 16,
-    fontWeight: '600',
   },
 });
