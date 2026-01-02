@@ -91,10 +91,7 @@ export interface HomeMenuProps {
   isCurrentUserEntry: (entry: LeaderboardEntry) => boolean;
 
   onPlayDaily: () => void;
-  onOpenLeaderboard: (tab?: 'global' | 'friends') => void;
   onRefreshLeaderboard: () => void;
-  onShowAnswers: () => void;
-  onShowTutorial: () => void;
 
   pendingFriendRequestCount: number;
 
@@ -103,6 +100,7 @@ export interface HomeMenuProps {
   signOut: () => Promise<void>;
 
   showEntranceAnimations?: boolean;
+  archiveCompletionPercentage: number | null;
 }
 
 export function HomeMenu({
@@ -146,15 +144,13 @@ export function HomeMenu({
   onDismissSignInBanner,
   isCurrentUserEntry,
   onPlayDaily,
-  onOpenLeaderboard,
   onRefreshLeaderboard,
-  onShowAnswers,
-  onShowTutorial,
   pendingFriendRequestCount,
   signInWithGoogle,
   signInWithApple,
   signOut,
   showEntranceAnimations = false,
+  archiveCompletionPercentage,
 }: HomeMenuProps) {
   const router = useRouter();
   const displayNameInputRef = useRef<TextInput>(null);
@@ -626,7 +622,7 @@ export function HomeMenu({
                 {user ? (
                   <TouchableOpacity
                     style={styles.completedContainer}
-                    onPress={() => onOpenLeaderboard(homeLeaderboardTab)}
+                    onPress={() => router.push('/leaderboard' as any)}
                     activeOpacity={0.8}
                   >
                     <View style={styles.completedHeader}>
@@ -942,19 +938,21 @@ export function HomeMenu({
                     </View>
                   </TouchableOpacity>
                 )}
-
-                <TouchableOpacity style={styles.viewAnswersMainButton} onPress={onShowAnswers} activeOpacity={0.85}>
-                  <Ionicons name="grid-outline" size={20} color="#6a9fff" />
-                  <Text style={styles.viewAnswersMainText}>View Correct Answers</Text>
-                </TouchableOpacity>
               </>
             )}
           </Animated.View>
 
-          <TouchableOpacity style={styles.howToPlayButton} onPress={onShowTutorial}>
-            <Ionicons name="help-circle-outline" size={20} color="#6a9fff" />
-            <Text style={styles.howToPlayText}>How to Play</Text>
-          </TouchableOpacity>
+          <View style={styles.secondaryButtonsRow}>
+            <TouchableOpacity style={styles.secondaryButton} onPress={() => router.push('/how-to-play')}>
+              <Ionicons name="help-circle-outline" size={20} color={colorScheme.brandPrimary} />
+              <Text style={styles.secondaryButtonText}>How to Play</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.secondaryButton} onPress={() => router.push('/archive')}>
+              <Ionicons name="calendar-outline" size={20} color={colorScheme.brandPrimary} />
+              <Text style={styles.secondaryButtonText}>Archive</Text>
+            </TouchableOpacity>
+          </View>
 
           <Animated.View style={[styles.footerLinks, { opacity: footerOpacity }]}>
             <Link href={'/about' as any} asChild>

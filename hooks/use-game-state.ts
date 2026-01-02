@@ -48,7 +48,13 @@ export interface UseGameStateReturn {
 
 const STARTING_LIVES = 3;
 
-export function useGameState(puzzle: Puzzle): UseGameStateReturn {
+export interface UseGameStateOptions {
+  /** If true, timer state will be persisted to AsyncStorage (for daily puzzle only) */
+  persistTimer?: boolean;
+}
+
+export function useGameState(puzzle: Puzzle, options?: UseGameStateOptions): UseGameStateReturn {
+  const { persistTimer = true } = options || {};
   const [shuffledWords, setShuffledWords] = useState(() => shuffleWords(puzzle));
   
   const [gameState, setGameState] = useState<GameState>(() => ({
@@ -68,8 +74,15 @@ export function useGameState(puzzle: Puzzle): UseGameStateReturn {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Load persisted start time on mount (for timer persistence when leaving/returning)
+  // Only for daily puzzle, not practice puzzles
   useEffect(() => {
     const loadStartTime = async () => {
+      if (!persistTimer) {
+        // Practice mode - don't use AsyncStorage, just start fresh
+        setTimerInitialized(true);
+        return;
+      }
+
       try {
         const todayKey = getTodayKey();
         const storedStartTime = await AsyncStorage.getItem(dailyGameStartKey(todayKey));
@@ -92,7 +105,7 @@ export function useGameState(puzzle: Puzzle): UseGameStateReturn {
     };
 
     loadStartTime();
-  }, []);
+  }, [persistTimer]);
 
   // Start/stop timer based on game state
   useEffect(() => {
@@ -147,13 +160,15 @@ export function useGameState(puzzle: Puzzle): UseGameStateReturn {
       if (timerRef.current) {
         clearInterval(timerRef.current);
       }
-      // Clear the stored start time since game is complete
-      const todayKey = getTodayKey();
-      AsyncStorage.removeItem(dailyGameStartKey(todayKey)).catch(() => {
-        // Silently fail
-      });
+      // Clear the stored start time since game is complete (only for daily puzzle)
+      if (persistTimer) {
+        const todayKey = getTodayKey();
+        AsyncStorage.removeItem(dailyGameStartKey(todayKey)).catch(() => {
+          // Silently fail
+        });
+      }
     }
-  }, [gameState.isSolved, isGameOver, elapsedTime, mistakes, correctPlacements, totalCells, finalScore]);
+  }, [gameState.isSolved, isGameOver, elapsedTime, mistakes, correctPlacements, totalCells, finalScore, persistTimer]);
 
   // Track if this is the initial mount
   const isInitialMount = useRef(true);
@@ -178,12 +193,14 @@ export function useGameState(puzzle: Puzzle): UseGameStateReturn {
     setFinalScore(null);
     startTimeRef.current = Date.now();
 
-    // Save new start time for the new puzzle
-    const todayKey = getTodayKey();
-    AsyncStorage.setItem(dailyGameStartKey(todayKey), Date.now().toString()).catch(() => {
-      // Silently fail
-    });
-  }, [puzzle]);
+    // Save new start time for the new puzzle (only for daily puzzle)
+    if (persistTimer) {
+      const todayKey = getTodayKey();
+      AsyncStorage.setItem(dailyGameStartKey(todayKey), Date.now().toString()).catch(() => {
+        // Silently fail
+      });
+    }
+  }, [puzzle, persistTimer]);
 
   const unplacedWords = useMemo(() => {
     const placedIds = new Set(gameState.placements.map(p => p.wordId));
