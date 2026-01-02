@@ -98,7 +98,14 @@ export function XPProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (xpGained <= 0) {
-        return null;
+        // Return result with 0 XP to show progress bar even when earning no XP
+        return {
+          xpGained: 0,
+          newTotalXP: totalXP,
+          newLevel: level,
+          leveledUp: false,
+          previousLevel: level,
+        };
       }
 
       // Logged in - update server

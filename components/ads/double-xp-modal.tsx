@@ -8,10 +8,10 @@ import {
   Platform,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Button } from '@/components/ui/button';
 
 interface DoubleXPModalProps {
   /** Whether the modal is visible */
@@ -97,31 +97,23 @@ export function DoubleXPModal({
           {/* Action buttons - show when not loading/showing */}
           {!isLoading && !isShowing && (
             <View style={styles.buttonContainer}>
-              {/* Watch Ad Button */}
-              <TouchableOpacity
-                style={[styles.button, styles.watchButton]}
+              <Button
+                text="Watch Ad for 2x XP"
                 onPress={onWatchAd}
-                activeOpacity={0.7}
-              >
-                <MaterialCommunityIcons
-                  name="play-circle"
-                  size={24}
-                  color={colorScheme.warmBlack}
-                  style={styles.buttonIcon}
-                />
-                <Text style={styles.watchButtonText}>
-                  Watch Ad for 2x XP
-                </Text>
-              </TouchableOpacity>
+                backgroundColor={colorScheme.gold}
+                textColor={colorScheme.warmBlack}
+                icon="play-circle"
+                iconColor={colorScheme.warmBlack}
+                iconSize={24}
+              />
 
-              {/* Decline Button */}
-              <TouchableOpacity
-                style={[styles.button, styles.declineButton]}
+              <Button
+                text={`Keep +${baseXP} XP`}
                 onPress={onDecline}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.declineButtonText}>Keep +{baseXP} XP</Text>
-              </TouchableOpacity>
+                variant="outlined"
+                backgroundColor={colorScheme.borderSecondary}
+                textColor={colorScheme.textSecondary}
+              />
             </View>
           )}
         </View>
@@ -223,34 +215,5 @@ const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
   buttonContainer: {
     width: '100%',
     gap: 12,
-  },
-  button: {
-    borderRadius: 12,
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
-  },
-  watchButton: {
-    backgroundColor: colorScheme.gold,
-  },
-  buttonIcon: {
-    marginRight: 8,
-  },
-  watchButtonText: {
-    color: colorScheme.warmBlack,
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  declineButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: colorScheme.borderSecondary,
-  },
-  declineButtonText: {
-    color: colorScheme.textSecondary,
-    fontSize: 16,
-    fontWeight: '600',
   },
 });

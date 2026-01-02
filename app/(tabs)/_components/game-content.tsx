@@ -7,6 +7,7 @@ import { BackButton } from '@/components/ui/back-button';
 import { useXP } from '@/contexts/xp-context';
 import { useAuth } from '@/contexts/auth-context';
 import { SignInForXPPrompt } from '@/components/xp/sign-in-for-xp-prompt';
+import { XPProgressBar } from '@/components/xp/xp-progress-bar';
 import { LeaderboardEntry, submitScore } from '@/data/puzzleApi';
 import { useGameState } from '@/hooks/use-game-state';
 import { useRewardedAd } from '@/hooks/use-rewarded-ad';
@@ -18,8 +19,8 @@ import { calculateXP } from '@/utils/xp';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Animated, Platform, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, Platform, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useThemeScheme } from '@/contexts/theme-context';
@@ -91,11 +92,6 @@ export function GameContent({
   const [previousLevel, setPreviousLevel] = useState<number | null>(null);
   const [xpAwarded, setXpAwarded] = useState(false);
   const doubleXPAd = useRewardedAd();
-
-  // XP bar animation
-  const xpBarWidth = useRef(new Animated.Value(0)).current;
-  const xpBarScale = useRef(new Animated.Value(1)).current;
-
   const rewardedAd = useRewardedAd();
 
   const isGameOver = gameState.lives <= 0;
@@ -229,34 +225,6 @@ export function GameContent({
     }
   }, [user, gameEnded, finalScore, xpAwarded, showDoubleXPModal, resultRank]);
 
-  // Animate XP bar whenever progress changes
-  useEffect(() => {
-    // Animate the width
-    Animated.spring(xpBarWidth, {
-      toValue: progress,
-      useNativeDriver: false,
-      tension: 20,
-      friction: 10,
-    }).start();
-
-    // Add a subtle pulse effect when leveling up
-    if (leveledUp) {
-      Animated.sequence([
-        Animated.spring(xpBarScale, {
-          toValue: 1.05,
-          useNativeDriver: true,
-          tension: 100,
-          friction: 5,
-        }),
-        Animated.spring(xpBarScale, {
-          toValue: 1,
-          useNativeDriver: true,
-          tension: 100,
-          friction: 5,
-        }),
-      ]).start();
-    }
-  }, [progress, leveledUp, xpBarWidth, xpBarScale]);
 
   // Handle leave game confirmation
   const handleLeaveRequest = useCallback(() => {
@@ -504,27 +472,7 @@ export function GameContent({
                   </Text>
                 </View>
               )}
-              <View style={styles.xpProgressContainer}>
-                <Animated.View
-                  style={[
-                    styles.xpProgressBar,
-                    { transform: [{ scaleY: xpBarScale }] }
-                  ]}
-                >
-                  <Animated.View
-                    style={[
-                      styles.xpProgressFill,
-                      {
-                        width: xpBarWidth.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: ['0%', '100%'],
-                        })
-                      }
-                    ]}
-                  />
-                </Animated.View>
-                <Text style={styles.xpLevelText}>Level {level + 1}</Text>
-              </View>
+              <XPProgressBar currentLevel={level} progress={progress} leveledUp={leveledUp} />
             </View>
           )}
 

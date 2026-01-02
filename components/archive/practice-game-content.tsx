@@ -1,9 +1,8 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-    Animated,
     ScrollView,
     StyleSheet,
     Text,
@@ -18,6 +17,7 @@ import { RewardedAdModal } from '@/components/ads/rewarded-ad-modal';
 import { GameGrid, WordTray, SignInBenefitsCard } from '@/components/game';
 import { BackButton } from '@/components/ui/back-button';
 import { Button } from '@/components/ui/button';
+import { XPProgressBar } from '@/components/xp/xp-progress-bar';
 import { useThemeScheme } from '@/contexts/theme-context';
 import { useXP } from '@/contexts/xp-context';
 import { useAuth } from '@/contexts/auth-context';
@@ -86,11 +86,6 @@ export function PracticeGameContent({
   const [previousLevel, setPreviousLevel] = useState<number | null>(null);
   const [xpAwarded, setXpAwarded] = useState(false);
   const doubleXPAd = useRewardedAd();
-
-  // XP bar animation
-  const xpBarWidth = useRef(new Animated.Value(0)).current;
-  const xpBarScale = useRef(new Animated.Value(1)).current;
-
   const rewardedAd = useRewardedAd();
 
   const isGameOver = gameState.lives <= 0;
@@ -209,34 +204,6 @@ export function PracticeGameContent({
     }
   }, [user, gameEnded, savedScore, xpAwarded, showDoubleXPModal]);
 
-  // Animate XP bar whenever progress changes
-  useEffect(() => {
-    // Animate the width
-    Animated.spring(xpBarWidth, {
-      toValue: progress,
-      useNativeDriver: false,
-      tension: 20,
-      friction: 10,
-    }).start();
-
-    // Add a subtle pulse effect when leveling up
-    if (leveledUp) {
-      Animated.sequence([
-        Animated.spring(xpBarScale, {
-          toValue: 1.05,
-          useNativeDriver: true,
-          tension: 100,
-          friction: 5,
-        }),
-        Animated.spring(xpBarScale, {
-          toValue: 1,
-          useNativeDriver: true,
-          tension: 100,
-          friction: 5,
-        }),
-      ]).start();
-    }
-  }, [progress, leveledUp, xpBarWidth, xpBarScale]);
 
   const handleLeaveRequest = useCallback(() => {
     onBack();
@@ -341,27 +308,7 @@ export function PracticeGameContent({
                   </Text>
                 </View>
               )}
-              <View style={gameStyles.xpProgressContainer}>
-                <Animated.View
-                  style={[
-                    gameStyles.xpProgressBar,
-                    { transform: [{ scaleY: xpBarScale }] }
-                  ]}
-                >
-                  <Animated.View
-                    style={[
-                      gameStyles.xpProgressFill,
-                      {
-                        width: xpBarWidth.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: ['0%', '100%'],
-                        })
-                      }
-                    ]}
-                  />
-                </Animated.View>
-                <Text style={gameStyles.xpLevelText}>Level {level + 1}</Text>
-              </View>
+              <XPProgressBar currentLevel={level} progress={progress} leveledUp={leveledUp} />
             </View>
           )}
 
