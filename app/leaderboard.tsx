@@ -335,6 +335,11 @@ export default function LeaderboardPage() {
                   </Text>
                 )}
               </View>
+              {entry.level && (
+                <View style={styles.leaderboardLevelBadge}>
+                  <Text style={styles.leaderboardLevelText}>Lv {entry.level}</Text>
+                </View>
+              )}
               <View style={styles.leaderboardFullInfo}>
                 <View style={styles.leaderboardFullNameRow}>
                   <Text
@@ -347,9 +352,6 @@ export default function LeaderboardPage() {
                     {entry.displayName || 'Anonymous'}
                     {isCurrentUserEntry(entry) && ' (you)'}
                   </Text>
-                  <View style={styles.leaderboardLevelBadge}>
-                    <Text style={styles.leaderboardLevelText}>Lv {entry.level || 1}</Text>
-                  </View>
                 </View>
                 <Text style={styles.leaderboardFullMeta}>
                   {entry.correctPlacements}/16 correct · {entry.mistakes} {entry.mistakes === 1 ? 'mistake' : 'mistakes'} · {formatTime(entry.timeSeconds)}

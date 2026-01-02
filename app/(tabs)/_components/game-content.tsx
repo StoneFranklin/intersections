@@ -14,8 +14,8 @@ import { calculateXP } from '@/utils/xp';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Platform, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useState, useRef } from 'react';
+import { ActivityIndicator, Platform, ScrollView, Text, TouchableOpacity, View, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useThemeScheme } from '@/contexts/theme-context';
@@ -86,6 +86,10 @@ export function GameContent({
   const [previousLevel, setPreviousLevel] = useState<number | null>(null);
   const [xpAwarded, setXpAwarded] = useState(false);
   const doubleXPAd = useRewardedAd();
+
+  // XP bar animation
+  const xpBarWidth = useRef(new Animated.Value(0)).current;
+  const xpBarScale = useRef(new Animated.Value(1)).current;
 
   const rewardedAd = useRewardedAd();
 
@@ -214,10 +218,39 @@ export function GameContent({
       // Small delay to let results screen render first
       const timer = setTimeout(() => {
         setShowDoubleXPModal(true);
-      }, 500);
+      }, 300);
       return () => clearTimeout(timer);
     }
   }, [gameEnded, finalScore, xpAwarded, showDoubleXPModal, resultRank]);
+
+  // Animate XP bar whenever progress changes
+  useEffect(() => {
+    // Animate the width
+    Animated.spring(xpBarWidth, {
+      toValue: progress,
+      useNativeDriver: false,
+      tension: 20,
+      friction: 10,
+    }).start();
+
+    // Add a subtle pulse effect when leveling up
+    if (leveledUp) {
+      Animated.sequence([
+        Animated.spring(xpBarScale, {
+          toValue: 1.05,
+          useNativeDriver: true,
+          tension: 100,
+          friction: 5,
+        }),
+        Animated.spring(xpBarScale, {
+          toValue: 1,
+          useNativeDriver: true,
+          tension: 100,
+          friction: 5,
+        }),
+      ]).start();
+    }
+  }, [progress, leveledUp, xpBarWidth, xpBarScale]);
 
   // Handle leave game confirmation
   const handleLeaveRequest = useCallback(() => {
@@ -467,10 +500,25 @@ export function GameContent({
                 </View>
               )}
               <View style={styles.xpProgressContainer}>
-                <View style={styles.xpProgressBar}>
-                  <View style={[styles.xpProgressFill, { width: `${progress * 100}%` }]} />
-                </View>
-                <Text style={styles.xpLevelText}>Level {level}</Text>
+                <Animated.View 
+                  style={[
+                    styles.xpProgressBar,
+                    { transform: [{ scaleY: xpBarScale }] }
+                  ]}
+                >
+                  <Animated.View 
+                    style={[
+                      styles.xpProgressFill, 
+                      { 
+                        width: xpBarWidth.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: ['0%', '100%'],
+                        })
+                      }
+                    ]} 
+                  />
+                </Animated.View>
+                <Text style={styles.xpLevelText}>Level {level + 1}</Text>
               </View>
             </View>
           )}

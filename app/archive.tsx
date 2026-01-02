@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 
 import { createStyles as createSharedStyles } from '@/app/(tabs)/index.styles';
 import { ArchiveCalendar } from '@/components/archive';
@@ -60,6 +60,13 @@ export default function ArchiveScreen() {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  // Reload data when screen comes back into focus (e.g., after completing a practice puzzle)
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [loadData])
+  );
 
   const handlePreviousMonth = useCallback(() => {
     if (currentMonth === 0) {

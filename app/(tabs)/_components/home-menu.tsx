@@ -750,6 +750,11 @@ export function HomeMenu({
                                     </Text>
                                   )}
                                 </View>
+                                {entry.level && (
+                                  <View style={styles.leaderboardCompactLevelBadge}>
+                                    <Text style={styles.leaderboardCompactLevelText}>Lv {entry.level}</Text>
+                                  </View>
+                                )}
                                 <View style={styles.leaderboardCompactNameContainer}>
                                   <Text
                                     style={[
@@ -761,11 +766,6 @@ export function HomeMenu({
                                     {(isCurrentUserEntry(entry) && displayName) ? displayName : (entry.displayName || 'Anonymous')}
                                     {isCurrentUserEntry(entry) && ' (you)'}
                                   </Text>
-                                  {entry.level && (
-                                    <View style={styles.leaderboardCompactLevelBadge}>
-                                      <Text style={styles.leaderboardCompactLevelText}>Lv {entry.level}</Text>
-                                    </View>
-                                  )}
                                 </View>
                                 <Text style={styles.leaderboardCompactCorrect}>{entry.correctPlacements}/16</Text>
                                 <Text
@@ -807,6 +807,11 @@ export function HomeMenu({
                                       </Text>
                                     )}
                                   </View>
+                                  {level && (
+                                    <View style={styles.leaderboardCompactLevelBadge}>
+                                      <Text style={styles.leaderboardCompactLevelText}>Lv {level}</Text>
+                                    </View>
+                                  )}
                                   <Text
                                     style={[styles.leaderboardCompactName, styles.leaderboardCompactNameCurrentUser]}
                                     numberOfLines={1}
@@ -877,6 +882,11 @@ export function HomeMenu({
                                     </Text>
                                   )}
                                 </View>
+                                {entry.level && (
+                                  <View style={styles.leaderboardCompactLevelBadge}>
+                                    <Text style={styles.leaderboardCompactLevelText}>Lv {entry.level || 1}</Text>
+                                  </View>
+                                )}
                                 <View style={styles.leaderboardCompactNameContainer}>
                                   <Text
                                     style={[
@@ -888,9 +898,6 @@ export function HomeMenu({
                                     {(isCurrentUserEntry(entry) && displayName) ? displayName : (entry.displayName || 'Anonymous')}
                                     {isCurrentUserEntry(entry) && ' (you)'}
                                   </Text>
-                                  <View style={styles.leaderboardCompactLevelBadge}>
-                                    <Text style={styles.leaderboardCompactLevelText}>Lv {entry.level || 1}</Text>
-                                  </View>
                                 </View>
                                 <Text style={styles.leaderboardCompactCorrect}>{entry.correctPlacements}/16</Text>
                                 <Text

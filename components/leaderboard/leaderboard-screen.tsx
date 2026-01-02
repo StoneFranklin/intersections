@@ -225,6 +225,11 @@ export function LeaderboardScreen({
                   </Text>
                 )}
               </View>
+              {entry.level && (
+                <View style={styles.leaderboardLevelBadge}>
+                  <Text style={styles.leaderboardLevelText}>Lv {entry.level}</Text>
+                </View>
+              )}
               <View style={styles.leaderboardFullInfo}>
                 <Text
                   style={[

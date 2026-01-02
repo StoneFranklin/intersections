@@ -296,6 +296,7 @@ export const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: 8,
+    marginRight: 8,
   },
   leaderboardCompactAvatarImage: {
     width: 28,
@@ -312,7 +313,7 @@ export const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    marginLeft: 8,
+    marginLeft: 0,
   },
   leaderboardCompactName: {
     fontSize: 14,
@@ -330,6 +331,7 @@ export const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
     borderRadius: 6,
     borderWidth: 1,
     borderColor: colorScheme.brandPrimary,
+    marginRight: 8,
   },
   leaderboardCompactLevelText: {
     fontSize: 9,
@@ -613,7 +615,7 @@ export const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
   },
   leaderboardFullInfo: {
     flex: 1,
-    marginLeft: 8,
+    marginLeft: 0,
   },
   leaderboardFullNameRow: {
     flexDirection: 'row',
@@ -636,6 +638,8 @@ export const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     borderColor: colorScheme.brandPrimary,
+    marginLeft: 8,
+    marginRight: 8,
   },
   leaderboardLevelText: {
     fontSize: 11,
