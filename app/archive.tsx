@@ -137,7 +137,20 @@ export default function ArchiveScreen() {
                   <Text style={styles.statLabel}>Completed</Text>
                 </View>
                 <View style={styles.statCard}>
-                  <Text style={styles.statValue}>
+                  <Text style={[
+                    styles.statValue,
+                    {
+                      color: availableCount > 0
+                        ? (() => {
+                            const percentage = Math.round((completedCount / availableCount) * 100);
+                            return percentage >= 100 ? '#4ade80' : // green
+                                   percentage >= 75 ? '#facc15' : // yellow
+                                   percentage >= 50 ? '#fb923c' : // orange
+                                   '#ef4444'; // red
+                          })()
+                        : colorScheme.textPrimary
+                    }
+                  ]}>
                     {availableCount > 0 ? Math.round((completedCount / availableCount) * 100) : 0}%
                   </Text>
                   <Text style={styles.statLabel}>Progress</Text>

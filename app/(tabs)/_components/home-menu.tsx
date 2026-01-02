@@ -950,19 +950,7 @@ export function HomeMenu({
 
             <TouchableOpacity style={styles.secondaryButton} onPress={() => router.push('/archive')}>
               <Ionicons name="calendar-outline" size={20} color={colorScheme.brandPrimary} />
-              <Text style={styles.secondaryButtonText}>
-                Archive
-                {user && archiveCompletionPercentage !== null && (
-                  <Text style={{
-                    color: archiveCompletionPercentage >= 100 ? '#4ade80' : // green
-                           archiveCompletionPercentage >= 75 ? '#facc15' : // yellow
-                           archiveCompletionPercentage >= 50 ? '#fb923c' : // orange
-                           '#ef4444' // red
-                  }}>
-                    {' '}({archiveCompletionPercentage}%)
-                  </Text>
-                )}
-              </Text>
+              <Text style={styles.secondaryButtonText}>Archive</Text>
             </TouchableOpacity>
           </View>
 
