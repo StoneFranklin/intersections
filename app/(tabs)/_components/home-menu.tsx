@@ -276,31 +276,27 @@ export function HomeMenu({
         <Text style={styles.displayNameErrorText}>{displayNameError}</Text>
       )}
 
-      <TouchableOpacity
-        style={[
-          styles.displayNameSaveButton,
-          (!displayNameInput.trim() || savingDisplayName) && styles.displayNameSaveButtonDisabled,
-        ]}
+      <Button
+        text={savingDisplayName ? 'Saving...' : 'Save'}
         onPress={onSaveDisplayName}
         disabled={!displayNameInput.trim() || savingDisplayName}
-        accessibilityRole="button"
-        accessibilityLabel={savingDisplayName ? 'Saving display name' : 'Save display name'}
-      >
-        <Text style={styles.displayNameSaveText}>{savingDisplayName ? 'Saving...' : 'Save'}</Text>
-      </TouchableOpacity>
+        loading={savingDisplayName}
+        backgroundColor={colorScheme.success}
+        textColor={colorScheme.textPrimary}
+        style={{ width: '100%' }}
+      />
 
       {displayName && (
-        <TouchableOpacity
-          style={styles.displayNameCancelButton}
+        <Button
+          text="Cancel"
           onPress={() => {
             setShowDisplayNameModal(false);
             setDisplayNameInput('');
           }}
-          accessibilityRole="button"
-          accessibilityLabel="Cancel editing display name"
-        >
-          <Text style={styles.displayNameCancelText}>Cancel</Text>
-        </TouchableOpacity>
+          variant="text"
+          backgroundColor={colorScheme.textTertiary}
+          style={{ width: '100%', marginTop: 12 }}
+        />
       )}
     </View>
   );

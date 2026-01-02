@@ -1045,30 +1045,6 @@ export const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
     marginBottom: 12,
     textAlign: 'center',
   },
-  displayNameSaveButton: {
-    backgroundColor: colorScheme.success,
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-    width: '100%',
-    alignItems: 'center',
-  },
-  displayNameSaveButtonDisabled: {
-    backgroundColor: colorScheme.successDark,
-  },
-  displayNameSaveText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colorScheme.textPrimary,
-  },
-  displayNameCancelButton: {
-    marginTop: 12,
-    paddingVertical: 8,
-  },
-  displayNameCancelText: {
-    fontSize: 15,
-    color: colorScheme.textTertiary,
-  },
   signInModal: {
     backgroundColor: colorScheme.backgroundSecondary,
     borderRadius: 16,
