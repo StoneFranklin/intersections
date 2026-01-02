@@ -514,23 +514,24 @@ export default function GameScreen() {
     }
   }, [user?.id]);
 
-  // Auto-refresh leaderboard every 60 seconds when on home screen and puzzle is completed
-  useEffect(() => {
-    if (!user || !dailyCompleted || !leaderboardLoaded || isPlaying) {
-      return;
-    }
-
-    const REFRESH_INTERVAL = 60000; // 60 seconds
-    const intervalId = setInterval(() => {
-      // Only refresh if data is older than the refresh interval
-      if (Date.now() - lastLeaderboardRefresh >= REFRESH_INTERVAL) {
-        logger.log('Auto-refreshing leaderboard...');
-        loadLeaderboard({ forceRefresh: true });
-      }
-    }, REFRESH_INTERVAL);
-
-    return () => clearInterval(intervalId);
-  }, [dailyCompleted, leaderboardLoaded, isPlaying, lastLeaderboardRefresh, user]);
+  // Disabled auto-refresh to reduce battery usage and prevent phone overheating
+  // Users can manually refresh by pulling down on the leaderboard
+  // useEffect(() => {
+  //   if (!user || !dailyCompleted || !leaderboardLoaded || isPlaying) {
+  //     return;
+  //   }
+  //
+  //   const REFRESH_INTERVAL = 60000; // 60 seconds
+  //   const intervalId = setInterval(() => {
+  //     // Only refresh if data is older than the refresh interval
+  //     if (Date.now() - lastLeaderboardRefresh >= REFRESH_INTERVAL) {
+  //       logger.log('Auto-refreshing leaderboard...');
+  //       loadLeaderboard({ forceRefresh: true });
+  //     }
+  //   }, REFRESH_INTERVAL);
+  //
+  //   return () => clearInterval(intervalId);
+  // }, [dailyCompleted, leaderboardLoaded, isPlaying, lastLeaderboardRefresh, user]);
 
 
   // Check if today's puzzle was already completed and load streak

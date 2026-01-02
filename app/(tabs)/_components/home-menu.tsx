@@ -5,8 +5,7 @@ import { logger } from '@/utils/logger';
 import { AntDesign, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { User } from '@supabase/supabase-js';
 import { Link, useRouter } from 'expo-router';
-import LottieView from 'lottie-react-native';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Animated,
@@ -27,17 +26,6 @@ import { useThemeScheme } from '@/contexts/theme-context';
 
 import { createStyles } from '../index.styles';
 
-// Animation frame constants (total 182 frames at 30fps)
-const TOTAL_FRAMES = 182;
-const LOOP_START = 79;
-const LOOP_END = 148;
-const TAP_START = 149;
-const TAP_END = 182;
-// Normalized progress values (0-1)
-const LOOP_START_PROGRESS = LOOP_START / TOTAL_FRAMES;
-const LOOP_END_PROGRESS = LOOP_END / TOTAL_FRAMES;
-const TAP_START_PROGRESS = TAP_START / TOTAL_FRAMES;
-const TAP_END_PROGRESS = TAP_END / TOTAL_FRAMES;
 let hasPlayedEntranceAnimations = false;
 
 export interface HomeMenuProps {
@@ -156,23 +144,15 @@ export function HomeMenu({
 }: HomeMenuProps) {
   const router = useRouter();
   const displayNameInputRef = useRef<TextInput>(null);
-  const lottieRef = useRef<LottieView>(null);
-  const [animationPhase, setAnimationPhase] = useState<'intro' | 'loop' | 'tap'>('intro');
   const [homeLeaderboardTab, setHomeLeaderboardTab] = useState<'global' | 'friends'>('global');
   const [avatarLoadError, setAvatarLoadError] = useState(false);
-  const hasStarted = useRef(false);
   const { colorScheme } = useThemeScheme();
   const { width } = useWindowDimensions();
   const styles = useMemo(() => createStyles(colorScheme), [colorScheme]);
   const logoSize = Math.min(Math.max(width * 0.55, 210), 320);
   const logoFrameHeight = Math.round(logoSize * 0.9);
 
-  const isWeb = Platform.OS === 'web';
   const shouldPlayEntranceAnimations = showEntranceAnimations && !hasPlayedEntranceAnimations;
-
-  // Progress state for mobile (more reliable than play(start, end))
-  const [mobileProgress, setMobileProgress] = useState(LOOP_START_PROGRESS);
-  const animationFrameRef = useRef<number | null>(null);
 
   // Entrance animations
   const logoOpacity = useRef(new Animated.Value(shouldPlayEntranceAnimations ? 0 : 1)).current;
@@ -184,73 +164,6 @@ export function HomeMenu({
   const buttonsOpacity = useRef(new Animated.Value(shouldPlayEntranceAnimations ? 0 : 1)).current;
   const buttonsTranslateY = useRef(new Animated.Value(shouldPlayEntranceAnimations ? 30 : 0)).current;
   const footerOpacity = useRef(new Animated.Value(shouldPlayEntranceAnimations ? 0 : 1)).current;
-
-  // Start the loop animation for mobile using requestAnimationFrame
-  const startLoopAnimation = useCallback(() => {
-    if (isWeb) return;
-
-    // Cancel any existing animation
-    if (animationFrameRef.current) {
-      cancelAnimationFrame(animationFrameRef.current);
-    }
-
-    const loopDurationMs = ((LOOP_END - LOOP_START) / 30) * 1000;
-    let startTime: number | null = null;
-
-    const animate = (timestamp: number) => {
-      if (!startTime) startTime = timestamp;
-      const elapsed = timestamp - startTime;
-      const progressInLoop = (elapsed % loopDurationMs) / loopDurationMs;
-      const progress = LOOP_START_PROGRESS + progressInLoop * (LOOP_END_PROGRESS - LOOP_START_PROGRESS);
-
-      setMobileProgress(progress);
-      animationFrameRef.current = requestAnimationFrame(animate);
-    };
-
-    animationFrameRef.current = requestAnimationFrame(animate);
-  }, [isWeb]);
-
-  // Play tap animation for mobile
-  const playTapAnimation = useCallback(() => {
-    if (isWeb) return;
-
-    // Cancel any existing animation
-    if (animationFrameRef.current) {
-      cancelAnimationFrame(animationFrameRef.current);
-    }
-
-    const tapDurationMs = ((TAP_END - TAP_START) / 30) * 1000;
-    let startTime: number | null = null;
-
-    const animate = (timestamp: number) => {
-      if (!startTime) startTime = timestamp;
-      const elapsed = timestamp - startTime;
-
-      if (elapsed >= tapDurationMs) {
-        setMobileProgress(TAP_END_PROGRESS);
-        setAnimationPhase('loop');
-        return;
-      }
-
-      const progressInTap = elapsed / tapDurationMs;
-      const progress = TAP_START_PROGRESS + progressInTap * (TAP_END_PROGRESS - TAP_START_PROGRESS);
-
-      setMobileProgress(progress);
-      animationFrameRef.current = requestAnimationFrame(animate);
-    };
-
-    setMobileProgress(TAP_START_PROGRESS);
-    animationFrameRef.current = requestAnimationFrame(animate);
-  }, [isWeb]);
-
-  // Cleanup animation frame on unmount
-  useEffect(() => {
-    return () => {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-    };
-  }, []);
 
   useEffect(() => {
     if (!showDisplayNameModal) return;
@@ -264,14 +177,6 @@ export function HomeMenu({
   useEffect(() => {
     setAvatarLoadError(false);
   }, [avatarUrl]);
-
-  const playSegment = useCallback((start: number, end: number) => {
-    if (!lottieRef.current) return;
-
-    // Web needs segment + explicit start frame to actually begin playback.
-    lottieRef.current.play(start, end);
-    lottieRef.current.play(start);
-  }, []);
 
   // Entrance animations effect
   useEffect(() => {
@@ -339,66 +244,8 @@ export function HomeMenu({
     }
   }, [shouldPlayEntranceAnimations]);
 
-  // Start loop animation on mount (skip the intro animation)
-  useEffect(() => {
-    if (hasStarted.current) return;
-    hasStarted.current = true;
-    setAnimationPhase('loop');
-
-    const timer = setTimeout(() => {
-      if (isWeb) {
-        playSegment(LOOP_START, LOOP_END);
-      } else {
-        startLoopAnimation();
-      }
-    }, 100);
-
-    return () => clearTimeout(timer);
-  }, [isWeb, playSegment, startLoopAnimation]);
-
-  // Play the appropriate segment when phase changes (except intro which plays on mount)
-  useEffect(() => {
-    if (animationPhase === 'intro' || !hasStarted.current) return;
-
-    const timer = setTimeout(() => {
-      if (animationPhase === 'loop') {
-        if (isWeb) {
-          playSegment(LOOP_START, LOOP_END);
-        } else {
-          startLoopAnimation();
-        }
-      } else if (animationPhase === 'tap') {
-        if (isWeb) {
-          playSegment(TAP_START, TAP_END);
-        } else {
-          playTapAnimation();
-        }
-      }
-    }, 50);
-
-    return () => clearTimeout(timer);
-  }, [animationPhase, isWeb, playSegment, startLoopAnimation, playTapAnimation]);
-
-  // Only used for web - mobile uses Animated progress callbacks
-  const handleAnimationFinish = () => {
-    if (!isWeb) return;
-
-    if (animationPhase === 'intro') {
-      setAnimationPhase('loop');
-    } else if (animationPhase === 'tap') {
-      setAnimationPhase('loop');
-    } else if (animationPhase === 'loop') {
-      // Loop keeps replaying
-      setTimeout(() => {
-        playSegment(LOOP_START, LOOP_END);
-      }, 50);
-    }
-  };
-
   const handleLogoPress = () => {
-    if (animationPhase === 'loop') {
-      setAnimationPhase('tap');
-    }
+    // Logo press handler - can be used for future interactions
   };
 
   const displayNameModalContent = (
@@ -538,26 +385,10 @@ export function HomeMenu({
           >
             <TouchableOpacity onPress={handleLogoPress} activeOpacity={0.8}>
               <View style={[styles.menuLogoFrame, { width: logoSize, height: logoFrameHeight }]}>
-                <LottieView
-                  ref={lottieRef}
-                  source={require('@/assets/lottie/anim_full_intersections_v2.json')}
+                <Image
+                  source={require('@/assets/images/intersections-splash.png')}
                   style={[styles.menuLogo, { width: logoSize, height: logoSize }]}
-                  webStyle={{ ...styles.menuLogo, width: logoSize, height: logoSize }}
-                  autoPlay={false}
-                  loop={false}
-                  progress={isWeb ? undefined : mobileProgress}
-                  onAnimationFinish={handleAnimationFinish}
-                  onAnimationLoaded={() => {
-                    if (!isWeb) return;
-                    // Always play the loop segment when animation loads on web
-                    // This handles both initial load and remount after OAuth redirect
-                    if (animationPhase === 'intro' || animationPhase === 'loop') {
-                      setAnimationPhase('loop');
-                      playSegment(LOOP_START, LOOP_END);
-                    } else if (animationPhase === 'tap') {
-                      playSegment(TAP_START, TAP_END);
-                    }
-                  }}
+                  resizeMode="contain"
                 />
               </View>
             </TouchableOpacity>
