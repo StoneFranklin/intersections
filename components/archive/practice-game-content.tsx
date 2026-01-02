@@ -394,9 +394,7 @@ export function PracticeGameContent({
   return (
     <SafeAreaView style={gameStyles.container}>
       <View style={gameStyles.header}>
-        <TouchableOpacity onPress={handleLeaveRequest} style={gameStyles.headerBackButton}>
-          <Ionicons name="chevron-back" size={28} color={colorScheme.textPrimary} />
-        </TouchableOpacity>
+        <BackButton onPress={handleLeaveRequest} style={gameStyles.headerBackButton} iconSize={28} />
         <View style={gameStyles.headerCenter}>
           <Text style={gameStyles.timerText}>{formatTime(elapsedTime)}</Text>
         </View>

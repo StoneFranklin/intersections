@@ -8,19 +8,15 @@ interface BackButtonProps {
   onPress: () => void;
   style?: ViewStyle;
   iconSize?: number;
-  variant?: 'arrow' | 'chevron';
 }
 
 export function BackButton({
   onPress,
   style,
   iconSize = 24,
-  variant = 'arrow',
 }: BackButtonProps) {
   const { colorScheme } = useThemeScheme();
   const styles = useMemo(() => createStyles(colorScheme), [colorScheme]);
-
-  const iconName = variant === 'chevron' ? 'chevron-back' : 'arrow-back';
 
   return (
     <TouchableOpacity
@@ -29,7 +25,7 @@ export function BackButton({
       activeOpacity={0.6}
       hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
     >
-      <Ionicons name={iconName} size={iconSize} color={colorScheme.textPrimary} />
+      <Ionicons name="arrow-back" size={iconSize} color={colorScheme.textPrimary} />
     </TouchableOpacity>
   );
 }

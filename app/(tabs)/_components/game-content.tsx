@@ -385,9 +385,7 @@ export function GameContent({
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={onBack} style={styles.headerBackButton}>
-            <Ionicons name="chevron-back" size={28} color={colorScheme.textPrimary} />
-          </TouchableOpacity>
+          <BackButton onPress={onBack} style={styles.headerBackButton} iconSize={28} />
           <View style={styles.headerCenter}>
             <Text style={styles.reviewHeaderTitle}>Your Results</Text>
           </View>
