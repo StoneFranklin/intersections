@@ -66,18 +66,18 @@ export const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
     color: colorScheme.textPrimary,
   },
   headerLevelBadge: {
-    backgroundColor: colorScheme.brandSecondary,
+    backgroundColor: colorScheme.gold + '20',
     paddingVertical: 4,
     paddingHorizontal: 10,
     borderRadius: 12,
     marginRight: 8,
     borderWidth: 1,
-    borderColor: colorScheme.brandPrimary,
+    borderColor: colorScheme.gold,
   },
   headerLevelText: {
     fontSize: 13,
     fontWeight: '700',
-    color: colorScheme.brandPrimary,
+    color: colorScheme.gold,
   },
   headerProfileButton: {
     padding: 4,
@@ -1175,7 +1175,7 @@ export const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
   },
   profileMenuLevel: {
     fontSize: 13,
-    color: colorScheme.brandPrimary,
+    color: colorScheme.gold,
     marginTop: 2,
     fontWeight: '600',
   },
