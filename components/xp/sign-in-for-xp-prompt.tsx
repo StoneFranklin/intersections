@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Button } from '@/components/ui/button';
 
 interface SignInForXPPromptProps {
   /** Optional callback when user taps sign in */
@@ -28,15 +29,11 @@ export function SignInForXPPrompt({ onSignInPress }: SignInForXPPromptProps) {
       <Text style={styles.description}>
         Sign in to track your progress and level up
       </Text>
-      <Pressable
-        style={({ pressed }) => [
-          styles.button,
-          pressed && styles.buttonPressed
-        ]}
+      <Button
+        text="Sign In"
         onPress={handleSignIn}
-      >
-        <Text style={styles.buttonText}>Sign In</Text>
-      </Pressable>
+        glow
+      />
     </View>
   );
 }
@@ -66,27 +63,5 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     lineHeight: 20,
     fontWeight: '400',
-  },
-  button: {
-    backgroundColor: '#FFD700',
-    paddingHorizontal: 32,
-    paddingVertical: 14,
-    borderRadius: 12,
-    shadowColor: '#FFD700',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  buttonPressed: {
-    opacity: 0.85,
-    transform: [{ scale: 0.98 }],
-  },
-  buttonText: {
-    color: '#000000',
-    fontSize: 15,
-    fontWeight: '700',
-    textAlign: 'center',
-    letterSpacing: 0.3,
   },
 });

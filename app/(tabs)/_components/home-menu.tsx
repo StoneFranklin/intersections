@@ -1,4 +1,5 @@
 import { GradientButton } from '@/components/ui/gradient-button';
+import { Button } from '@/components/ui/button';
 import { SignInBenefitsCard } from '@/components/game';
 import { LeaderboardEntry } from '@/data/puzzleApi';
 import { GameScore } from '@/types/game';
@@ -348,9 +349,13 @@ export function HomeMenu({
               </TouchableOpacity>
             </>
           ) : (
-            <TouchableOpacity style={styles.headerSignInButton} onPress={() => setShowSignIn(true)}>
-              <Text style={styles.headerSignInText}>Sign In</Text>
-            </TouchableOpacity>
+            <Button
+              text="Sign In"
+              onPress={() => setShowSignIn(true)}
+              style={{ paddingHorizontal: 16, paddingVertical: 8 }}
+              textStyle={{ fontSize: 14 }}
+              glow
+            />
           )}
         </View>
       </View>
@@ -363,9 +368,13 @@ export function HomeMenu({
                 Sign in to see your global ranking, compete on the leaderboard, and sync across devices
               </Text>
             </View>
-            <TouchableOpacity style={styles.signInBannerButton} onPress={() => setShowSignIn(true)}>
-              <Text style={styles.signInBannerButtonText}>Sign In</Text>
-            </TouchableOpacity>
+            <Button
+              text="Sign In"
+              onPress={() => setShowSignIn(true)}
+              style={{ paddingHorizontal: 20, paddingVertical: 10 }}
+              textStyle={{ fontSize: 14 }}
+              glow
+            />
           </View>
           <TouchableOpacity style={styles.signInBannerDismiss} onPress={onDismissSignInBanner}>
             <Ionicons name="close" size={20} color="#666" />
@@ -814,8 +823,12 @@ export function HomeMenu({
             <Text style={styles.signInModalTitle}>Sign In</Text>
             <Text style={styles.signInModalSubtitle}>Sync your scores and streaks across devices</Text>
 
-            <TouchableOpacity
-              style={styles.googleButton}
+            <Button
+              text={signingIn ? 'Signing in...' : 'Continue with Google'}
+              icon="google"
+              backgroundColor="#FFFFFF"
+              textColor="#000000"
+              iconColor="#4285f4"
               onPress={async () => {
                 setSigningIn(true);
                 try {
@@ -828,16 +841,16 @@ export function HomeMenu({
                 }
               }}
               disabled={signingIn}
-            >
-              <View style={styles.googleButtonContent}>
-                <AntDesign name="google" size={20} color="#4285f4" style={{ marginRight: 8 }} />
-                <Text style={styles.googleButtonText}>{signingIn ? 'Signing in...' : 'Continue with Google'}</Text>
-              </View>
-            </TouchableOpacity>
+              loading={signingIn}
+              style={{ width: '100%', marginBottom: 12 }}
+            />
 
             {Platform.OS === 'ios' && (
-              <TouchableOpacity
-                style={styles.appleButton}
+              <Button
+                text={signingInWithApple ? 'Signing in...' : 'Continue with Apple'}
+                icon="apple"
+                backgroundColor="#000000"
+                textColor="#FFFFFF"
                 onPress={async () => {
                   setSigningInWithApple(true);
                   try {
@@ -850,20 +863,18 @@ export function HomeMenu({
                   }
                 }}
                 disabled={signingInWithApple}
-                activeOpacity={0.8}
-              >
-                <View style={styles.appleButtonContent}>
-                  <Ionicons name="logo-apple" size={20} color="#fff" style={{ marginRight: 8 }} />
-                  <Text style={styles.appleButtonText}>
-                    {signingInWithApple ? 'Signing in...' : 'Continue with Apple'}
-                  </Text>
-                </View>
-              </TouchableOpacity>
+                loading={signingInWithApple}
+                style={{ width: '100%', marginBottom: 12 }}
+              />
             )}
 
-            <TouchableOpacity style={styles.signInCancelButton} onPress={() => setShowSignIn(false)}>
-              <Text style={styles.signInCancelText}>Cancel</Text>
-            </TouchableOpacity>
+            <Button
+              text="Cancel"
+              variant="text"
+              backgroundColor={colorScheme.textSecondary}
+              onPress={() => setShowSignIn(false)}
+              style={{ width: '100%' }}
+            />
           </View>
         </View>
       </Modal>
