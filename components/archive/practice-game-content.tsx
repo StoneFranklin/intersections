@@ -1,4 +1,4 @@
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -7,7 +7,6 @@ import {
     ScrollView,
     StyleSheet,
     Text,
-    TouchableOpacity,
     View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,6 +17,7 @@ import { DoubleXPModal } from '@/components/ads/double-xp-modal';
 import { RewardedAdModal } from '@/components/ads/rewarded-ad-modal';
 import { GameGrid, WordTray, SignInBenefitsCard } from '@/components/game';
 import { BackButton } from '@/components/ui/back-button';
+import { Button } from '@/components/ui/button';
 import { useThemeScheme } from '@/contexts/theme-context';
 import { useXP } from '@/contexts/xp-context';
 import { useAuth } from '@/contexts/auth-context';
@@ -370,10 +370,14 @@ export function PracticeGameContent({
 
           {!isWin && (
             <View style={styles.actionButtons}>
-              <TouchableOpacity style={styles.retryButton} onPress={onRetry}>
-                <Ionicons name="refresh" size={20} color={colorScheme.backgroundPrimary} />
-                <Text style={styles.retryButtonText}>Try Again</Text>
-              </TouchableOpacity>
+              <Button
+                text="Try Again"
+                onPress={onRetry}
+                icon="refresh"
+                backgroundColor={colorScheme.brandPrimary}
+                textColor={colorScheme.backgroundPrimary}
+                iconColor={colorScheme.backgroundPrimary}
+              />
             </View>
           )}
         </ScrollView>
@@ -586,20 +590,6 @@ const createStyles = (colorScheme: any) =>
       gap: 12,
       width: '100%',
       maxWidth: 400,
-    },
-    retryButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: 8,
-      paddingVertical: 16,
-      backgroundColor: colorScheme.brandPrimary,
-      borderRadius: 12,
-    },
-    retryButtonText: {
-      fontSize: 16,
-      fontWeight: '600',
-      color: colorScheme.backgroundPrimary,
     },
     backButtonTop: {
       position: 'absolute',
