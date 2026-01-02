@@ -325,18 +325,18 @@ export const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
     fontWeight: '600',
   },
   leaderboardCompactLevelBadge: {
-    backgroundColor: colorScheme.brandSecondary,
+    backgroundColor: colorScheme.gold + '20',
     paddingVertical: 1,
     paddingHorizontal: 4,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: colorScheme.brandPrimary,
+    borderColor: colorScheme.gold,
     marginRight: 8,
   },
   leaderboardCompactLevelText: {
     fontSize: 9,
     fontWeight: '700',
-    color: colorScheme.brandPrimary,
+    color: colorScheme.gold,
   },
   leaderboardCompactCorrect: {
     fontSize: 12,
@@ -632,17 +632,17 @@ export const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
     color: colorScheme.brandPrimary,
   },
   leaderboardLevelBadge: {
-    backgroundColor: colorScheme.brandSecondary,
+    backgroundColor: colorScheme.gold + '20',
     paddingVertical: 2,
     paddingHorizontal: 6,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: colorScheme.brandPrimary,
+    borderColor: colorScheme.gold,
   },
   leaderboardLevelText: {
     fontSize: 11,
     fontWeight: '700',
-    color: colorScheme.brandPrimary,
+    color: colorScheme.gold,
   },
   leaderboardFullMeta: {
     fontSize: 13,
