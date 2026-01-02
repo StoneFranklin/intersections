@@ -3,12 +3,12 @@ import { useAuth } from '@/contexts/auth-context';
 import { useThemeScheme } from '@/contexts/theme-context';
 import type { LeaderboardEntry } from '@/data/puzzleApi';
 import {
-  getFriendIds,
-  getFriendsLeaderboardPage,
-  getPercentile,
-  getTodayLeaderboard,
-  getTodayLeaderboardPage,
-  getUserTodayScore,
+    getFriendIds,
+    getFriendsLeaderboardPage,
+    getPercentile,
+    getTodayLeaderboard,
+    getTodayLeaderboardPage,
+    getUserTodayScore,
 } from '@/data/puzzleApi';
 import type { GameScore } from '@/types/game';
 import { formatTime, shareScore } from '@/utils/share';
@@ -336,16 +336,21 @@ export default function LeaderboardPage() {
                 )}
               </View>
               <View style={styles.leaderboardFullInfo}>
-                <Text
-                  style={[
-                    styles.leaderboardFullName,
-                    isCurrentUserEntry(entry) && styles.leaderboardFullNameCurrentUser,
-                  ]}
-                  numberOfLines={1}
-                >
-                  {entry.displayName || 'Anonymous'}
-                  {isCurrentUserEntry(entry) && ' (you)'}
-                </Text>
+                <View style={styles.leaderboardFullNameRow}>
+                  <Text
+                    style={[
+                      styles.leaderboardFullName,
+                      isCurrentUserEntry(entry) && styles.leaderboardFullNameCurrentUser,
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {entry.displayName || 'Anonymous'}
+                    {isCurrentUserEntry(entry) && ' (you)'}
+                  </Text>
+                  <View style={styles.leaderboardLevelBadge}>
+                    <Text style={styles.leaderboardLevelText}>Lv {entry.level || 1}</Text>
+                  </View>
+                </View>
                 <Text style={styles.leaderboardFullMeta}>
                   {entry.correctPlacements}/16 correct · {entry.mistakes} {entry.mistakes === 1 ? 'mistake' : 'mistakes'} · {formatTime(entry.timeSeconds)}
                 </Text>

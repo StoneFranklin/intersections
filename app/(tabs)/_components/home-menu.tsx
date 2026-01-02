@@ -48,6 +48,7 @@ export interface HomeMenuProps {
   loading: boolean;
   dailyCompleted: boolean;
   fetchingPuzzle: boolean;
+  level: number;
 
   leaderboard: LeaderboardEntry[];
   loadingLeaderboard: boolean;
@@ -111,6 +112,7 @@ export function HomeMenu({
   loading,
   dailyCompleted,
   fetchingPuzzle,
+  level,
   leaderboard,
   loadingLeaderboard,
   leaderboardLoaded,
@@ -476,6 +478,9 @@ export function HomeMenu({
                   </View>
                 )}
               </TouchableOpacity>
+              <View style={styles.headerLevelBadge}>
+                <Text style={styles.headerLevelText}>Lv {level}</Text>
+              </View>
               <TouchableOpacity style={styles.headerProfileButton} onPress={() => setShowProfileMenu(true)}>
                 <View style={styles.headerProfileIcon}>
                   {avatarUrl && !avatarLoadError ? (
@@ -745,16 +750,23 @@ export function HomeMenu({
                                     </Text>
                                   )}
                                 </View>
-                                <Text
-                                  style={[
-                                    styles.leaderboardCompactName,
-                                    isCurrentUserEntry(entry) && styles.leaderboardCompactNameCurrentUser,
-                                  ]}
-                                  numberOfLines={1}
-                                >
-                                  {(isCurrentUserEntry(entry) && displayName) ? displayName : (entry.displayName || 'Anonymous')}
-                                  {isCurrentUserEntry(entry) && ' (you)'}
-                                </Text>
+                                <View style={styles.leaderboardCompactNameContainer}>
+                                  <Text
+                                    style={[
+                                      styles.leaderboardCompactName,
+                                      isCurrentUserEntry(entry) && styles.leaderboardCompactNameCurrentUser,
+                                    ]}
+                                    numberOfLines={1}
+                                  >
+                                    {(isCurrentUserEntry(entry) && displayName) ? displayName : (entry.displayName || 'Anonymous')}
+                                    {isCurrentUserEntry(entry) && ' (you)'}
+                                  </Text>
+                                  {entry.level && (
+                                    <View style={styles.leaderboardCompactLevelBadge}>
+                                      <Text style={styles.leaderboardCompactLevelText}>Lv {entry.level}</Text>
+                                    </View>
+                                  )}
+                                </View>
                                 <Text style={styles.leaderboardCompactCorrect}>{entry.correctPlacements}/16</Text>
                                 <Text
                                   style={[
@@ -865,16 +877,21 @@ export function HomeMenu({
                                     </Text>
                                   )}
                                 </View>
-                                <Text
-                                  style={[
-                                    styles.leaderboardCompactName,
-                                    isCurrentUserEntry(entry) && styles.leaderboardCompactNameCurrentUser,
-                                  ]}
-                                  numberOfLines={1}
-                                >
-                                  {(isCurrentUserEntry(entry) && displayName) ? displayName : (entry.displayName || 'Anonymous')}
-                                  {isCurrentUserEntry(entry) && ' (you)'}
-                                </Text>
+                                <View style={styles.leaderboardCompactNameContainer}>
+                                  <Text
+                                    style={[
+                                      styles.leaderboardCompactName,
+                                      isCurrentUserEntry(entry) && styles.leaderboardCompactNameCurrentUser,
+                                    ]}
+                                    numberOfLines={1}
+                                  >
+                                    {(isCurrentUserEntry(entry) && displayName) ? displayName : (entry.displayName || 'Anonymous')}
+                                    {isCurrentUserEntry(entry) && ' (you)'}
+                                  </Text>
+                                  <View style={styles.leaderboardCompactLevelBadge}>
+                                    <Text style={styles.leaderboardCompactLevelText}>Lv {entry.level || 1}</Text>
+                                  </View>
+                                </View>
                                 <Text style={styles.leaderboardCompactCorrect}>{entry.correctPlacements}/16</Text>
                                 <Text
                                   style={[
@@ -1071,6 +1088,7 @@ export function HomeMenu({
               </View>
               <View style={styles.profileMenuInfo}>
                 <Text style={styles.profileMenuName}>{displayName || 'No display name'}</Text>
+                <Text style={styles.profileMenuLevel}>Level {level}</Text>
               </View>
             </View>
 

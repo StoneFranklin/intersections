@@ -1,18 +1,19 @@
 import { LoadingScreen } from '@/components/screens/loading-screen';
 import { useAuth } from '@/contexts/auth-context';
-import { fetchTodaysPuzzle, getAvailablePuzzleDates, getFriendIds, getFriendsLeaderboardPage, getOrCreateProfile, getPercentile, getPendingRequestCount, getPracticeCompletionDates, getTodayLeaderboard, getUserStreak, getUserTodayScore, hasUserCompletedToday, LeaderboardEntry, reconcileScoreOnSignIn, updateDisplayName, updateUserStreak } from '@/data/puzzleApi';
+import { useXP } from '@/contexts/xp-context';
+import { fetchTodaysPuzzle, getAvailablePuzzleDates, getFriendIds, getFriendsLeaderboardPage, getOrCreateProfile, getPendingRequestCount, getPercentile, getPracticeCompletionDates, getTodayLeaderboard, getUserStreak, getUserTodayScore, hasUserCompletedToday, LeaderboardEntry, reconcileScoreOnSignIn, updateDisplayName, updateUserStreak } from '@/data/puzzleApi';
 import { GameScore, Puzzle } from '@/types/game';
-import { getTodayKey, getYesterdayKey } from '@/utils/dateKeys';
 import {
-  dailyCompletedKey,
-  dailyRankKey,
-  dailyScoreKey,
-  extractClaimableAnonymousScore,
-  getStoredLocalUserId,
-  normalizeStoredDailyScore,
-  safeJsonParse,
-  serializeStoredDailyScore,
+    dailyCompletedKey,
+    dailyRankKey,
+    dailyScoreKey,
+    extractClaimableAnonymousScore,
+    getStoredLocalUserId,
+    normalizeStoredDailyScore,
+    safeJsonParse,
+    serializeStoredDailyScore,
 } from '@/utils/dailyScoreStorage';
+import { getTodayKey, getYesterdayKey } from '@/utils/dateKeys';
 import { validateDisplayName } from '@/utils/displayNameValidation';
 import { logger } from '@/utils/logger';
 import { areNotificationsEnabled, scheduleDailyNotification, setNotificationsEnabled } from '@/utils/notificationService';
@@ -22,16 +23,17 @@ import { useFocusEffect, useNavigation } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Modal, Platform, Text, TouchableOpacity, View } from 'react-native';
 
+import { useThemeScheme } from '@/contexts/theme-context';
 import { GameContent } from './_components/game-content';
 import { HomeMenu } from './_components/home-menu';
 import { createStyles } from './index.styles';
-import { useThemeScheme } from '@/contexts/theme-context';
 
 // Track if loading screen has been shown this session (persists across component remounts)
 let hasShownLoadingThisSession = false;
 
 export default function GameScreen() {
   const { user, signInWithGoogle, signInWithApple, signOut } = useAuth();
+  const { level } = useXP();
   const { colorScheme } = useThemeScheme();
   const styles = useMemo(() => createStyles(colorScheme), [colorScheme]);
   const [puzzle, setPuzzle] = useState<Puzzle | null>(null);
@@ -870,6 +872,7 @@ export default function GameScreen() {
         loading={loading}
         dailyCompleted={dailyCompleted}
         fetchingPuzzle={fetchingPuzzle}
+        level={level}
         leaderboard={leaderboard}
         loadingLeaderboard={loadingLeaderboard}
         leaderboardLoaded={leaderboardLoaded}

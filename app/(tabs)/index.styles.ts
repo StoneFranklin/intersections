@@ -1,5 +1,5 @@
-import { StyleSheet } from 'react-native';
 import { ColorScheme, Fonts } from '@/constants/theme';
+import { StyleSheet } from 'react-native';
 
 export const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
   container: {
@@ -64,6 +64,20 @@ export const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
     fontSize: 10,
     fontWeight: '700',
     color: colorScheme.textPrimary,
+  },
+  headerLevelBadge: {
+    backgroundColor: colorScheme.brandSecondary,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+    marginRight: 8,
+    borderWidth: 1,
+    borderColor: colorScheme.brandPrimary,
+  },
+  headerLevelText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colorScheme.brandPrimary,
   },
   headerProfileButton: {
     padding: 4,
@@ -293,15 +307,34 @@ export const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
     fontWeight: '600',
     color: colorScheme.textPrimary,
   },
-  leaderboardCompactName: {
+  leaderboardCompactNameContainer: {
     flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginLeft: 8,
+  },
+  leaderboardCompactName: {
     fontSize: 14,
     color: colorScheme.textSecondary,
-    marginLeft: 8,
+    flexShrink: 1,
   },
   leaderboardCompactNameCurrentUser: {
     color: colorScheme.brandPrimary,
     fontWeight: '600',
+  },
+  leaderboardCompactLevelBadge: {
+    backgroundColor: colorScheme.brandSecondary,
+    paddingVertical: 1,
+    paddingHorizontal: 4,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: colorScheme.brandPrimary,
+  },
+  leaderboardCompactLevelText: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: colorScheme.brandPrimary,
   },
   leaderboardCompactCorrect: {
     fontSize: 12,
@@ -582,12 +615,31 @@ export const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
     flex: 1,
     marginLeft: 8,
   },
+  leaderboardFullNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   leaderboardFullName: {
     fontSize: 16,
     color: colorScheme.textPrimary,
     fontWeight: '500',
+    flexShrink: 1,
   },
   leaderboardFullNameCurrentUser: {
+    color: colorScheme.brandPrimary,
+  },
+  leaderboardLevelBadge: {
+    backgroundColor: colorScheme.brandSecondary,
+    paddingVertical: 2,
+    paddingHorizontal: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colorScheme.brandPrimary,
+  },
+  leaderboardLevelText: {
+    fontSize: 11,
+    fontWeight: '700',
     color: colorScheme.brandPrimary,
   },
   leaderboardFullMeta: {
@@ -1118,6 +1170,12 @@ export const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: colorScheme.textPrimary,
+  },
+  profileMenuLevel: {
+    fontSize: 13,
+    color: colorScheme.brandPrimary,
+    marginTop: 2,
+    fontWeight: '600',
   },
   profileMenuEmail: {
     fontSize: 13,
@@ -1903,6 +1961,48 @@ export const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
     fontSize: 12,
     color: colorScheme.textTertiary,
     marginTop: 4,
+  },
+  // XP display styles
+  xpGainedRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  levelUpRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    marginBottom: 12,
+  },
+  levelUpText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  xpProgressContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginTop: 4,
+  },
+  xpProgressBar: {
+    flex: 1,
+    height: 8,
+    backgroundColor: colorScheme.backgroundTertiary,
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  xpProgressFill: {
+    height: '100%',
+    backgroundColor: colorScheme.gold,
+    borderRadius: 4,
+  },
+  xpLevelText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colorScheme.textSecondary,
+    minWidth: 60,
   },
   gameCompleteLeaderboardCard: {
     backgroundColor: colorScheme.backgroundSecondary,
