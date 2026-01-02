@@ -17,6 +17,7 @@ import {
   View,
 } from 'react-native';
 import { ColorScheme } from '@/constants/theme';
+import { Button } from '@/components/ui/button';
 
 interface UserSearchModalProps {
   visible: boolean;
@@ -223,9 +224,13 @@ export function UserSearchModal({
             </Text>
           )}
 
-          <TouchableOpacity style={styles.cancelButton} onPress={handleClose}>
-            <Text style={styles.cancelText}>Cancel</Text>
-          </TouchableOpacity>
+          <Button
+            text="Cancel"
+            onPress={handleClose}
+            variant="text"
+            backgroundColor={colorScheme.textTertiary}
+            style={{ marginTop: 12, width: '100%' }}
+          />
         </View>
       </KeyboardAvoidingView>
     </Modal>
@@ -399,14 +404,5 @@ const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
     fontSize: 13,
     color: colorScheme.brandPrimary,
     fontWeight: '500',
-  },
-  cancelButton: {
-    marginTop: 12,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  cancelText: {
-    fontSize: 15,
-    color: colorScheme.textTertiary,
   },
 });

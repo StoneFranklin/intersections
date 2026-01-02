@@ -14,6 +14,7 @@ import {
   View,
 } from 'react-native';
 import { ColorScheme } from '@/constants/theme';
+import { Button } from '@/components/ui/button';
 
 interface FriendsListProps {
   friends: Friend[];
@@ -170,18 +171,20 @@ export function FriendsList({
               ?
             </Text>
             <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={styles.modalCancelButton}
+              <Button
+                text="Cancel"
                 onPress={handleCancelRemove}
-              >
-                <Text style={styles.modalCancelText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.modalRemoveButton}
+                variant="outlined"
+                backgroundColor={colorScheme.backgroundTertiary}
+                style={{ flex: 1 }}
+              />
+              <Button
+                text="Remove"
                 onPress={handleConfirmRemove}
-              >
-                <Text style={styles.modalRemoveText}>Remove</Text>
-              </TouchableOpacity>
+                backgroundColor={colorScheme.error}
+                textColor={colorScheme.textPrimary}
+                style={{ flex: 1 }}
+              />
             </View>
           </View>
         </View>
@@ -329,29 +332,5 @@ const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
     width: '100%',
-  },
-  modalCancelButton: {
-    flex: 1,
-    backgroundColor: colorScheme.backgroundTertiary,
-    paddingVertical: 14,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  modalCancelText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: colorScheme.textSecondary,
-  },
-  modalRemoveButton: {
-    flex: 1,
-    backgroundColor: colorScheme.error,
-    paddingVertical: 14,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  modalRemoveText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: colorScheme.textPrimary,
   },
 });
