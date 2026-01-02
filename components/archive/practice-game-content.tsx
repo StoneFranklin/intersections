@@ -17,6 +17,7 @@ import { AdFallbackScreen } from '@/components/ads/ad-fallback-screen';
 import { DoubleXPModal } from '@/components/ads/double-xp-modal';
 import { RewardedAdModal } from '@/components/ads/rewarded-ad-modal';
 import { GameGrid, WordTray, SignInBenefitsCard } from '@/components/game';
+import { BackButton } from '@/components/ui/back-button';
 import { useThemeScheme } from '@/contexts/theme-context';
 import { useXP } from '@/contexts/xp-context';
 import { useAuth } from '@/contexts/auth-context';
@@ -288,6 +289,7 @@ export function PracticeGameContent({
 
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: isWin ? colorScheme.successBg : colorScheme.errorBg }]}>
+        <BackButton onPress={onBack} style={styles.backButtonTop} />
         <ScrollView contentContainerStyle={styles.resultsScrollContent}>
           <View style={styles.resultsHeader}>
             {isWin ? (
@@ -366,19 +368,14 @@ export function PracticeGameContent({
           {/* Sign-in benefits card for anonymous users */}
           {!user && <SignInBenefitsCard onSignInPress={() => router.push('/(tabs)')} />}
 
-          <View style={styles.actionButtons}>
-            {!isWin && (
+          {!isWin && (
+            <View style={styles.actionButtons}>
               <TouchableOpacity style={styles.retryButton} onPress={onRetry}>
                 <Ionicons name="refresh" size={20} color={colorScheme.backgroundPrimary} />
                 <Text style={styles.retryButtonText}>Try Again</Text>
               </TouchableOpacity>
-            )}
-
-            <TouchableOpacity style={styles.backButton} onPress={onBack}>
-              <Ionicons name="arrow-back" size={20} color={colorScheme.brandPrimary} />
-              <Text style={styles.backButtonText}>Back to Archive</Text>
-            </TouchableOpacity>
-          </View>
+            </View>
+          )}
         </ScrollView>
 
         <DoubleXPModal
@@ -606,17 +603,11 @@ const createStyles = (colorScheme: any) =>
       fontWeight: '600',
       color: colorScheme.backgroundPrimary,
     },
-    backButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: 8,
-      paddingVertical: 16,
-    },
-    backButtonText: {
-      fontSize: 16,
-      color: colorScheme.brandPrimary,
-      fontWeight: '600',
+    backButtonTop: {
+      position: 'absolute',
+      top: 12,
+      left: 12,
+      zIndex: 10,
     },
   });
 

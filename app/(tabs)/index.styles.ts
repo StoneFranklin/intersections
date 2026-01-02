@@ -2122,15 +2122,11 @@ export const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
     fontSize: 15,
     letterSpacing: 0.3,
   },
-  gameCompleteBackButton: {
-    paddingVertical: 14,
-    paddingHorizontal: 28,
-  },
-  gameCompleteBackButtonText: {
-    color: colorScheme.textTertiary,
-    fontSize: 15,
-    fontWeight: '600',
-    letterSpacing: 0.2,
+  gameCompleteBackButtonTop: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    zIndex: 10,
   },
   homeLeaderboardTabBar: {
     flexDirection: 'row',

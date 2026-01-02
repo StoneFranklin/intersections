@@ -3,6 +3,7 @@ import { DoubleXPModal } from '@/components/ads/double-xp-modal';
 import { RewardedAdModal } from '@/components/ads/rewarded-ad-modal';
 import { GameGrid, LeaveGameModal, WordTray } from '@/components/game';
 import { SignInBenefitsCard } from '@/components/game/sign-in-benefits-card';
+import { BackButton } from '@/components/ui/back-button';
 import { useXP } from '@/contexts/xp-context';
 import { useAuth } from '@/contexts/auth-context';
 import { SignInForXPPrompt } from '@/components/xp/sign-in-for-xp-prompt';
@@ -457,6 +458,7 @@ export function GameContent({
 
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: isWin ? colorScheme.successBg : colorScheme.errorBg }]}>
+        <BackButton onPress={onBack} style={styles.gameCompleteBackButtonTop} />
         <ScrollView contentContainerStyle={styles.gameCompleteScrollContent}>
           <View style={styles.gameCompleteHeader}>
             {isWin ? (
@@ -631,10 +633,6 @@ export function GameContent({
               </TouchableOpacity>
             )}
           </View>
-
-          <TouchableOpacity style={styles.gameCompleteBackButton} onPress={onBack}>
-            <Text style={styles.gameCompleteBackButtonText}>Back to Home</Text>
-          </TouchableOpacity>
         </ScrollView>
 
         <DoubleXPModal
