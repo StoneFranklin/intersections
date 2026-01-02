@@ -84,6 +84,11 @@ export function XPProvider({ children }: { children: React.ReactNode }) {
     doubled: boolean = false
   ): Promise<XPGainResult | null> => {
     try {
+      // Anonymous users don't earn XP
+      if (!user) {
+        return null;
+      }
+
       // Calculate base XP
       let xpGained = calculateXP(score, isDaily);
 
@@ -96,49 +101,25 @@ export function XPProvider({ children }: { children: React.ReactNode }) {
         return null;
       }
 
-      const previousLevel = level;
-
-      if (user) {
-        // Logged in - update server
-        const result = await addUserXP(user.id, xpGained, levelFromXP);
-        if (result) {
-          setTotalXP(result.newTotalXP);
-          setLevel(result.newLevel);
-          return {
-            xpGained,
-            newTotalXP: result.newTotalXP,
-            newLevel: result.newLevel,
-            leveledUp: result.leveledUp,
-            previousLevel: result.previousLevel,
-          };
-        }
-        return null;
-      } else {
-        // Not logged in - update local storage
-        const newTotalXP = totalXP + xpGained;
-        const newLevel = levelFromXP(newTotalXP);
-        const leveledUp = newLevel > previousLevel;
-
-        setTotalXP(newTotalXP);
-        setLevel(newLevel);
-
-        await AsyncStorage.setItem(XP_STORAGE_KEY, JSON.stringify({
-          totalXP: newTotalXP,
-        }));
-
+      // Logged in - update server
+      const result = await addUserXP(user.id, xpGained, levelFromXP);
+      if (result) {
+        setTotalXP(result.newTotalXP);
+        setLevel(result.newLevel);
         return {
           xpGained,
-          newTotalXP,
-          newLevel,
-          leveledUp,
-          previousLevel,
+          newTotalXP: result.newTotalXP,
+          newLevel: result.newLevel,
+          leveledUp: result.leveledUp,
+          previousLevel: result.previousLevel,
         };
       }
+      return null;
     } catch (e) {
       logger.error('Error awarding XP:', e);
       return null;
     }
-  }, [user, totalXP, level]);
+  }, [user, level]);
 
   const refreshXP = useCallback(async () => {
     await loadXP();

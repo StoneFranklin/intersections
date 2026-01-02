@@ -1,4 +1,5 @@
 import { GradientButton } from '@/components/ui/gradient-button';
+import { SignInBenefitsCard } from '@/components/game';
 import { LeaderboardEntry } from '@/data/puzzleApi';
 import { GameScore } from '@/types/game';
 import { logger } from '@/utils/logger';
@@ -325,9 +326,11 @@ export function HomeMenu({
                   </View>
                 )}
               </TouchableOpacity>
-              <View style={styles.headerLevelBadge}>
-                <Text style={styles.headerLevelText}>Lv {level}</Text>
-              </View>
+              {user && (
+                <View style={styles.headerLevelBadge}>
+                  <Text style={styles.headerLevelText}>Lv {level}</Text>
+                </View>
+              )}
               <TouchableOpacity style={styles.headerProfileButton} onPress={() => setShowProfileMenu(true)}>
                 <View style={styles.headerProfileIcon}>
                   {avatarUrl && !avatarLoadError ? (
@@ -752,46 +755,9 @@ export function HomeMenu({
                     </View>
                   </TouchableOpacity>
                 ) : (
-                  <TouchableOpacity
-                    style={styles.completedContainer}
-                    onPress={() => setShowSignIn(true)}
-                    activeOpacity={0.8}
-                  >
-                    <View style={styles.completedHeader}>
-                      <View style={styles.completedHeaderContent}>
-                        <View style={styles.completedHeaderTitleRow}>
-                          <MaterialCommunityIcons name="trophy" size={20} color="#ffd700" />
-                          <Text style={styles.completedTitle}>Today&apos;s Leaderboard</Text>
-                        </View>
-                      </View>
-                    </View>
-                    {savedScore && (
-                      <View style={styles.leaderboardCompact}>
-                        <View style={[styles.leaderboardCompactRow, styles.leaderboardCompactRowCurrentUser]}>
-                          <View style={styles.leaderboardCompactRank}>
-                            <Text style={styles.leaderboardCompactRankText}>?</Text>
-                          </View>
-                          <Text
-                            style={[styles.leaderboardCompactName, styles.leaderboardCompactNameCurrentUser]}
-                            numberOfLines={1}
-                          >
-                            You
-                          </Text>
-                          <Text style={styles.leaderboardCompactCorrect}>{savedScore.correctPlacements}/16</Text>
-                          <Text style={[styles.leaderboardCompactScore, styles.leaderboardCompactScoreCurrentUser]}>
-                            {savedScore.score}
-                          </Text>
-                        </View>
-                      </View>
-                    )}
-                    <Text style={styles.leaderboardEmptyText}>
-                      Sign in to see your global ranking and full leaderboard
-                    </Text>
-                    <View style={styles.tapForDetailsHint}>
-                      <Text style={styles.tapForDetailsText}>Sign in to continue</Text>
-                      <Ionicons name="chevron-forward" size={14} color="#666" />
-                    </View>
-                  </TouchableOpacity>
+                  <View style={{ paddingHorizontal: 16, marginTop: 8, alignItems: 'center' }}>
+                    <SignInBenefitsCard onSignInPress={() => setShowSignIn(true)} />
+                  </View>
                 )}
               </>
             )}

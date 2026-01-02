@@ -16,9 +16,10 @@ import { createStyles as createGameStyles } from '@/app/(tabs)/index.styles';
 import { AdFallbackScreen } from '@/components/ads/ad-fallback-screen';
 import { DoubleXPModal } from '@/components/ads/double-xp-modal';
 import { RewardedAdModal } from '@/components/ads/rewarded-ad-modal';
-import { GameGrid, WordTray } from '@/components/game';
+import { GameGrid, WordTray, SignInBenefitsCard } from '@/components/game';
 import { useThemeScheme } from '@/contexts/theme-context';
 import { useXP } from '@/contexts/xp-context';
+import { useAuth } from '@/contexts/auth-context';
 import { useGameState } from '@/hooks/use-game-state';
 import { useRewardedAd } from '@/hooks/use-rewarded-ad';
 import { PracticeCompletion } from '@/types/archive';
@@ -52,6 +53,7 @@ export function PracticeGameContent({
 }: PracticeGameContentProps) {
   const { colorScheme } = useThemeScheme();
   const router = useRouter();
+  const { user } = useAuth();
   const gameStyles = useMemo(() => createGameStyles(colorScheme), [colorScheme]);
   const styles = useMemo(() => createStyles(colorScheme), [colorScheme]);
 
@@ -195,15 +197,16 @@ export function PracticeGameContent({
   };
 
   // Show double XP modal when game ends
+  // Only show to authenticated users since anonymous users can't earn XP
   useEffect(() => {
-    if (gameEnded && savedScore && !xpAwarded && !showDoubleXPModal) {
+    if (user && gameEnded && savedScore && !xpAwarded && !showDoubleXPModal) {
       // Small delay to let results screen render first
       const timer = setTimeout(() => {
         setShowDoubleXPModal(true);
       }, 500);
       return () => clearTimeout(timer);
     }
-  }, [gameEnded, savedScore, xpAwarded, showDoubleXPModal]);
+  }, [user, gameEnded, savedScore, xpAwarded, showDoubleXPModal]);
 
   // Animate XP bar whenever progress changes
   useEffect(() => {
@@ -320,7 +323,7 @@ export function PracticeGameContent({
           </View>
 
           {/* XP Gained Card */}
-          {xpAwarded && xpGained !== null && (
+          {user && xpAwarded && xpGained !== null && (
             <View style={[styles.scoreCard, { marginTop: 0 }]}>
               <View style={gameStyles.xpGainedRow}>
                 <MaterialCommunityIcons name="star-circle" size={24} color={colorScheme.gold} />
@@ -337,22 +340,22 @@ export function PracticeGameContent({
                 </View>
               )}
               <View style={gameStyles.xpProgressContainer}>
-                <Animated.View 
+                <Animated.View
                   style={[
                     gameStyles.xpProgressBar,
                     { transform: [{ scaleY: xpBarScale }] }
                   ]}
                 >
-                  <Animated.View 
+                  <Animated.View
                     style={[
-                      gameStyles.xpProgressFill, 
-                      { 
+                      gameStyles.xpProgressFill,
+                      {
                         width: xpBarWidth.interpolate({
                           inputRange: [0, 1],
                           outputRange: ['0%', '100%'],
                         })
                       }
-                    ]} 
+                    ]}
                   />
                 </Animated.View>
                 <Text style={gameStyles.xpLevelText}>Level {level + 1}</Text>
@@ -360,12 +363,8 @@ export function PracticeGameContent({
             </View>
           )}
 
-          <View style={styles.infoCard}>
-            <Ionicons name="information-circle-outline" size={20} color={colorScheme.info} />
-            <Text style={styles.infoText}>
-              Practice scores don't affect your streak or leaderboard ranking. Play as many times as you like!
-            </Text>
-          </View>
+          {/* Sign-in benefits card for anonymous users */}
+          {!user && <SignInBenefitsCard onSignInPress={() => router.push('/(tabs)')} />}
 
           <View style={styles.actionButtons}>
             {!isWin && (

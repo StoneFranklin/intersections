@@ -2,7 +2,10 @@ import { AdFallbackScreen } from '@/components/ads/ad-fallback-screen';
 import { DoubleXPModal } from '@/components/ads/double-xp-modal';
 import { RewardedAdModal } from '@/components/ads/rewarded-ad-modal';
 import { GameGrid, LeaveGameModal, WordTray } from '@/components/game';
+import { SignInBenefitsCard } from '@/components/game/sign-in-benefits-card';
 import { useXP } from '@/contexts/xp-context';
+import { useAuth } from '@/contexts/auth-context';
+import { SignInForXPPrompt } from '@/components/xp/sign-in-for-xp-prompt';
 import { LeaderboardEntry, submitScore } from '@/data/puzzleApi';
 import { useGameState } from '@/hooks/use-game-state';
 import { useRewardedAd } from '@/hooks/use-rewarded-ad';
@@ -55,6 +58,7 @@ export function GameContent({
 }: GameContentProps) {
   const { colorScheme } = useThemeScheme();
   const router = useRouter();
+  const { user } = useAuth();
   const styles = useMemo(() => createStyles(colorScheme), [colorScheme]);
   const {
     gameState,
@@ -213,15 +217,16 @@ export function GameContent({
   };
 
   // Show double XP modal when game ends (after score submission completes)
+  // Only show to authenticated users since anonymous users can't earn XP
   useEffect(() => {
-    if (gameEnded && finalScore && !xpAwarded && !showDoubleXPModal && resultRank !== null) {
+    if (user && gameEnded && finalScore && !xpAwarded && !showDoubleXPModal && resultRank !== null) {
       // Small delay to let results screen render first
       const timer = setTimeout(() => {
         setShowDoubleXPModal(true);
       }, 300);
       return () => clearTimeout(timer);
     }
-  }, [gameEnded, finalScore, xpAwarded, showDoubleXPModal, resultRank]);
+  }, [user, gameEnded, finalScore, xpAwarded, showDoubleXPModal, resultRank]);
 
   // Animate XP bar whenever progress changes
   useEffect(() => {
@@ -483,7 +488,7 @@ export function GameContent({
           </View>
 
           {/* XP Gained Card */}
-          {xpAwarded && xpGained !== null && (
+          {user && xpAwarded && xpGained !== null && (
             <View style={[styles.gameCompleteScoreCard, { marginTop: 0 }]}>
               <View style={styles.xpGainedRow}>
                 <MaterialCommunityIcons name="star-circle" size={24} color={colorScheme.gold} />
@@ -500,22 +505,22 @@ export function GameContent({
                 </View>
               )}
               <View style={styles.xpProgressContainer}>
-                <Animated.View 
+                <Animated.View
                   style={[
                     styles.xpProgressBar,
                     { transform: [{ scaleY: xpBarScale }] }
                   ]}
                 >
-                  <Animated.View 
+                  <Animated.View
                     style={[
-                      styles.xpProgressFill, 
-                      { 
+                      styles.xpProgressFill,
+                      {
                         width: xpBarWidth.interpolate({
                           inputRange: [0, 1],
                           outputRange: ['0%', '100%'],
                         })
                       }
-                    ]} 
+                    ]}
                   />
                 </Animated.View>
                 <Text style={styles.xpLevelText}>Level {level + 1}</Text>
@@ -612,44 +617,7 @@ export function GameContent({
               </View>
             </TouchableOpacity>
           ) : (
-            <View style={styles.gameCompleteLeaderboardCard}>
-              <View style={styles.gameCompleteLeaderboardHeader}>
-                <View style={styles.gameCompleteLeaderboardHeaderLeft}>
-                  <MaterialCommunityIcons name="trophy" size={20} color={colorScheme.gold} />
-                  <Text style={styles.gameCompleteLeaderboardTitle}>Today&apos;s Leaderboard</Text>
-                </View>
-              </View>
-              {displayScore && (
-                <View style={styles.leaderboardCompact}>
-                  <View style={[styles.leaderboardCompactRow, styles.leaderboardCompactRowCurrentUser]}>
-                    <View style={styles.leaderboardCompactRank}>
-                      <Text style={styles.leaderboardCompactRankText}>?</Text>
-                    </View>
-                    <Text
-                      style={[styles.leaderboardCompactName, styles.leaderboardCompactNameCurrentUser]}
-                      numberOfLines={1}
-                    >
-                      You
-                    </Text>
-                    <Text style={styles.leaderboardCompactCorrect}>{displayScore.correctPlacements}/16</Text>
-                    <Text style={[styles.leaderboardCompactScore, styles.leaderboardCompactScoreCurrentUser]}>
-                      {displayScore.score}
-                    </Text>
-                  </View>
-                </View>
-              )}
-              <Text style={styles.leaderboardEmptyText}>
-                Sign in to see your global ranking and view today&apos;s leaderboard
-              </Text>
-              <TouchableOpacity
-                style={styles.gameCompleteSignInButton}
-                onPress={onShowSignIn}
-                activeOpacity={0.8}
-              >
-                <Ionicons name="log-in-outline" size={20} color={colorScheme.brandPrimary} />
-                <Text style={styles.gameCompleteSignInButtonText}>Sign In</Text>
-              </TouchableOpacity>
-            </View>
+            <SignInBenefitsCard onSignInPress={onShowSignIn} />
           )}
 
           <View style={styles.gameCompleteActions}>
