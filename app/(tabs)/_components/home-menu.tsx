@@ -1,6 +1,7 @@
 import { GradientButton } from '@/components/ui/gradient-button';
 import { Button } from '@/components/ui/button';
 import { SignInBenefitsCard } from '@/components/game';
+import { LeaderboardTabToggle, LeaderboardTab } from '@/components/leaderboard/leaderboard-tab-toggle';
 import { LeaderboardEntry } from '@/data/puzzleApi';
 import { GameScore } from '@/types/game';
 import { logger } from '@/utils/logger';
@@ -146,7 +147,7 @@ export function HomeMenu({
 }: HomeMenuProps) {
   const router = useRouter();
   const displayNameInputRef = useRef<TextInput>(null);
-  const [homeLeaderboardTab, setHomeLeaderboardTab] = useState<'global' | 'friends'>('global');
+  const [homeLeaderboardTab, setHomeLeaderboardTab] = useState<LeaderboardTab>('global');
   const [avatarLoadError, setAvatarLoadError] = useState(false);
   const { colorScheme } = useThemeScheme();
   const { width } = useWindowDimensions();
@@ -476,49 +477,18 @@ export function HomeMenu({
                           <Text style={styles.completedTitle}>Today&apos;s Leaderboard</Text>
                         </View>
                         {hasFriends && (
-                          <View style={styles.homeLeaderboardTabBar}>
-                            <TouchableOpacity
-                              style={[
-                                styles.homeLeaderboardTab,
-                                homeLeaderboardTab === 'global' && styles.homeLeaderboardTabActive,
-                              ]}
-                              onPress={(e) => {
-                                e.stopPropagation();
-                                setHomeLeaderboardTab('global');
-                              }}
-                            >
-                              <Text
-                                style={[
-                                  styles.homeLeaderboardTabText,
-                                  homeLeaderboardTab === 'global' && styles.homeLeaderboardTabTextActive,
-                                ]}
-                              >
-                                Global
-                              </Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                              style={[
-                                styles.homeLeaderboardTab,
-                                homeLeaderboardTab === 'friends' && styles.homeLeaderboardTabActive,
-                              ]}
-                              onPress={(e) => {
-                                e.stopPropagation();
-                                setHomeLeaderboardTab('friends');
-                                if (!friendsLeaderboardLoaded && !loadingFriendsLeaderboard) {
-                                  onLoadFriendsLeaderboard();
-                                }
-                              }}
-                            >
-                              <Text
-                                style={[
-                                  styles.homeLeaderboardTabText,
-                                  homeLeaderboardTab === 'friends' && styles.homeLeaderboardTabTextActive,
-                                ]}
-                              >
-                                Friends
-                              </Text>
-                            </TouchableOpacity>
-                          </View>
+                          <LeaderboardTabToggle
+                            activeTab={homeLeaderboardTab}
+                            onTabChange={(tab) => {
+                              setHomeLeaderboardTab(tab);
+                              if (tab === 'friends' && !friendsLeaderboardLoaded && !loadingFriendsLeaderboard) {
+                                onLoadFriendsLeaderboard();
+                              }
+                            }}
+                            containerStyle={{ width: '80%', padding: 2 }}
+                            tabStyle={{ paddingVertical: 3 }}
+                            tabTextStyle={{ fontSize: 13 }}
+                          />
                         )}
                         {homeLeaderboardTab === 'global' && userRank && (
                           <Text style={styles.completedRankText}>#{userRank} in the world</Text>

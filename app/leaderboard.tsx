@@ -1,6 +1,7 @@
 import { createStyles } from '@/app/(tabs)/index.styles';
 import { useAuth } from '@/contexts/auth-context';
 import { useThemeScheme } from '@/contexts/theme-context';
+import { LeaderboardTabToggle, LeaderboardTab } from '@/components/leaderboard/leaderboard-tab-toggle';
 import type { LeaderboardEntry } from '@/data/puzzleApi';
 import {
     getFriendIds,
@@ -17,8 +18,6 @@ import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, Image, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-type LeaderboardTab = 'global' | 'friends';
 
 export default function LeaderboardPage() {
   const { colorScheme } = useThemeScheme();
@@ -200,24 +199,10 @@ export default function LeaderboardPage() {
 
       {/* Tab Bar for Global/Friends */}
       {friendIds.length > 0 && (
-        <View style={styles.leaderboardTabBar}>
-          <TouchableOpacity
-            style={[styles.leaderboardTab, isGlobalTab && styles.leaderboardTabActive]}
-            onPress={() => handleTabChange('global')}
-          >
-            <Text style={[styles.leaderboardTabText, isGlobalTab && styles.leaderboardTabTextActive]}>
-              Global
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.leaderboardTab, !isGlobalTab && styles.leaderboardTabActive]}
-            onPress={() => handleTabChange('friends')}
-          >
-            <Text style={[styles.leaderboardTabText, !isGlobalTab && styles.leaderboardTabTextActive]}>
-              Friends
-            </Text>
-          </TouchableOpacity>
-        </View>
+        <LeaderboardTabToggle
+          activeTab={leaderboardTab}
+          onTabChange={handleTabChange}
+        />
       )}
 
       <View style={{ flex: 1 }}>
