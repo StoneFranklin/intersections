@@ -499,16 +499,21 @@ const createStyles = (colorScheme: any) =>
     },
     // Results screen styles
     resultsScrollContent: {
-      padding: 24,
+      flexGrow: 1,
+      alignItems: 'center',
+      paddingHorizontal: 20,
+      paddingTop: 32,
       paddingBottom: 40,
     },
     resultsHeader: {
       alignItems: 'center',
-      marginBottom: 24,
+      marginBottom: 28,
     },
     resultsTitle: {
-      fontSize: 28,
-      fontWeight: 'bold',
+      fontSize: 32,
+      fontWeight: '800',
+      textAlign: 'center',
+      letterSpacing: -1,
       marginBottom: 12,
     },
     practiceBadge: {
@@ -532,9 +537,18 @@ const createStyles = (colorScheme: any) =>
     },
     scoreCard: {
       backgroundColor: colorScheme.backgroundSecondary,
-      borderRadius: 16,
-      padding: 20,
+      borderRadius: 20,
+      padding: 24,
+      width: '100%',
+      maxWidth: 400,
       marginBottom: 16,
+      borderWidth: 1,
+      borderColor: colorScheme.borderPrimary,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 8,
+      elevation: 3,
     },
     scoreRow: {
       flexDirection: 'row',
@@ -544,14 +558,17 @@ const createStyles = (colorScheme: any) =>
       alignItems: 'center',
     },
     scoreValue: {
-      fontSize: 24,
-      fontWeight: 'bold',
+      fontSize: 28,
+      fontWeight: '800',
       color: colorScheme.textPrimary,
+      letterSpacing: -0.5,
     },
     scoreLabel: {
-      fontSize: 12,
-      color: colorScheme.textMuted,
-      marginTop: 4,
+      fontSize: 13,
+      color: colorScheme.textTertiary,
+      marginTop: 6,
+      fontWeight: '500',
+      letterSpacing: 0.2,
     },
     infoCard: {
       flexDirection: 'row',
@@ -573,6 +590,7 @@ const createStyles = (colorScheme: any) =>
     actionButtons: {
       gap: 12,
       width: '100%',
+      maxWidth: 400,
     },
     retryButton: {
       flexDirection: 'row',
