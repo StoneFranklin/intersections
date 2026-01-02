@@ -769,15 +769,29 @@ export function HomeMenu({
           </Animated.View>
 
           <View style={styles.secondaryButtonsRow}>
-            <TouchableOpacity style={styles.secondaryButton} onPress={() => router.push('/how-to-play')}>
-              <Ionicons name="help-circle-outline" size={20} color={colorScheme.brandPrimary} />
-              <Text style={styles.secondaryButtonText}>How to Play</Text>
-            </TouchableOpacity>
+            <Button
+              text="How to Play"
+              onPress={() => router.push('/how-to-play')}
+              variant="outlined"
+              backgroundColor={colorScheme.brandPrimary}
+              textColor={colorScheme.brandPrimary}
+              icon="help-circle"
+              iconColor={colorScheme.brandPrimary}
+              iconSize={20}
+              style={{ flex: 1 }}
+            />
 
-            <TouchableOpacity style={styles.secondaryButton} onPress={() => router.push('/archive')}>
-              <Ionicons name="calendar-outline" size={20} color={colorScheme.brandPrimary} />
-              <Text style={styles.secondaryButtonText}>Archive</Text>
-            </TouchableOpacity>
+            <Button
+              text="Archive"
+              onPress={() => router.push('/archive')}
+              variant="outlined"
+              backgroundColor={colorScheme.brandPrimary}
+              textColor={colorScheme.brandPrimary}
+              icon="calendar"
+              iconColor={colorScheme.brandPrimary}
+              iconSize={20}
+              style={{ flex: 1 }}
+            />
           </View>
 
           <Animated.View style={[styles.footerLinks, { opacity: footerOpacity }]}>
