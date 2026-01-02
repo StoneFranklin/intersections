@@ -16,7 +16,7 @@ interface ArchiveCalendarProps {
   canGoNext: boolean;
 }
 
-const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December'
@@ -117,8 +117,6 @@ export function ArchiveCalendar({
   const { colorScheme } = useThemeScheme();
   const { width } = useWindowDimensions();
 
-  const cellSize = Math.min((width - 48) / 7, 48);
-
   const days = useMemo(() => {
     const calendarDays = getCalendarDays(year, month);
     return calendarDays.map(day => {
@@ -132,7 +130,7 @@ export function ArchiveCalendar({
     });
   }, [year, month, completedPuzzles]);
 
-  const styles = useMemo(() => createStyles(colorScheme, cellSize), [colorScheme, cellSize]);
+  const styles = useMemo(() => createStyles(colorScheme), [colorScheme]);
 
   const handleDayPress = (day: CalendarDay) => {
     if (day.isFuture || !day.isCurrentMonth) return;
@@ -229,8 +227,8 @@ export function ArchiveCalendar({
       </View>
 
       <View style={styles.weekdayRow}>
-        {WEEKDAYS.map(day => (
-          <View key={day} style={styles.weekdayCell}>
+        {WEEKDAYS.map((day, index) => (
+          <View key={index} style={styles.weekdayCell}>
             <Text style={styles.weekdayText}>{day}</Text>
           </View>
         ))}
@@ -238,44 +236,44 @@ export function ArchiveCalendar({
 
       <View style={styles.daysGrid}>
         {days.map((day, index) => {
-          const puzzleData = completedPuzzles.get(day.date);
-          const isFullySolved = puzzleData?.correctPlacements === 16;
-          
           return (
-            <TouchableOpacity
-              key={`${day.date}-${index}`}
-              style={[styles.dayCell, getDayStyle(day)]}
-              onPress={() => handleDayPress(day)}
-              disabled={day.isFuture || !day.isCurrentMonth || (!availableDates.has(day.date) && !day.isToday)}
-            >
-              <Text style={getDayTextStyle(day)}>{day.dayOfMonth}</Text>
-              {puzzleData && day.isCurrentMonth && (
-                <View style={styles.scoreContainer}>
-                  {isFullySolved ? (
-                    <View style={styles.completedIndicator}>
-                      <Ionicons name="checkmark-circle" size={14} color={colorScheme.success} />
-                    </View>
-                  ) : (
-                    <Text style={styles.scoreText}>{puzzleData.correctPlacements}/16</Text>
-                  )}
-                </View>
-              )}
-            </TouchableOpacity>
+            <View key={`${day.date}-${index}`} style={styles.dayCellWrapper}>
+              <TouchableOpacity
+                style={[styles.dayCell, getDayStyle(day)]}
+                onPress={() => handleDayPress(day)}
+                disabled={day.isFuture || !day.isCurrentMonth || (!availableDates.has(day.date) && !day.isToday)}
+              >
+                <Text style={getDayTextStyle(day)}>{day.dayOfMonth}</Text>
+              </TouchableOpacity>
+            </View>
           );
         })}
       </View>
 
       <View style={styles.legend}>
         <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: colorScheme.brandPrimary }]} />
+          <View style={[styles.legendDot, {
+            backgroundColor: colorScheme.backgroundSecondary,
+            borderColor: colorScheme.brandPrimary,
+            borderWidth: 2,
+          }]} />
           <Text style={styles.legendText}>Available</Text>
         </View>
         <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: colorScheme.success }]} />
+          <View style={[styles.legendDot, {
+            backgroundColor: colorScheme.successBg,
+            borderColor: colorScheme.success,
+            borderWidth: 2,
+          }]} />
           <Text style={styles.legendText}>Solved</Text>
         </View>
         <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: colorScheme.warning, opacity: 0.3 }]} />
+          <View style={[styles.legendDot, {
+            backgroundColor: colorScheme.warningBg,
+            borderColor: colorScheme.warning,
+            borderWidth: 2,
+            opacity: 0.8,
+          }]} />
           <Text style={styles.legendText}>Attempted</Text>
         </View>
       </View>
@@ -283,9 +281,9 @@ export function ArchiveCalendar({
   );
 }
 
-const createStyles = (colorScheme: any, cellSize: number) => StyleSheet.create({
+const createStyles = (colorScheme: any) => StyleSheet.create({
   container: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 8,
   },
   header: {
     flexDirection: 'row',
@@ -295,18 +293,20 @@ const createStyles = (colorScheme: any, cellSize: number) => StyleSheet.create({
   },
   navButton: {
     padding: 8,
+    borderRadius: 8,
+    backgroundColor: colorScheme.backgroundSecondary,
   },
   navButtonDisabled: {
-    opacity: 0.5,
+    opacity: 0.3,
   },
   monthYear: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 20,
+    fontWeight: '700',
     color: colorScheme.textPrimary,
   },
   weekdayRow: {
     flexDirection: 'row',
-    marginBottom: 8,
+    marginBottom: 4,
   },
   weekdayCell: {
     flex: 1,
@@ -317,103 +317,96 @@ const createStyles = (colorScheme: any, cellSize: number) => StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: colorScheme.textMuted,
-    textTransform: 'uppercase',
   },
   daysGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
   },
-  dayCell: {
-    width: `${100 / 7}%`,
+  dayCellWrapper: {
+    width: '14.285714%', // 100% / 7
     aspectRatio: 1,
+    padding: 2,
+  },
+  dayCell: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 8,
-    marginBottom: 4,
   },
   dayOtherMonth: {
-    opacity: 0.3,
+    opacity: 0.2,
   },
   dayToday: {
     backgroundColor: colorScheme.brandPrimary,
   },
   dayFuture: {
-    opacity: 0.3,
+    opacity: 0.2,
   },
   dayCompleted: {
     backgroundColor: colorScheme.successBg,
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: colorScheme.success,
   },
   dayAttempted: {
-    backgroundColor: colorScheme.backgroundSecondary,
-    borderWidth: 1,
+    backgroundColor: colorScheme.warningBg,
+    borderWidth: 2,
     borderColor: colorScheme.warning,
-    opacity: 0.7,
+    opacity: 0.8,
   },
   dayAvailable: {
     backgroundColor: colorScheme.backgroundSecondary,
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: colorScheme.brandPrimary,
   },
   dayUnavailable: {
     backgroundColor: colorScheme.backgroundSecondary,
-    opacity: 0.5,
+    opacity: 0.3,
   },
   dayTextOtherMonth: {
-    fontSize: 14,
+    fontSize: 15,
+    fontWeight: '500',
     color: colorScheme.textMuted,
   },
   dayTextToday: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colorScheme.textPrimary,
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#000',
   },
   dayTextFuture: {
-    fontSize: 14,
+    fontSize: 15,
+    fontWeight: '500',
     color: colorScheme.textDisabled,
   },
   dayTextCompleted: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 16,
+    fontWeight: '700',
     color: colorScheme.success,
   },
   dayTextAttempted: {
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: 15,
+    fontWeight: '600',
     color: colorScheme.warning,
   },
   dayTextAvailable: {
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: 15,
+    fontWeight: '600',
     color: colorScheme.textPrimary,
   },
   dayTextUnavailable: {
-    fontSize: 14,
+    fontSize: 15,
+    fontWeight: '500',
     color: colorScheme.textMuted,
-  },
-  scoreContainer: {
-    position: 'absolute',
-    bottom: 2,
-    right: 2,
-  },
-  scoreText: {
-    fontSize: 8,
-    fontWeight: '700',
-    color: colorScheme.warning,
-  },
-  completedIndicator: {
-    position: 'absolute',
-    bottom: 2,
-    right: 2,
   },
   legend: {
     flexDirection: 'row',
     justifyContent: 'center',
     flexWrap: 'wrap',
     gap: 16,
-    marginTop: 16,
+    marginTop: 20,
+    paddingTop: 16,
     paddingBottom: 8,
+    borderTopWidth: 1,
+    borderTopColor: colorScheme.backgroundSecondary,
   },
   legendItem: {
     flexDirection: 'row',
@@ -427,6 +420,7 @@ const createStyles = (colorScheme: any, cellSize: number) => StyleSheet.create({
   },
   legendText: {
     fontSize: 12,
+    fontWeight: '600',
     color: colorScheme.textSecondary,
   },
 });

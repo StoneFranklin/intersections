@@ -94,7 +94,7 @@ export const colorSchemes = {
     textMuted: '#6a88a8',              // Softer blue
     textDisabled: '#4a6888',           // Dim blue
 
-    brandPrimary: '#008af4ff',           // Bright readable blue
+    brandPrimary: '#0099ffff',             // Bright blue used throughout UI
     brandSecondary: '#3a5a8a',         // Logo blue
     brandLight: '#9abadc',             // Light version for highlights
 
