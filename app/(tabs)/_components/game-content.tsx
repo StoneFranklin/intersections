@@ -9,6 +9,7 @@ import { useXP } from '@/contexts/xp-context';
 import { useAuth } from '@/contexts/auth-context';
 import { SignInForXPPrompt } from '@/components/xp/sign-in-for-xp-prompt';
 import { XPProgressBar } from '@/components/xp/xp-progress-bar';
+import { LeaderboardCompact } from '@/components/leaderboard/leaderboard-compact';
 import { LeaderboardEntry, submitScore } from '@/data/puzzleApi';
 import { useGameState } from '@/hooks/use-game-state';
 import { useRewardedAd } from '@/hooks/use-rewarded-ad';
@@ -22,7 +23,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Platform, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { Platform, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useThemeScheme } from '@/contexts/theme-context';
@@ -106,9 +107,6 @@ export function GameContent({
     }
     return false;
   };
-
-  const getDisplayName = (entry: LeaderboardEntry) =>
-    (isCurrentUserEntry(entry) && displayName) ? displayName : (entry.displayName || 'Anonymous');
 
   useEffect(() => {
     if (isGameOver && !hasShownAdOffer && !isReviewMode) {
@@ -510,79 +508,17 @@ export function GameContent({
                 </View>
               </View>
 
-              {loadingLeaderboard && !leaderboardLoaded ? (
-                <ActivityIndicator size="small" color={colorScheme.brandPrimary} style={{ marginVertical: 16 }} />
-              ) : leaderboard.length === 0 ? (
-                <Text style={styles.leaderboardEmptyText}>No scores yet</Text>
-              ) : (
-                <View style={styles.leaderboardCompact}>
-                  {leaderboard.slice(0, 3).map((entry, index) => (
-                    <View
-                      key={index}
-                      style={[
-                        styles.leaderboardCompactRow,
-                        isCurrentUserEntry(entry) && styles.leaderboardCompactRowCurrentUser,
-                      ]}
-                    >
-                      <View style={styles.leaderboardCompactRank}>
-                        {entry.rank === 1 ? (
-                          <MaterialCommunityIcons name="medal" size={20} color={colorScheme.gold} />
-                        ) : entry.rank === 2 ? (
-                          <MaterialCommunityIcons name="medal" size={20} color={colorScheme.textSecondary} />
-                        ) : (
-                          <MaterialCommunityIcons name="medal" size={20} color={colorScheme.warning} />
-                        )}
-                      </View>
-                      <Text
-                        style={[
-                          styles.leaderboardCompactName,
-                          isCurrentUserEntry(entry) && styles.leaderboardCompactNameCurrentUser,
-                        ]}
-                        numberOfLines={1}
-                      >
-                        {getDisplayName(entry)}
-                        {isCurrentUserEntry(entry) && ' (you)'}
-                      </Text>
-                      <Text style={styles.leaderboardCompactCorrect}>{entry.correctPlacements}/16</Text>
-                      <Text
-                        style={[
-                          styles.leaderboardCompactScore,
-                          isCurrentUserEntry(entry) && styles.leaderboardCompactScoreCurrentUser,
-                        ]}
-                      >
-                        {entry.score}
-                      </Text>
-                    </View>
-                  ))}
-
-                  {displayRank && displayRank > 3 && displayScore && (
-                    <>
-                      <View style={styles.leaderboardDivider}>
-                        <Text style={styles.leaderboardDividerText}>...</Text>
-                      </View>
-                      <View style={[styles.leaderboardCompactRow, styles.leaderboardCompactRowCurrentUser]}>
-                        <View style={styles.leaderboardCompactRank}>
-                          <Text
-                            style={styles.leaderboardCompactRankText}
-                            numberOfLines={1}
-                            adjustsFontSizeToFit
-                            minimumFontScale={0.8}
-                          >
-                            #{displayRank}
-                          </Text>
-                        </View>
-                        <Text style={[styles.leaderboardCompactName, styles.leaderboardCompactNameCurrentUser]} numberOfLines={1}>
-                          {displayName || 'Anonymous'} (you)
-                        </Text>
-                        <Text style={styles.leaderboardCompactCorrect}>{displayScore.correctPlacements}/16</Text>
-                        <Text style={[styles.leaderboardCompactScore, styles.leaderboardCompactScoreCurrentUser]}>
-                          {displayScore.score}
-                        </Text>
-                      </View>
-                    </>
-                  )}
-                </View>
-              )}
+              <LeaderboardCompact
+                leaderboard={leaderboard}
+                loading={loadingLeaderboard}
+                loaded={leaderboardLoaded}
+                isCurrentUserEntry={isCurrentUserEntry}
+                displayName={displayName}
+                level={level}
+                userRank={displayRank}
+                savedScore={displayScore}
+                showUserRow={true}
+              />
 
               <View style={styles.tapForDetailsHint}>
                 <Text style={styles.tapForDetailsText}>Tap for full leaderboard</Text>

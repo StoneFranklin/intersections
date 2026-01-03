@@ -81,7 +81,9 @@
       "Bash($HOME/Library/Android/sdk/platform-tools/adb --version)",
       "Bash(npm run type-check:*)",
       "Bash(npm run:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(du:*)",
+      "Bash(git -C /Users/stonefranklin/code/web/intersections log --oneline -5)"
     ]
   }
 }

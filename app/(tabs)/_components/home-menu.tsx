@@ -2,6 +2,7 @@ import { GradientButton } from '@/components/ui/gradient-button';
 import { Button } from '@/components/ui/button';
 import { SignInBenefitsCard } from '@/components/game';
 import { LeaderboardTabToggle, LeaderboardTab } from '@/components/leaderboard/leaderboard-tab-toggle';
+import { LeaderboardCompact } from '@/components/leaderboard/leaderboard-compact';
 import { LeaderboardEntry } from '@/data/puzzleApi';
 import { GameScore } from '@/types/game';
 import { logger } from '@/utils/logger';
@@ -10,7 +11,6 @@ import { User } from '@supabase/supabase-js';
 import { Link, useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
   Animated,
   Image,
   KeyboardAvoidingView,
@@ -514,214 +514,32 @@ export function HomeMenu({
                     </View>
 
                     {homeLeaderboardTab === 'global' ? (
-                      <>
-                        {(loadingLeaderboard && !leaderboardLoaded) ||
-                        (user && leaderboardLoaded && leaderboard.length > 0 && userRank === null) ? (
-                          <View style={styles.leaderboardLoadingContainer}>
-                            <ActivityIndicator size="small" color="#6a9fff" />
-                            <Text style={styles.leaderboardLoadingText}>Loading rankings...</Text>
-                          </View>
-                        ) : leaderboard.length === 0 ? (
-                          <Text style={styles.leaderboardEmptyText}>No scores yet</Text>
-                        ) : (
-                          <View style={styles.leaderboardCompact}>
-                            {isRefreshing && (
-                              <View style={styles.refreshingOverlay}>
-                                <ActivityIndicator size="small" color="#6a9fff" />
-                              </View>
-                            )}
-                            {leaderboard.slice(0, 3).map((entry, index) => (
-                              <View
-                                key={index}
-                                style={[
-                                  styles.leaderboardCompactRow,
-                                  isCurrentUserEntry(entry) && styles.leaderboardCompactRowCurrentUser,
-                                ]}
-                              >
-                                <View style={styles.leaderboardCompactRank}>
-                                  {entry.rank === 1 ? (
-                                    <MaterialCommunityIcons name="medal" size={20} color="#ffd700" />
-                                  ) : entry.rank === 2 ? (
-                                    <MaterialCommunityIcons name="medal" size={20} color="#c0c0c0" />
-                                  ) : (
-                                    <MaterialCommunityIcons name="medal" size={20} color="#cd7f32" />
-                                  )}
-                                </View>
-                                <View style={styles.leaderboardCompactAvatar}>
-                                  {entry.avatarUrl ? (
-                                    <Image
-                                      source={{ uri: entry.avatarUrl }}
-                                      style={styles.leaderboardCompactAvatarImage}
-                                    />
-                                  ) : (
-                                    <Text style={styles.leaderboardCompactAvatarText}>
-                                      {(entry.displayName || 'A').charAt(0).toUpperCase()}
-                                    </Text>
-                                  )}
-                                </View>
-                                {entry.level && (
-                                  <View style={styles.leaderboardCompactLevelBadge}>
-                                    <Text style={styles.leaderboardCompactLevelText}>Lv {entry.level}</Text>
-                                  </View>
-                                )}
-                                <View style={styles.leaderboardCompactNameContainer}>
-                                  <Text
-                                    style={[
-                                      styles.leaderboardCompactName,
-                                      isCurrentUserEntry(entry) && styles.leaderboardCompactNameCurrentUser,
-                                    ]}
-                                    numberOfLines={1}
-                                  >
-                                    {(isCurrentUserEntry(entry) && displayName) ? displayName : (entry.displayName || 'Anonymous')}
-                                    {isCurrentUserEntry(entry) && ' (you)'}
-                                  </Text>
-                                </View>
-                                <Text style={styles.leaderboardCompactCorrect}>{entry.correctPlacements}/16</Text>
-                                <Text
-                                  style={[
-                                    styles.leaderboardCompactScore,
-                                    isCurrentUserEntry(entry) && styles.leaderboardCompactScoreCurrentUser,
-                                  ]}
-                                >
-                                  {entry.score}
-                                </Text>
-                              </View>
-                            ))}
-
-                            {userRank && userRank > 3 && savedScore && (
-                              <>
-                                <View style={styles.leaderboardDivider}>
-                                  <Text style={styles.leaderboardDividerText}>...</Text>
-                                </View>
-                                <View style={[styles.leaderboardCompactRow, styles.leaderboardCompactRowCurrentUser]}>
-                                  <View style={styles.leaderboardCompactRank}>
-                                    <Text
-                                      style={styles.leaderboardCompactRankText}
-                                      numberOfLines={1}
-                                      adjustsFontSizeToFit
-                                      minimumFontScale={0.8}
-                                    >
-                                      #{userRank}
-                                    </Text>
-                                  </View>
-                                  <View style={styles.leaderboardCompactAvatar}>
-                                    {avatarUrl ? (
-                                      <Image
-                                        source={{ uri: avatarUrl }}
-                                        style={styles.leaderboardCompactAvatarImage}
-                                      />
-                                    ) : (
-                                      <Text style={styles.leaderboardCompactAvatarText}>
-                                        {(displayName || 'A').charAt(0).toUpperCase()}
-                                      </Text>
-                                    )}
-                                  </View>
-                                  {level && (
-                                    <View style={styles.leaderboardCompactLevelBadge}>
-                                      <Text style={styles.leaderboardCompactLevelText}>Lv {level}</Text>
-                                    </View>
-                                  )}
-                                  <Text
-                                    style={[styles.leaderboardCompactName, styles.leaderboardCompactNameCurrentUser]}
-                                    numberOfLines={1}
-                                  >
-                                    {displayName || 'Anonymous'} (you)
-                                  </Text>
-                                  <Text style={styles.leaderboardCompactCorrect}>{savedScore.correctPlacements}/16</Text>
-                                  <Text style={[styles.leaderboardCompactScore, styles.leaderboardCompactScoreCurrentUser]}>
-                                    {savedScore.score}
-                                  </Text>
-                                </View>
-                              </>
-                            )}
-                          </View>
-                        )}
-                      </>
+                      <LeaderboardCompact
+                        leaderboard={leaderboard}
+                        loading={loadingLeaderboard || (user && leaderboardLoaded && leaderboard.length > 0 && userRank === null)}
+                        loaded={leaderboardLoaded}
+                        isRefreshing={isRefreshing}
+                        isCurrentUserEntry={isCurrentUserEntry}
+                        displayName={displayName}
+                        avatarUrl={avatarUrl}
+                        level={level}
+                        userRank={userRank}
+                        savedScore={savedScore}
+                        showUserRow={true}
+                      />
                     ) : (
-                      <>
-                        {loadingFriendsLeaderboard && !friendsLeaderboardLoaded ? (
-                          <View style={styles.leaderboardLoadingContainer}>
-                            <ActivityIndicator size="small" color="#6a9fff" />
-                            <Text style={styles.leaderboardLoadingText}>Loading friends...</Text>
-                          </View>
-                        ) : friendsLeaderboard.length === 0 ? (
-                          <Text style={styles.leaderboardEmptyText}>No friends have played yet</Text>
-                        ) : (
-                          <View style={styles.leaderboardCompact}>
-                            {isRefreshing && (
-                              <View style={styles.refreshingOverlay}>
-                                <ActivityIndicator size="small" color="#6a9fff" />
-                              </View>
-                            )}
-                            {friendsLeaderboard.slice(0, 3).map((entry, index) => (
-                              <View
-                                key={index}
-                                style={[
-                                  styles.leaderboardCompactRow,
-                                  isCurrentUserEntry(entry) && styles.leaderboardCompactRowCurrentUser,
-                                ]}
-                              >
-                                <View style={styles.leaderboardCompactRank}>
-                                  {entry.rank === 1 ? (
-                                    <MaterialCommunityIcons name="medal" size={20} color="#ffd700" />
-                                  ) : entry.rank === 2 ? (
-                                    <MaterialCommunityIcons name="medal" size={20} color="#c0c0c0" />
-                                  ) : entry.rank === 3 ? (
-                                    <MaterialCommunityIcons name="medal" size={20} color="#cd7f32" />
-                                  ) : (
-                                    <Text
-                                      style={styles.leaderboardCompactRankText}
-                                      numberOfLines={1}
-                                      adjustsFontSizeToFit
-                                      minimumFontScale={0.8}
-                                    >
-                                      #{entry.rank}
-                                    </Text>
-                                  )}
-                                </View>
-                                <View style={styles.leaderboardCompactAvatar}>
-                                  {entry.avatarUrl ? (
-                                    <Image
-                                      source={{ uri: entry.avatarUrl }}
-                                      style={styles.leaderboardCompactAvatarImage}
-                                    />
-                                  ) : (
-                                    <Text style={styles.leaderboardCompactAvatarText}>
-                                      {(entry.displayName || 'A').charAt(0).toUpperCase()}
-                                    </Text>
-                                  )}
-                                </View>
-                                {entry.level && (
-                                  <View style={styles.leaderboardCompactLevelBadge}>
-                                    <Text style={styles.leaderboardCompactLevelText}>Lv {entry.level || 1}</Text>
-                                  </View>
-                                )}
-                                <View style={styles.leaderboardCompactNameContainer}>
-                                  <Text
-                                    style={[
-                                      styles.leaderboardCompactName,
-                                      isCurrentUserEntry(entry) && styles.leaderboardCompactNameCurrentUser,
-                                    ]}
-                                    numberOfLines={1}
-                                  >
-                                    {(isCurrentUserEntry(entry) && displayName) ? displayName : (entry.displayName || 'Anonymous')}
-                                    {isCurrentUserEntry(entry) && ' (you)'}
-                                  </Text>
-                                </View>
-                                <Text style={styles.leaderboardCompactCorrect}>{entry.correctPlacements}/16</Text>
-                                <Text
-                                  style={[
-                                    styles.leaderboardCompactScore,
-                                    isCurrentUserEntry(entry) && styles.leaderboardCompactScoreCurrentUser,
-                                  ]}
-                                >
-                                  {entry.score}
-                                </Text>
-                              </View>
-                            ))}
-                          </View>
-                        )}
-                      </>
+                      <LeaderboardCompact
+                        leaderboard={friendsLeaderboard}
+                        loading={loadingFriendsLeaderboard}
+                        loaded={friendsLeaderboardLoaded}
+                        isRefreshing={isRefreshing}
+                        emptyText="No friends have played yet"
+                        isCurrentUserEntry={isCurrentUserEntry}
+                        displayName={displayName}
+                        avatarUrl={avatarUrl}
+                        level={level}
+                        showUserRow={false}
+                      />
                     )}
 
                     <View style={styles.tapForDetailsHint}>
