@@ -1664,6 +1664,7 @@ export async function upsertPracticeScore(
       }
     } else {
       // No record exists - insert new one
+      const now = new Date().toISOString();
       const { error: insertError } = await supabase
         .from('practice_scores')
         .insert({
@@ -1674,6 +1675,8 @@ export async function upsertPracticeScore(
           best_mistakes: mistakes,
           best_correct_placements: correctPlacements,
           attempts: 1,
+          first_completed_at: now,
+          last_played_at: now,
         });
 
       if (insertError) {
