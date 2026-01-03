@@ -134,9 +134,9 @@ export function GameContent({
         setAdOfferDeclined(false);
         setHasShownAdOffer(false); // Allow another ad offer if they lose again
       } else {
-        // double-xp fallback - award base XP
+        // double-xp fallback - award double XP (reward them anyway!)
         setShowDoubleXPModal(false);
-        awardPuzzleXP(finalScore?.score ?? 0, true, false).then((xpResult) => {
+        awardPuzzleXP(finalScore?.score ?? 0, true, true).then((xpResult) => {
           if (xpResult) {
             setXpGained(xpResult.xpGained);
             setLeveledUp(xpResult.leveledUp);
@@ -200,15 +200,8 @@ export function GameContent({
       setXpAwarded(true);
       haptics.notification(Haptics.NotificationFeedbackType.Success);
     } else {
-      // Ad failed to load/show or user didn't complete it - award base XP
-      const xpResult = await awardPuzzleXP(finalScore?.score ?? 0, true, false);
-      if (xpResult) {
-        setXpGained(xpResult.xpGained);
-        setLeveledUp(xpResult.leveledUp);
-        setPreviousLevel(xpResult.previousLevel);
-      }
-      setXpAwarded(true);
-      haptics.notification(Haptics.NotificationFeedbackType.Success);
+      // Ad failed to load/show or user didn't complete it - go to graceful fallback with double XP
+      setGracefulFallback({ type: 'double-xp', countdown: 3 });
     }
   };
 
