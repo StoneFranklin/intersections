@@ -74,8 +74,7 @@ export function PracticeGameContent({
   const [showRewardedAdModal, setShowRewardedAdModal] = useState(false);
   const [hasShownAdOffer, setHasShownAdOffer] = useState(false);
   const [adOfferDeclined, setAdOfferDeclined] = useState(false);
-  const [isGracefulFallback, setIsGracefulFallback] = useState(false);
-  const [fallbackCountdown, setFallbackCountdown] = useState(3);
+  const [gracefulFallback, setGracefulFallback] = useState<{ type: 'extra-life' | 'double-xp'; countdown: number } | null>(null);
   const [hasCompleted, setHasCompleted] = useState(false);
 
   // XP state
@@ -89,7 +88,7 @@ export function PracticeGameContent({
   const rewardedAd = useRewardedAd();
 
   const isGameOver = gameState.lives <= 0;
-  const shouldShowGameOver = isGameOver && (adOfferDeclined || !showRewardedAdModal) && hasShownAdOffer && !isGracefulFallback;
+  const shouldShowGameOver = isGameOver && (adOfferDeclined || !showRewardedAdModal) && hasShownAdOffer && !gracefulFallback;
   const isGameActive = !gameState.isSolved && !isGameOver && !gameEnded;
 
   // Show ad offer when game is over
@@ -100,26 +99,40 @@ export function PracticeGameContent({
     }
   }, [isGameOver, hasShownAdOffer]);
 
-  // Countdown for graceful fallback
+  // Countdown timer for graceful fallback
   useEffect(() => {
-    if (!isGracefulFallback) return;
+    if (!gracefulFallback) return;
 
-    if (fallbackCountdown <= 0) {
-      setShowRewardedAdModal(false);
-      setIsGracefulFallback(false);
-      grantExtraLife();
-      setAdOfferDeclined(false);
-      setHasShownAdOffer(false);
+    if (gracefulFallback.countdown <= 0) {
+      // Grant the reward and close modal
+      if (gracefulFallback.type === 'extra-life') {
+        setShowRewardedAdModal(false);
+        grantExtraLife();
+        setAdOfferDeclined(false);
+        setHasShownAdOffer(false);
+      } else {
+        // double-xp fallback - award base XP
+        setShowDoubleXPModal(false);
+        awardPuzzleXP(finalScore?.score ?? 0, false, false).then((xpResult) => {
+          if (xpResult) {
+            setXpGained(xpResult.xpGained);
+            setLeveledUp(xpResult.leveledUp);
+            setPreviousLevel(xpResult.previousLevel);
+          }
+          setXpAwarded(true);
+        });
+      }
+      setGracefulFallback(null);
       haptics.notification(Haptics.NotificationFeedbackType.Success);
       return;
     }
 
     const timer = setTimeout(() => {
-      setFallbackCountdown(prev => prev - 1);
+      setGracefulFallback(prev => prev ? { ...prev, countdown: prev.countdown - 1 } : null);
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [isGracefulFallback, fallbackCountdown, grantExtraLife]);
+  }, [gracefulFallback, grantExtraLife, awardPuzzleXP, finalScore]);
 
   // Handle game completion
   useEffect(() => {
@@ -140,8 +153,9 @@ export function PracticeGameContent({
       setHasShownAdOffer(false);
       haptics.notification(Haptics.NotificationFeedbackType.Success);
     } else {
-      setIsGracefulFallback(true);
-      setFallbackCountdown(3);
+      // Either ad failed to load/show, or user didn't complete it
+      // Go to graceful fallback - don't punish them
+      setGracefulFallback({ type: 'extra-life', countdown: 3 });
     }
   };
 
@@ -169,14 +183,8 @@ export function PracticeGameContent({
       setXpAwarded(true);
       haptics.notification(Haptics.NotificationFeedbackType.Success);
     } else {
-      // Ad failed or was dismissed - still award base XP
-      const xpResult = await awardPuzzleXP(finalScore?.score ?? 0, false, false);
-      if (xpResult) {
-        setXpGained(xpResult.xpGained);
-        setLeveledUp(xpResult.leveledUp);
-        setPreviousLevel(xpResult.previousLevel);
-      }
-      setXpAwarded(true);
+      // Ad failed to load/show - go to graceful fallback
+      setGracefulFallback({ type: 'double-xp', countdown: 3 });
     }
   };
 
@@ -245,9 +253,17 @@ export function PracticeGameContent({
     }
   };
 
-  // Show graceful fallback screen
-  if (isGracefulFallback) {
-    return <AdFallbackScreen countdown={fallbackCountdown} />;
+  // Full-screen fallback when ad couldn't load but user wanted to watch
+  // IMPORTANT: Check this BEFORE other conditions to ensure it always displays
+  if (gracefulFallback) {
+    return (
+      <AdFallbackScreen
+        countdown={gracefulFallback.countdown}
+        title={gracefulFallback.type === 'extra-life' ? 'Getting Your Extra Life' : 'Getting Your Double XP'}
+        iconName={gracefulFallback.type === 'extra-life' ? 'heart-plus' : 'star-circle'}
+        description="Thanks for your patience!"
+      />
+    );
   }
 
   // Show results screen when game ends
@@ -255,8 +271,7 @@ export function PracticeGameContent({
     const isWin = gameState.isSolved;
 
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isWin ? colorScheme.successBg : colorScheme.errorBg }]}>
-        <BackButton onPress={onBack} style={styles.backButtonTop} />
+      <SafeAreaView style={[styles.container, { backgroundColor: isWin ? colorScheme.successBg : colorScheme.errorBg }]} edges={['top', 'left', 'right', 'bottom']}>
         <ScrollView contentContainerStyle={styles.resultsScrollContent}>
           <View style={styles.resultsHeader}>
             {isWin ? (
@@ -315,8 +330,8 @@ export function PracticeGameContent({
           {/* Sign-in benefits card for anonymous users */}
           {!user && <SignInBenefitsCard onSignInPress={() => router.push('/(tabs)')} />}
 
-          {!isWin && (
-            <View style={styles.actionButtons}>
+          <View style={styles.actionButtons}>
+            {!isWin && (
               <Button
                 text="Try Again"
                 onPress={onRetry}
@@ -325,8 +340,16 @@ export function PracticeGameContent({
                 textColor={colorScheme.backgroundPrimary}
                 iconColor={colorScheme.backgroundPrimary}
               />
-            </View>
-          )}
+            )}
+            <Button
+              text="Back to Archive"
+              onPress={onBack}
+              icon="chevron-left"
+              backgroundColor={colorScheme.backgroundSecondary}
+              textColor={colorScheme.textPrimary}
+              iconColor={colorScheme.textPrimary}
+            />
+          </View>
         </ScrollView>
 
         <DoubleXPModal
@@ -537,12 +560,6 @@ const createStyles = (colorScheme: any) =>
       gap: 12,
       width: '100%',
       maxWidth: 400,
-    },
-    backButtonTop: {
-      position: 'absolute',
-      top: 12,
-      left: 12,
-      zIndex: 10,
     },
   });
 

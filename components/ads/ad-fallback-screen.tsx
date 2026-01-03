@@ -13,13 +13,25 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 interface AdFallbackScreenProps {
   /** Countdown seconds remaining before granting reward */
   countdown: number;
+  /** Title text for the fallback screen */
+  title?: string;
+  /** Icon name from MaterialCommunityIcons */
+  iconName?: string;
+  /** Description text for the fallback screen */
+  description?: string;
 }
 
 /**
  * Full-screen fallback shown when ad fails to load but user wanted to watch.
- * Shows a countdown before automatically granting the extra life.
+ * Shows a countdown before automatically granting the reward.
+ * Reusable for different reward types (extra life, double XP, etc).
  */
-export function AdFallbackScreen({ countdown }: AdFallbackScreenProps) {
+export function AdFallbackScreen({
+  countdown,
+  title = 'Getting Your Extra Life',
+  iconName = 'heart-plus',
+  description = 'Thanks for your patience!'
+}: AdFallbackScreenProps) {
   const { colorScheme } = useThemeScheme();
   const styles = useMemo(() => createStyles(colorScheme), [colorScheme]);
 
@@ -27,21 +39,16 @@ export function AdFallbackScreen({ countdown }: AdFallbackScreenProps) {
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
         <View style={styles.iconContainer}>
-          <MaterialCommunityIcons name="heart-plus" size={80} color={colorScheme.success} />
+          <MaterialCommunityIcons name={iconName as any} size={80} color={colorScheme.success} />
         </View>
 
-        <Text style={styles.title}>Getting Your Extra Life</Text>
+        <Text style={styles.title}>{title}</Text>
 
         <View style={styles.countdownContainer}>
-          <ActivityIndicator size="large" color={colorScheme.success} />
           <Text style={styles.countdownText}>
             {countdown > 0 ? `${countdown}...` : 'Done!'}
           </Text>
         </View>
-
-        <Text style={styles.description}>
-          Thanks for your patience!
-        </Text>
       </View>
     </SafeAreaView>
   );

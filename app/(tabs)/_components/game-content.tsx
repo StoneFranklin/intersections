@@ -4,6 +4,7 @@ import { RewardedAdModal } from '@/components/ads/rewarded-ad-modal';
 import { GameGrid, LeaveGameModal, WordTray } from '@/components/game';
 import { SignInBenefitsCard } from '@/components/game/sign-in-benefits-card';
 import { BackButton } from '@/components/ui/back-button';
+import { Button } from '@/components/ui/button';
 import { useXP } from '@/contexts/xp-context';
 import { useAuth } from '@/contexts/auth-context';
 import { SignInForXPPrompt } from '@/components/xp/sign-in-for-xp-prompt';
@@ -11,6 +12,7 @@ import { XPProgressBar } from '@/components/xp/xp-progress-bar';
 import { LeaderboardEntry, submitScore } from '@/data/puzzleApi';
 import { useGameState } from '@/hooks/use-game-state';
 import { useRewardedAd } from '@/hooks/use-rewarded-ad';
+import { useDoubleXPAd } from '@/hooks/use-double-xp-ad';
 import { CellPosition, GameScore, Puzzle } from '@/types/game';
 import { haptics } from '@/utils/haptics';
 import { logger } from '@/utils/logger';
@@ -81,8 +83,7 @@ export function GameContent({
   const [hasShownAdOffer, setHasShownAdOffer] = useState(false);
   const [adOfferDeclined, setAdOfferDeclined] = useState(false);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
-  const [isGracefulFallback, setIsGracefulFallback] = useState(false);
-  const [fallbackCountdown, setFallbackCountdown] = useState(3);
+  const [gracefulFallback, setGracefulFallback] = useState<{ type: 'extra-life' | 'double-xp'; countdown: number } | null>(null);
 
   // XP state
   const { awardPuzzleXP, level, totalXP, progress } = useXP();
@@ -91,11 +92,11 @@ export function GameContent({
   const [leveledUp, setLeveledUp] = useState(false);
   const [previousLevel, setPreviousLevel] = useState<number | null>(null);
   const [xpAwarded, setXpAwarded] = useState(false);
-  const doubleXPAd = useRewardedAd();
+  const doubleXPAd = useDoubleXPAd();
   const rewardedAd = useRewardedAd();
 
   const isGameOver = gameState.lives <= 0;
-  const shouldShowGameOver = isGameOver && (adOfferDeclined || !showRewardedAdModal) && hasShownAdOffer && !isGracefulFallback;
+  const shouldShowGameOver = isGameOver && (adOfferDeclined || !showRewardedAdModal) && hasShownAdOffer && !gracefulFallback;
   const isGameActive = !isReviewMode && !gameState.isSolved && !isGameOver && !gameEnded;
 
   const isCurrentUserEntry = (entry: LeaderboardEntry): boolean => {
@@ -119,32 +120,44 @@ export function GameContent({
   useEffect(() => {
     setHasShownAdOffer(false);
     setAdOfferDeclined(false);
-    setIsGracefulFallback(false);
-    setFallbackCountdown(3);
+    setGracefulFallback(null);
   }, [puzzle]);
 
 
   // Countdown timer for graceful fallback
   useEffect(() => {
-    if (!isGracefulFallback) return;
+    if (!gracefulFallback) return;
 
-    if (fallbackCountdown <= 0) {
+    if (gracefulFallback.countdown <= 0) {
       // Grant the reward and close modal
-      setShowRewardedAdModal(false);
-      setIsGracefulFallback(false);
-      grantExtraLife();
-      setAdOfferDeclined(false);
-      setHasShownAdOffer(false); // Allow another ad offer if they lose again
+      if (gracefulFallback.type === 'extra-life') {
+        setShowRewardedAdModal(false);
+        grantExtraLife();
+        setAdOfferDeclined(false);
+        setHasShownAdOffer(false); // Allow another ad offer if they lose again
+      } else {
+        // double-xp fallback - award base XP
+        setShowDoubleXPModal(false);
+        awardPuzzleXP(finalScore?.score ?? 0, true, false).then((xpResult) => {
+          if (xpResult) {
+            setXpGained(xpResult.xpGained);
+            setLeveledUp(xpResult.leveledUp);
+            setPreviousLevel(xpResult.previousLevel);
+          }
+          setXpAwarded(true);
+        });
+      }
+      setGracefulFallback(null);
       haptics.notification(Haptics.NotificationFeedbackType.Success);
       return;
     }
 
     const timer = setTimeout(() => {
-      setFallbackCountdown(prev => prev - 1);
+      setGracefulFallback(prev => prev ? { ...prev, countdown: prev.countdown - 1 } : null);
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [isGracefulFallback, fallbackCountdown, grantExtraLife]);
+  }, [gracefulFallback, grantExtraLife, awardPuzzleXP, finalScore]);
 
   const handleWatchAd = async () => {
     // Close the modal - the ad loading state will show in the modal while loading
@@ -161,8 +174,7 @@ export function GameContent({
     } else {
       // Either ad failed to load/show, or user didn't complete it
       // Go to graceful fallback - don't punish them
-      setIsGracefulFallback(true);
-      setFallbackCountdown(3);
+      setGracefulFallback({ type: 'extra-life', countdown: 3 });
     }
   };
 
@@ -190,14 +202,8 @@ export function GameContent({
       setXpAwarded(true);
       haptics.notification(Haptics.NotificationFeedbackType.Success);
     } else {
-      // Ad failed or was dismissed - still award base XP
-      const xpResult = await awardPuzzleXP(finalScore?.score ?? 0, true, false);
-      if (xpResult) {
-        setXpGained(xpResult.xpGained);
-        setLeveledUp(xpResult.leveledUp);
-        setPreviousLevel(xpResult.previousLevel);
-      }
-      setXpAwarded(true);
+      // Ad failed to load/show - go to graceful fallback
+      setGracefulFallback({ type: 'double-xp', countdown: 3 });
     }
   };
 
@@ -349,6 +355,19 @@ export function GameContent({
     }
   };
 
+  // Full-screen fallback when ad couldn't load but user wanted to watch
+  // IMPORTANT: Check this BEFORE other conditions to ensure it always displays
+  if (gracefulFallback) {
+    return (
+      <AdFallbackScreen
+        countdown={gracefulFallback.countdown}
+        title={gracefulFallback.type === 'extra-life' ? 'Getting Your Extra Life' : 'Getting Your Double XP'}
+        iconName={gracefulFallback.type === 'extra-life' ? 'heart-plus' : 'star-circle'}
+        description="Thanks for your patience!"
+      />
+    );
+  }
+
   if (isReviewMode) {
     return (
       <SafeAreaView style={styles.container}>
@@ -423,8 +442,7 @@ export function GameContent({
     const displayRank = userId ? (resultRank || userRank) : null;
 
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isWin ? colorScheme.successBg : colorScheme.errorBg }]}>
-        <BackButton onPress={onBack} style={styles.gameCompleteBackButtonTop} />
+      <SafeAreaView style={[styles.container, { backgroundColor: isWin ? colorScheme.successBg : colorScheme.errorBg }]} edges={['top', 'left', 'right', 'bottom']}>
         <ScrollView contentContainerStyle={styles.gameCompleteScrollContent}>
           <View style={styles.gameCompleteHeader}>
             {isWin ? (
@@ -579,6 +597,16 @@ export function GameContent({
               </TouchableOpacity>
             )}
           </View>
+
+          <Button
+            text="Back to Menu"
+            onPress={onBack}
+            icon="chevron-left"
+            backgroundColor={colorScheme.backgroundSecondary}
+            textColor={colorScheme.textPrimary}
+            iconColor={colorScheme.textPrimary}
+            style={{ marginTop: 16, width: '100%', maxWidth: 400 }}
+          />
         </ScrollView>
 
         <DoubleXPModal
@@ -591,11 +619,6 @@ export function GameContent({
         />
       </SafeAreaView>
     );
-  }
-
-  // Full-screen fallback when ad couldn't load but user wanted to watch
-  if (isGracefulFallback) {
-    return <AdFallbackScreen countdown={fallbackCountdown} />;
   }
 
   return (

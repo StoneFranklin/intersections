@@ -2081,12 +2081,6 @@ export const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
     fontSize: 15,
     letterSpacing: 0.3,
   },
-  gameCompleteBackButtonTop: {
-    position: 'absolute',
-    top: 12,
-    left: 12,
-    zIndex: 10,
-  },
   homeLeaderboardTabBar: {
     flexDirection: 'row',
     marginTop: 8,
