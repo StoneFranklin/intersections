@@ -202,8 +202,15 @@ export function GameContent({
       setXpAwarded(true);
       haptics.notification(Haptics.NotificationFeedbackType.Success);
     } else {
-      // Ad failed to load/show - go to graceful fallback
-      setGracefulFallback({ type: 'double-xp', countdown: 3 });
+      // Ad failed to load/show or user didn't complete it - award base XP
+      const xpResult = await awardPuzzleXP(finalScore?.score ?? 0, true, false);
+      if (xpResult) {
+        setXpGained(xpResult.xpGained);
+        setLeveledUp(xpResult.leveledUp);
+        setPreviousLevel(xpResult.previousLevel);
+      }
+      setXpAwarded(true);
+      haptics.notification(Haptics.NotificationFeedbackType.Success);
     }
   };
 

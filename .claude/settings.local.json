@@ -80,7 +80,8 @@
       "Bash(export ANDROID_HOME=\"$HOME/Library/Android/sdk\")",
       "Bash($HOME/Library/Android/sdk/platform-tools/adb --version)",
       "Bash(npm run type-check:*)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(npm run build:*)"
     ]
   }
 }
