@@ -1,4 +1,3 @@
-import { AdFallbackScreen } from '@/components/ads/ad-fallback-screen';
 import { DoubleXPModal } from '@/components/ads/double-xp-modal';
 import { RewardedAdModal } from '@/components/ads/rewarded-ad-modal';
 import { GameGrid, LeaveGameModal, WordTray } from '@/components/game';
@@ -84,7 +83,6 @@ export function GameContent({
   const [hasShownAdOffer, setHasShownAdOffer] = useState(false);
   const [adOfferDeclined, setAdOfferDeclined] = useState(false);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
-  const [gracefulFallback, setGracefulFallback] = useState<{ type: 'extra-life' | 'double-xp'; countdown: number } | null>(null);
 
   // XP state
   const { awardPuzzleXP, level, totalXP, progress } = useXP();
@@ -97,7 +95,7 @@ export function GameContent({
   const rewardedAd = useRewardedAd();
 
   const isGameOver = gameState.lives <= 0;
-  const shouldShowGameOver = isGameOver && (adOfferDeclined || !showRewardedAdModal) && hasShownAdOffer && !gracefulFallback;
+  const shouldShowGameOver = isGameOver && (adOfferDeclined || !showRewardedAdModal) && hasShownAdOffer;
   const isGameActive = !isReviewMode && !gameState.isSolved && !isGameOver && !gameEnded;
 
   const isCurrentUserEntry = (entry: LeaderboardEntry): boolean => {
@@ -118,62 +116,18 @@ export function GameContent({
   useEffect(() => {
     setHasShownAdOffer(false);
     setAdOfferDeclined(false);
-    setGracefulFallback(null);
   }, [puzzle]);
 
-
-  // Countdown timer for graceful fallback
-  useEffect(() => {
-    if (!gracefulFallback) return;
-
-    if (gracefulFallback.countdown <= 0) {
-      // Grant the reward and close modal
-      if (gracefulFallback.type === 'extra-life') {
-        setShowRewardedAdModal(false);
-        grantExtraLife();
-        setAdOfferDeclined(false);
-        setHasShownAdOffer(false); // Allow another ad offer if they lose again
-      } else {
-        // double-xp fallback - award double XP (reward them anyway!)
-        setShowDoubleXPModal(false);
-        awardPuzzleXP(finalScore?.score ?? 0, true, true).then((xpResult) => {
-          if (xpResult) {
-            setXpGained(xpResult.xpGained);
-            setLeveledUp(xpResult.leveledUp);
-            setPreviousLevel(xpResult.previousLevel);
-          }
-          setXpAwarded(true);
-        });
-      }
-      setGracefulFallback(null);
-      haptics.notification(Haptics.NotificationFeedbackType.Success);
-      return;
-    }
-
-    const timer = setTimeout(() => {
-      setGracefulFallback(prev => prev ? { ...prev, countdown: prev.countdown - 1 } : null);
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, [gracefulFallback, grantExtraLife, awardPuzzleXP, finalScore]);
-
   const handleWatchAd = async () => {
-    // Close the modal - the ad loading state will show in the modal while loading
     const result = await rewardedAd.loadAndShow();
 
     setShowRewardedAdModal(false);
 
-    if (result.success && result.rewarded) {
-      // User watched the ad and earned the reward
-      grantExtraLife();
-      setAdOfferDeclined(false);
-      setHasShownAdOffer(false); // Allow another ad offer if they lose again
-      haptics.notification(Haptics.NotificationFeedbackType.Success);
-    } else {
-      // Either ad failed to load/show, or user didn't complete it
-      // Go to graceful fallback - don't punish them
-      setGracefulFallback({ type: 'extra-life', countdown: 3 });
-    }
+    // Grant extra life whether ad succeeded or failed - don't punish the user
+    grantExtraLife();
+    setAdOfferDeclined(false);
+    setHasShownAdOffer(false); // Allow another ad offer if they lose again
+    haptics.notification(Haptics.NotificationFeedbackType.Success);
   };
 
   const handleDeclineAd = () => {
@@ -186,23 +140,20 @@ export function GameContent({
 
   // Handle double XP ad
   const handleWatchDoubleXPAd = async () => {
-    const result = await doubleXPAd.loadAndShow();
+    // Mark XP as awarded immediately to prevent modal from reopening
+    setXpAwarded(true);
+
+    await doubleXPAd.loadAndShow();
     setShowDoubleXPModal(false);
 
-    if (result.success && result.rewarded) {
-      // User watched the ad - award double XP
-      const xpResult = await awardPuzzleXP(finalScore?.score ?? 0, true, true);
-      if (xpResult) {
-        setXpGained(xpResult.xpGained);
-        setLeveledUp(xpResult.leveledUp);
-        setPreviousLevel(xpResult.previousLevel);
-      }
-      setXpAwarded(true);
-      haptics.notification(Haptics.NotificationFeedbackType.Success);
-    } else {
-      // Ad failed to load/show or user didn't complete it - go to graceful fallback with double XP
-      setGracefulFallback({ type: 'double-xp', countdown: 3 });
+    // Award double XP whether ad succeeded or failed - don't punish the user
+    const xpResult = await awardPuzzleXP(finalScore?.score ?? 0, true, true);
+    if (xpResult) {
+      setXpGained(xpResult.xpGained);
+      setLeveledUp(xpResult.leveledUp);
+      setPreviousLevel(xpResult.previousLevel);
     }
+    haptics.notification(Haptics.NotificationFeedbackType.Success);
   };
 
   const handleDeclineDoubleXP = async () => {
@@ -352,19 +303,6 @@ export function GameContent({
       haptics.selection();
     }
   };
-
-  // Full-screen fallback when ad couldn't load but user wanted to watch
-  // IMPORTANT: Check this BEFORE other conditions to ensure it always displays
-  if (gracefulFallback) {
-    return (
-      <AdFallbackScreen
-        countdown={gracefulFallback.countdown}
-        title={gracefulFallback.type === 'extra-life' ? 'Getting Your Extra Life' : 'Getting Your Double XP'}
-        iconName={gracefulFallback.type === 'extra-life' ? 'heart-plus' : 'star-circle'}
-        description="Thanks for your patience!"
-      />
-    );
-  }
 
   if (isReviewMode) {
     return (

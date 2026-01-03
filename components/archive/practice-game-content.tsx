@@ -11,7 +11,6 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { createStyles as createGameStyles } from '@/app/(tabs)/index.styles';
-import { AdFallbackScreen } from '@/components/ads/ad-fallback-screen';
 import { DoubleXPModal } from '@/components/ads/double-xp-modal';
 import { RewardedAdModal } from '@/components/ads/rewarded-ad-modal';
 import { GameGrid, WordTray, SignInBenefitsCard } from '@/components/game';
@@ -74,7 +73,6 @@ export function PracticeGameContent({
   const [showRewardedAdModal, setShowRewardedAdModal] = useState(false);
   const [hasShownAdOffer, setHasShownAdOffer] = useState(false);
   const [adOfferDeclined, setAdOfferDeclined] = useState(false);
-  const [gracefulFallback, setGracefulFallback] = useState<{ type: 'extra-life' | 'double-xp'; countdown: number } | null>(null);
   const [hasCompleted, setHasCompleted] = useState(false);
 
   // XP state
@@ -88,7 +86,7 @@ export function PracticeGameContent({
   const rewardedAd = useRewardedAd();
 
   const isGameOver = gameState.lives <= 0;
-  const shouldShowGameOver = isGameOver && (adOfferDeclined || !showRewardedAdModal) && hasShownAdOffer && !gracefulFallback;
+  const shouldShowGameOver = isGameOver && (adOfferDeclined || !showRewardedAdModal) && hasShownAdOffer;
   const isGameActive = !gameState.isSolved && !isGameOver && !gameEnded;
 
   // Show ad offer when game is over
@@ -98,41 +96,6 @@ export function PracticeGameContent({
       setHasShownAdOffer(true);
     }
   }, [isGameOver, hasShownAdOffer]);
-
-  // Countdown timer for graceful fallback
-  useEffect(() => {
-    if (!gracefulFallback) return;
-
-    if (gracefulFallback.countdown <= 0) {
-      // Grant the reward and close modal
-      if (gracefulFallback.type === 'extra-life') {
-        setShowRewardedAdModal(false);
-        grantExtraLife();
-        setAdOfferDeclined(false);
-        setHasShownAdOffer(false);
-      } else {
-        // double-xp fallback - award base XP
-        setShowDoubleXPModal(false);
-        awardPuzzleXP(finalScore?.score ?? 0, false, false).then((xpResult) => {
-          if (xpResult) {
-            setXpGained(xpResult.xpGained);
-            setLeveledUp(xpResult.leveledUp);
-            setPreviousLevel(xpResult.previousLevel);
-          }
-          setXpAwarded(true);
-        });
-      }
-      setGracefulFallback(null);
-      haptics.notification(Haptics.NotificationFeedbackType.Success);
-      return;
-    }
-
-    const timer = setTimeout(() => {
-      setGracefulFallback(prev => prev ? { ...prev, countdown: prev.countdown - 1 } : null);
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, [gracefulFallback, grantExtraLife, awardPuzzleXP, finalScore]);
 
   // Handle game completion
   useEffect(() => {
@@ -147,16 +110,11 @@ export function PracticeGameContent({
     const result = await rewardedAd.loadAndShow();
     setShowRewardedAdModal(false);
 
-    if (result.success && result.rewarded) {
-      grantExtraLife();
-      setAdOfferDeclined(false);
-      setHasShownAdOffer(false);
-      haptics.notification(Haptics.NotificationFeedbackType.Success);
-    } else {
-      // Either ad failed to load/show, or user didn't complete it
-      // Go to graceful fallback - don't punish them
-      setGracefulFallback({ type: 'extra-life', countdown: 3 });
-    }
+    // Grant extra life whether ad succeeded or failed - don't punish the user
+    grantExtraLife();
+    setAdOfferDeclined(false);
+    setHasShownAdOffer(false);
+    haptics.notification(Haptics.NotificationFeedbackType.Success);
   };
 
   const handleDeclineAd = () => {
@@ -169,23 +127,20 @@ export function PracticeGameContent({
 
   // Handle double XP ad for archive
   const handleWatchDoubleXPAd = async () => {
-    const result = await doubleXPAd.loadAndShow();
+    // Mark XP as awarded immediately to prevent modal from reopening
+    setXpAwarded(true);
+
+    await doubleXPAd.loadAndShow();
     setShowDoubleXPModal(false);
 
-    if (result.success && result.rewarded) {
-      // User watched the ad - award double XP (still 50% base for archive)
-      const xpResult = await awardPuzzleXP(finalScore?.score ?? 0, false, true);
-      if (xpResult) {
-        setXpGained(xpResult.xpGained);
-        setLeveledUp(xpResult.leveledUp);
-        setPreviousLevel(xpResult.previousLevel);
-      }
-      setXpAwarded(true);
-      haptics.notification(Haptics.NotificationFeedbackType.Success);
-    } else {
-      // Ad failed to load/show - go to graceful fallback
-      setGracefulFallback({ type: 'double-xp', countdown: 3 });
+    // Award double XP whether ad succeeded or failed - don't punish the user
+    const xpResult = await awardPuzzleXP(finalScore?.score ?? 0, false, true);
+    if (xpResult) {
+      setXpGained(xpResult.xpGained);
+      setLeveledUp(xpResult.leveledUp);
+      setPreviousLevel(xpResult.previousLevel);
     }
+    haptics.notification(Haptics.NotificationFeedbackType.Success);
   };
 
   const handleDeclineDoubleXP = async () => {
@@ -252,19 +207,6 @@ export function PracticeGameContent({
       haptics.selection();
     }
   };
-
-  // Full-screen fallback when ad couldn't load but user wanted to watch
-  // IMPORTANT: Check this BEFORE other conditions to ensure it always displays
-  if (gracefulFallback) {
-    return (
-      <AdFallbackScreen
-        countdown={gracefulFallback.countdown}
-        title={gracefulFallback.type === 'extra-life' ? 'Getting Your Extra Life' : 'Getting Your Double XP'}
-        iconName={gracefulFallback.type === 'extra-life' ? 'heart-plus' : 'star-circle'}
-        description="Thanks for your patience!"
-      />
-    );
-  }
 
   // Show results screen when game ends
   if (gameEnded && savedScore) {
