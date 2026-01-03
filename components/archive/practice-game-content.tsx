@@ -1,27 +1,32 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+    ScrollView,
+    StyleSheet,
+    Text,
+    View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { createStyles as createGameStyles } from '@/app/(tabs)/index.styles';
+import { DoubleXPModal } from '@/components/ads/double-xp-modal';
 import { RewardedAdModal } from '@/components/ads/rewarded-ad-modal';
-import { AdFallbackScreen } from '@/components/ads/ad-fallback-screen';
-import { GameGrid, WordTray } from '@/components/game';
+import { GameGrid, WordTray, SignInBenefitsCard } from '@/components/game';
+import { BackButton } from '@/components/ui/back-button';
+import { Button } from '@/components/ui/button';
+import { XPProgressBar } from '@/components/xp/xp-progress-bar';
+import { useThemeScheme } from '@/contexts/theme-context';
+import { useXP } from '@/contexts/xp-context';
+import { useAuth } from '@/contexts/auth-context';
 import { useGameState } from '@/hooks/use-game-state';
 import { useRewardedAd } from '@/hooks/use-rewarded-ad';
-import { useThemeScheme } from '@/contexts/theme-context';
-import { CellPosition, GameScore, Puzzle } from '@/types/game';
 import { PracticeCompletion } from '@/types/archive';
+import { CellPosition, GameScore, Puzzle } from '@/types/game';
 import { haptics } from '@/utils/haptics';
 import { formatTime } from '@/utils/share';
-import { createStyles as createGameStyles } from '@/app/(tabs)/index.styles';
+import { calculateXP } from '@/utils/xp';
 
 interface PracticeGameContentProps {
   puzzle: Puzzle;
@@ -48,6 +53,7 @@ export function PracticeGameContent({
 }: PracticeGameContentProps) {
   const { colorScheme } = useThemeScheme();
   const router = useRouter();
+  const { user } = useAuth();
   const gameStyles = useMemo(() => createGameStyles(colorScheme), [colorScheme]);
   const styles = useMemo(() => createStyles(colorScheme), [colorScheme]);
 
@@ -67,14 +73,20 @@ export function PracticeGameContent({
   const [showRewardedAdModal, setShowRewardedAdModal] = useState(false);
   const [hasShownAdOffer, setHasShownAdOffer] = useState(false);
   const [adOfferDeclined, setAdOfferDeclined] = useState(false);
-  const [isGracefulFallback, setIsGracefulFallback] = useState(false);
-  const [fallbackCountdown, setFallbackCountdown] = useState(3);
   const [hasCompleted, setHasCompleted] = useState(false);
 
+  // XP state
+  const { awardPuzzleXP, level, progress } = useXP();
+  const [showDoubleXPModal, setShowDoubleXPModal] = useState(false);
+  const [xpGained, setXpGained] = useState<number | null>(null);
+  const [leveledUp, setLeveledUp] = useState(false);
+  const [previousLevel, setPreviousLevel] = useState<number | null>(null);
+  const [xpAwarded, setXpAwarded] = useState(false);
+  const doubleXPAd = useRewardedAd();
   const rewardedAd = useRewardedAd();
 
   const isGameOver = gameState.lives <= 0;
-  const shouldShowGameOver = isGameOver && (adOfferDeclined || !showRewardedAdModal) && hasShownAdOffer && !isGracefulFallback;
+  const shouldShowGameOver = isGameOver && (adOfferDeclined || !showRewardedAdModal) && hasShownAdOffer;
   const isGameActive = !gameState.isSolved && !isGameOver && !gameEnded;
 
   // Show ad offer when game is over
@@ -84,27 +96,6 @@ export function PracticeGameContent({
       setHasShownAdOffer(true);
     }
   }, [isGameOver, hasShownAdOffer]);
-
-  // Countdown for graceful fallback
-  useEffect(() => {
-    if (!isGracefulFallback) return;
-
-    if (fallbackCountdown <= 0) {
-      setShowRewardedAdModal(false);
-      setIsGracefulFallback(false);
-      grantExtraLife();
-      setAdOfferDeclined(false);
-      setHasShownAdOffer(false);
-      haptics.notification(Haptics.NotificationFeedbackType.Success);
-      return;
-    }
-
-    const timer = setTimeout(() => {
-      setFallbackCountdown(prev => prev - 1);
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, [isGracefulFallback, fallbackCountdown, grantExtraLife]);
 
   // Handle game completion
   useEffect(() => {
@@ -119,21 +110,63 @@ export function PracticeGameContent({
     const result = await rewardedAd.loadAndShow();
     setShowRewardedAdModal(false);
 
-    if (result.success && result.rewarded) {
-      grantExtraLife();
-      setAdOfferDeclined(false);
-      setHasShownAdOffer(false);
-      haptics.notification(Haptics.NotificationFeedbackType.Success);
-    } else {
-      setIsGracefulFallback(true);
-      setFallbackCountdown(3);
-    }
+    // Grant extra life whether ad succeeded or failed - don't punish the user
+    grantExtraLife();
+    setAdOfferDeclined(false);
+    setHasShownAdOffer(false);
+    haptics.notification(Haptics.NotificationFeedbackType.Success);
   };
 
   const handleDeclineAd = () => {
     setShowRewardedAdModal(false);
     setAdOfferDeclined(true);
   };
+
+  // Calculate base XP for display (archive gives 50% XP)
+  const baseXP = finalScore ? calculateXP(finalScore.score, false) : 0;
+
+  // Handle double XP ad for archive
+  const handleWatchDoubleXPAd = async () => {
+    // Mark XP as awarded immediately to prevent modal from reopening
+    setXpAwarded(true);
+
+    await doubleXPAd.loadAndShow();
+    setShowDoubleXPModal(false);
+
+    // Award double XP whether ad succeeded or failed - don't punish the user
+    const xpResult = await awardPuzzleXP(finalScore?.score ?? 0, false, true);
+    if (xpResult) {
+      setXpGained(xpResult.xpGained);
+      setLeveledUp(xpResult.leveledUp);
+      setPreviousLevel(xpResult.previousLevel);
+    }
+    haptics.notification(Haptics.NotificationFeedbackType.Success);
+  };
+
+  const handleDeclineDoubleXP = async () => {
+    setShowDoubleXPModal(false);
+    // Award base XP
+    const xpResult = await awardPuzzleXP(finalScore?.score ?? 0, false, false);
+    if (xpResult) {
+      setXpGained(xpResult.xpGained);
+      setLeveledUp(xpResult.leveledUp);
+      setPreviousLevel(xpResult.previousLevel);
+    }
+    setXpAwarded(true);
+  };
+
+  // Show double XP modal when game ends
+  // Only show to authenticated users since anonymous users can't earn XP
+  useEffect(() => {
+    if (user && gameEnded && savedScore && !xpAwarded && !showDoubleXPModal) {
+      // Small delay to let results screen render first
+      const timer = setTimeout(() => {
+        setShowDoubleXPModal(true);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [user, gameEnded, savedScore, xpAwarded, showDoubleXPModal]);
+
 
   const handleLeaveRequest = useCallback(() => {
     onBack();
@@ -175,17 +208,12 @@ export function PracticeGameContent({
     }
   };
 
-  // Show graceful fallback screen
-  if (isGracefulFallback) {
-    return <AdFallbackScreen countdown={fallbackCountdown} />;
-  }
-
   // Show results screen when game ends
   if (gameEnded && savedScore) {
     const isWin = gameState.isSolved;
 
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isWin ? colorScheme.successBg : colorScheme.errorBg }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: isWin ? colorScheme.successBg : colorScheme.errorBg }]} edges={['top', 'left', 'right', 'bottom']}>
         <ScrollView contentContainerStyle={styles.resultsScrollContent}>
           <View style={styles.resultsHeader}>
             {isWin ? (
@@ -220,27 +248,60 @@ export function PracticeGameContent({
             </View>
           </View>
 
-          <View style={styles.infoCard}>
-            <Ionicons name="information-circle-outline" size={20} color={colorScheme.info} />
-            <Text style={styles.infoText}>
-              Practice scores don't affect your streak or leaderboard ranking. Play as many times as you like!
-            </Text>
-          </View>
+          {/* XP Gained Card */}
+          {user && xpAwarded && xpGained !== null && (
+            <View style={[styles.scoreCard, { marginTop: 0 }]}>
+              <View style={gameStyles.xpGainedRow}>
+                <MaterialCommunityIcons name="star-circle" size={24} color={colorScheme.gold} />
+                <Text style={[styles.scoreValue, { color: colorScheme.gold, marginLeft: 8 }]}>
+                  +{xpGained} XP
+                </Text>
+              </View>
+              {leveledUp && previousLevel !== null && (
+                <View style={gameStyles.levelUpRow}>
+                  <MaterialCommunityIcons name="arrow-up-circle" size={20} color={colorScheme.success} />
+                  <Text style={[gameStyles.levelUpText, { color: colorScheme.success }]}>
+                    Level Up! You are now Level {level}
+                  </Text>
+                </View>
+              )}
+              <XPProgressBar currentLevel={level} progress={progress} leveledUp={leveledUp} />
+            </View>
+          )}
+
+          {/* Sign-in benefits card for anonymous users */}
+          {!user && <SignInBenefitsCard onSignInPress={() => router.push('/(tabs)')} />}
 
           <View style={styles.actionButtons}>
             {!isWin && (
-              <TouchableOpacity style={styles.retryButton} onPress={onRetry}>
-                <Ionicons name="refresh" size={20} color={colorScheme.backgroundPrimary} />
-                <Text style={styles.retryButtonText}>Try Again</Text>
-              </TouchableOpacity>
+              <Button
+                text="Try Again"
+                onPress={onRetry}
+                icon="refresh"
+                backgroundColor={colorScheme.brandPrimary}
+                textColor={colorScheme.backgroundPrimary}
+                iconColor={colorScheme.backgroundPrimary}
+              />
             )}
-
-            <TouchableOpacity style={styles.backButton} onPress={onBack}>
-              <Ionicons name="arrow-back" size={20} color={colorScheme.brandPrimary} />
-              <Text style={styles.backButtonText}>Back to Archive</Text>
-            </TouchableOpacity>
+            <Button
+              text="Back to Archive"
+              onPress={onBack}
+              icon="chevron-left"
+              backgroundColor={colorScheme.backgroundSecondary}
+              textColor={colorScheme.textPrimary}
+              iconColor={colorScheme.textPrimary}
+            />
           </View>
         </ScrollView>
+
+        <DoubleXPModal
+          visible={showDoubleXPModal}
+          baseXP={baseXP}
+          isLoading={doubleXPAd.isLoading}
+          isShowing={doubleXPAd.isShowing}
+          onWatchAd={handleWatchDoubleXPAd}
+          onDecline={handleDeclineDoubleXP}
+        />
       </SafeAreaView>
     );
   }
@@ -249,9 +310,7 @@ export function PracticeGameContent({
   return (
     <SafeAreaView style={gameStyles.container}>
       <View style={gameStyles.header}>
-        <TouchableOpacity onPress={handleLeaveRequest} style={gameStyles.headerBackButton}>
-          <Ionicons name="chevron-back" size={28} color={colorScheme.textPrimary} />
-        </TouchableOpacity>
+        <BackButton onPress={handleLeaveRequest} style={gameStyles.headerBackButton} iconSize={28} />
         <View style={gameStyles.headerCenter}>
           <Text style={gameStyles.timerText}>{formatTime(elapsedTime)}</Text>
         </View>
@@ -351,16 +410,21 @@ const createStyles = (colorScheme: any) =>
     },
     // Results screen styles
     resultsScrollContent: {
-      padding: 24,
+      flexGrow: 1,
+      alignItems: 'center',
+      paddingHorizontal: 20,
+      paddingTop: 32,
       paddingBottom: 40,
     },
     resultsHeader: {
       alignItems: 'center',
-      marginBottom: 24,
+      marginBottom: 28,
     },
     resultsTitle: {
-      fontSize: 28,
-      fontWeight: 'bold',
+      fontSize: 32,
+      fontWeight: '800',
+      textAlign: 'center',
+      letterSpacing: -1,
       marginBottom: 12,
     },
     practiceBadge: {
@@ -384,9 +448,18 @@ const createStyles = (colorScheme: any) =>
     },
     scoreCard: {
       backgroundColor: colorScheme.backgroundSecondary,
-      borderRadius: 16,
-      padding: 20,
+      borderRadius: 20,
+      padding: 24,
+      width: '100%',
+      maxWidth: 400,
       marginBottom: 16,
+      borderWidth: 1,
+      borderColor: colorScheme.borderPrimary,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 8,
+      elevation: 3,
     },
     scoreRow: {
       flexDirection: 'row',
@@ -396,14 +469,17 @@ const createStyles = (colorScheme: any) =>
       alignItems: 'center',
     },
     scoreValue: {
-      fontSize: 24,
-      fontWeight: 'bold',
+      fontSize: 28,
+      fontWeight: '800',
       color: colorScheme.textPrimary,
+      letterSpacing: -0.5,
     },
     scoreLabel: {
-      fontSize: 12,
-      color: colorScheme.textMuted,
-      marginTop: 4,
+      fontSize: 13,
+      color: colorScheme.textTertiary,
+      marginTop: 6,
+      fontWeight: '500',
+      letterSpacing: 0.2,
     },
     infoCard: {
       flexDirection: 'row',
@@ -425,32 +501,7 @@ const createStyles = (colorScheme: any) =>
     actionButtons: {
       gap: 12,
       width: '100%',
-    },
-    retryButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: 8,
-      paddingVertical: 16,
-      backgroundColor: colorScheme.brandPrimary,
-      borderRadius: 12,
-    },
-    retryButtonText: {
-      fontSize: 16,
-      fontWeight: '600',
-      color: colorScheme.backgroundPrimary,
-    },
-    backButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: 8,
-      paddingVertical: 16,
-    },
-    backButtonText: {
-      fontSize: 16,
-      color: colorScheme.brandPrimary,
-      fontWeight: '600',
+      maxWidth: 400,
     },
   });
 

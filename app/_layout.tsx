@@ -1,6 +1,7 @@
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { AuthProvider } from '@/contexts/auth-context';
 import { AppThemeProvider, useThemeScheme } from '@/contexts/theme-context';
+import { XPProvider } from '@/contexts/xp-context';
 import { requestNotificationPermissions, scheduleNotificationForToday } from '@/utils/notificationService';
 import { parseNotificationData } from '@/utils/pushNotificationService';
 import { DarkTheme, ThemeProvider } from '@react-navigation/native';
@@ -68,11 +69,13 @@ export default function RootLayout() {
         </Head>
       )}
       <AuthProvider>
-        <AppThemeProvider>
-          <SafeAreaProvider>
-            <RootLayoutContent />
-          </SafeAreaProvider>
-        </AppThemeProvider>
+        <XPProvider>
+          <AppThemeProvider>
+            <SafeAreaProvider>
+              <RootLayoutContent />
+            </SafeAreaProvider>
+          </AppThemeProvider>
+        </XPProvider>
       </AuthProvider>
     </ErrorBoundary>
   );

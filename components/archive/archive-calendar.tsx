@@ -133,8 +133,8 @@ export function ArchiveCalendar({
   const styles = useMemo(() => createStyles(colorScheme), [colorScheme]);
 
   const handleDayPress = (day: CalendarDay) => {
-    if (day.isFuture || !day.isCurrentMonth) return;
-    if (!availableDates.has(day.date) && !day.isToday) return;
+    if (day.isFuture || !day.isCurrentMonth || day.isToday) return;
+    if (!availableDates.has(day.date)) return;
     onSelectDate(day.date);
   };
 
@@ -241,7 +241,7 @@ export function ArchiveCalendar({
               <TouchableOpacity
                 style={[styles.dayCell, getDayStyle(day)]}
                 onPress={() => handleDayPress(day)}
-                disabled={day.isFuture || !day.isCurrentMonth || (!availableDates.has(day.date) && !day.isToday)}
+                disabled={day.isFuture || !day.isCurrentMonth || day.isToday || !availableDates.has(day.date)}
               >
                 <Text style={getDayTextStyle(day)}>{day.dayOfMonth}</Text>
               </TouchableOpacity>
@@ -337,7 +337,9 @@ const createStyles = (colorScheme: any) => StyleSheet.create({
     opacity: 0.2,
   },
   dayToday: {
-    backgroundColor: colorScheme.brandPrimary,
+    backgroundColor: colorScheme.backgroundSecondary,
+    borderWidth: 2,
+    borderColor: colorScheme.textMuted,
   },
   dayFuture: {
     opacity: 0.2,
@@ -368,9 +370,9 @@ const createStyles = (colorScheme: any) => StyleSheet.create({
     color: colorScheme.textMuted,
   },
   dayTextToday: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: '#000',
+    fontSize: 15,
+    fontWeight: '600',
+    color: colorScheme.textMuted,
   },
   dayTextFuture: {
     fontSize: 15,

@@ -1,18 +1,9 @@
 import { ColorScheme } from '@/constants/theme';
 import { useThemeScheme } from '@/contexts/theme-context';
 import { CellPosition, Puzzle, Word } from '@/types/game';
-import LottieView from 'lottie-react-native';
-import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Dimensions, Platform, StyleSheet, Text, View } from 'react-native';
+import React, { memo, useEffect, useMemo, useState } from 'react';
+import { Dimensions, Image, Platform, StyleSheet, Text, View } from 'react-native';
 import { GameCell } from './game-cell';
-
-// Animation frame constants for loop animation (total 182 frames at 30fps)
-const TOTAL_FRAMES = 182;
-const LOOP_START = 79;
-const LOOP_END = 148;
-// Normalized progress values (0-1)
-const LOOP_START_PROGRESS = LOOP_START / TOTAL_FRAMES;
-const LOOP_END_PROGRESS = LOOP_END / TOTAL_FRAMES;
 
 interface GameGridProps {
   puzzle: Puzzle;
@@ -34,14 +25,6 @@ export const GameGrid = memo(function GameGrid({
   const { colorScheme } = useThemeScheme();
   const styles = useMemo(() => createStyles(colorScheme), [colorScheme]);
   const { rowCategories, colCategories } = puzzle;
-
-  const lottieRef = useRef<LottieView>(null);
-  const hasStarted = useRef(false);
-  const isWeb = Platform.OS === 'web';
-
-  // Progress state for mobile (more reliable than play(start, end) on Android)
-  const [mobileProgress, setMobileProgress] = useState(LOOP_START_PROGRESS);
-  const animationFrameRef = useRef<number | null>(null);
 
   // Use state for dimensions to properly update after hydration
   const [dimensions, setDimensions] = useState(() => {
@@ -66,76 +49,6 @@ export const GameGrid = memo(function GameGrid({
     const subscription = Dimensions.addEventListener('change', updateDimensions);
     return () => subscription.remove();
   }, []);
-
-  // Start the loop animation for mobile using requestAnimationFrame
-  const startLoopAnimation = useCallback(() => {
-    if (isWeb) return;
-
-    // Cancel any existing animation
-    if (animationFrameRef.current) {
-      cancelAnimationFrame(animationFrameRef.current);
-    }
-
-    const loopDurationMs = ((LOOP_END - LOOP_START) / 30) * 1000;
-    let startTime: number | null = null;
-
-    const animate = (timestamp: number) => {
-      if (!startTime) startTime = timestamp;
-      const elapsed = timestamp - startTime;
-      const progressInLoop = (elapsed % loopDurationMs) / loopDurationMs;
-      const progress = LOOP_START_PROGRESS + progressInLoop * (LOOP_END_PROGRESS - LOOP_START_PROGRESS);
-
-      setMobileProgress(progress);
-      animationFrameRef.current = requestAnimationFrame(animate);
-    };
-
-    animationFrameRef.current = requestAnimationFrame(animate);
-  }, [isWeb]);
-
-  const playSegment = useCallback((start: number, end: number) => {
-    if (!lottieRef.current) return;
-
-    if (isWeb) {
-      // Web needs segment + explicit start frame to actually begin playback.
-      lottieRef.current.play(start, end);
-      lottieRef.current.play(start);
-    }
-  }, [isWeb]);
-
-  // Cleanup animation frame on unmount
-  useEffect(() => {
-    return () => {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-    };
-  }, []);
-
-  // Start loop animation on mount
-  useEffect(() => {
-    if (hasStarted.current) return;
-    hasStarted.current = true;
-
-    const timer = setTimeout(() => {
-      if (isWeb) {
-        playSegment(LOOP_START, LOOP_END);
-      } else {
-        startLoopAnimation();
-      }
-    }, 100);
-
-    return () => clearTimeout(timer);
-  }, [isWeb, playSegment, startLoopAnimation]);
-
-  const handleAnimationFinish = () => {
-    // Only used for web - mobile uses continuous requestAnimationFrame
-    if (!isWeb) return;
-
-    // Keep looping on web
-    setTimeout(() => {
-      playSegment(LOOP_START, LOOP_END);
-    }, 50);
-  };
 
   const { width, height } = dimensions;
   
@@ -198,19 +111,10 @@ export const GameGrid = memo(function GameGrid({
       {/* Column headers (top) */}
       <View style={styles.headerRow}>
         <View style={[styles.cornerCell, { width: headerWidth, height: cellSize * 0.8 }]}>
-          <LottieView
-            ref={lottieRef}
-            source={require('@/assets/lottie/anim_full_intersections_v2.json')}
+          <Image
+            source={require('@/assets/images/intersections-splash.png')}
             style={{ width: logoSize, height: logoSize }}
-            webStyle={{ width: logoSize, height: logoSize }}
-            autoPlay={false}
-            loop={false}
-            progress={isWeb ? undefined : mobileProgress}
-            onAnimationFinish={handleAnimationFinish}
-            onAnimationLoaded={() => {
-              if (!isWeb) return;
-              playSegment(LOOP_START, LOOP_END);
-            }}
+            resizeMode="contain"
           />
         </View>
         {colCategories.map((col) => (
@@ -222,7 +126,7 @@ export const GameGrid = memo(function GameGrid({
             ]}
           >
             <Text
-              style={[styles.headerText, { fontSize: calculateHeaderFontSize(col.label, cellSize) }]}
+              style={[styles.colHeaderText, { fontSize: calculateHeaderFontSize(col.label, cellSize) }]}
               numberOfLines={2}
               adjustsFontSizeToFit
               minimumFontScale={0.3}
@@ -245,7 +149,7 @@ export const GameGrid = memo(function GameGrid({
             ]}
           >
             <Text
-              style={[styles.headerText, { fontSize: calculateHeaderFontSize(row.label, headerWidth) }]}
+              style={[styles.rowHeaderText, { fontSize: calculateHeaderFontSize(row.label, headerWidth) }]}
               numberOfLines={2}
               adjustsFontSizeToFit
               minimumFontScale={0.3}
@@ -293,20 +197,16 @@ const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
     margin: 2,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colorScheme.backgroundTertiary,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: colorScheme.borderSecondary,
   },
   colHeader: {
     margin: 2,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colorScheme.gridHeaderColBg,
+    backgroundColor: 'rgba(0, 153, 255, 0.15)', // Translucent blue center
     borderRadius: 8,
     padding: 4,
-    borderWidth: 1,
-    borderColor: colorScheme.borderSecondary,
+    borderWidth: 2,
+    borderColor: colorScheme.gridHeaderColBg, // Bright blue border
   },
   gridRow: {
     flexDirection: 'row',
@@ -315,14 +215,24 @@ const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
     margin: 2,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colorScheme.gridHeaderRowBg,
+    backgroundColor: 'rgba(122, 74, 189, 0.15)', // Translucent purple center
     borderRadius: 8,
     padding: 4,
-    borderWidth: 1,
-    borderColor: colorScheme.borderSecondary,
+    borderWidth: 2,
+    borderColor: colorScheme.gridHeaderRowBg, // Bright purple border
   },
   headerText: {
     color: colorScheme.textPrimary,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  colHeaderText: {
+    color: colorScheme.textPrimary, // White text for better contrast
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  rowHeaderText: {
+    color: colorScheme.textPrimary, // White text for better contrast
     fontWeight: '600',
     textAlign: 'center',
   },

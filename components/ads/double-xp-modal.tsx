@@ -13,31 +13,36 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/ui/button';
 
-interface RewardedAdModalProps {
+interface DoubleXPModalProps {
   /** Whether the modal is visible */
   visible: boolean;
+  /** The base XP that would be earned */
+  baseXP: number;
   /** Whether the ad is currently loading */
   isLoading: boolean;
   /** Whether the ad is currently showing */
   isShowing: boolean;
-  /** Called when user chooses to watch an ad */
+  /** Called when user chooses to watch an ad for double XP */
   onWatchAd: () => void;
-  /** Called when user declines to watch an ad */
+  /** Called when user declines and takes the base XP */
   onDecline: () => void;
 }
 
 /**
- * Modal that prompts the user to watch a rewarded ad for an extra life
+ * Modal that prompts the user to watch a rewarded ad to double their XP
  */
-export function RewardedAdModal({
+export function DoubleXPModal({
   visible,
+  baseXP,
   isLoading,
   isShowing,
   onWatchAd,
   onDecline,
-}: RewardedAdModalProps) {
+}: DoubleXPModalProps) {
   const { colorScheme } = useThemeScheme();
   const styles = useMemo(() => createStyles(colorScheme), [colorScheme]);
+
+  const doubledXP = baseXP * 2;
 
   return (
     <Modal
@@ -48,23 +53,36 @@ export function RewardedAdModal({
     >
       <SafeAreaView style={styles.overlay} edges={['top', 'bottom']}>
         <View style={styles.container}>
-          {/* Heart Icon */}
+          {/* XP Icon */}
           <View style={styles.iconContainer}>
-            <MaterialCommunityIcons name="heart-plus" size={64} color={colorScheme.errorLight} />
+            <MaterialCommunityIcons name="star-circle" size={64} color={colorScheme.gold} />
           </View>
 
           {/* Title */}
-          <Text style={styles.title}>Out of Lives!</Text>
+          <Text style={styles.title}>Double Your XP!</Text>
+
+          {/* XP Display */}
+          <View style={styles.xpContainer}>
+            <View style={styles.xpRow}>
+              <Text style={styles.xpLabel}>Base XP:</Text>
+              <Text style={styles.xpValue}>+{baseXP}</Text>
+            </View>
+            <View style={styles.xpDivider} />
+            <View style={styles.xpRow}>
+              <Text style={styles.xpLabelHighlight}>With Ad:</Text>
+              <Text style={styles.xpValueHighlight}>+{doubledXP}</Text>
+            </View>
+          </View>
 
           {/* Description */}
           <Text style={styles.description}>
-            Watch a short ad to get an extra life and continue playing
+            Watch a short ad to earn double XP and level up faster!
           </Text>
 
           {/* Loading indicator - shown while ad is loading */}
           {isLoading && (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color={colorScheme.success} />
+              <ActivityIndicator size="large" color={colorScheme.gold} />
               <Text style={styles.loadingText}>Loading ad...</Text>
             </View>
           )}
@@ -79,24 +97,22 @@ export function RewardedAdModal({
           {/* Action buttons - show when not loading/showing */}
           {!isLoading && !isShowing && (
             <View style={styles.buttonContainer}>
-              {/* Watch Ad Button */}
               <Button
-                text="Watch Ad"
-                icon="play-circle"
-                iconSize={24}
-                backgroundColor={colorScheme.success}
-                textColor={colorScheme.textPrimary}
+                text="Watch Ad for 2x XP"
                 onPress={onWatchAd}
+                backgroundColor={colorScheme.gold}
+                textColor={colorScheme.warmBlack}
+                icon="play-circle"
+                iconColor={colorScheme.warmBlack}
+                iconSize={24}
               />
 
-              {/* Decline Button */}
               <Button
-                text="No Thanks"
+                text={`Keep +${baseXP} XP`}
+                onPress={onDecline}
                 variant="outlined"
                 backgroundColor={colorScheme.borderSecondary}
                 textColor={colorScheme.textSecondary}
-                onPress={onDecline}
-                textStyle={{ fontSize: 16, fontWeight: '600' }}
               />
             </View>
           )}
@@ -140,15 +156,52 @@ const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
     fontSize: 28,
     fontWeight: 'bold',
     color: colorScheme.textPrimary,
-    marginBottom: 12,
+    marginBottom: 16,
     textAlign: 'center',
   },
-  description: {
+  xpContainer: {
+    backgroundColor: colorScheme.backgroundTertiary,
+    borderRadius: 12,
+    padding: 16,
+    width: '100%',
+    marginBottom: 16,
+  },
+  xpRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  xpDivider: {
+    height: 1,
+    backgroundColor: colorScheme.borderPrimary,
+    marginVertical: 4,
+  },
+  xpLabel: {
     fontSize: 16,
+    color: colorScheme.textSecondary,
+  },
+  xpValue: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colorScheme.textPrimary,
+  },
+  xpLabelHighlight: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colorScheme.gold,
+  },
+  xpValueHighlight: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: colorScheme.gold,
+  },
+  description: {
+    fontSize: 14,
     color: colorScheme.textSecondary,
     textAlign: 'center',
     marginBottom: 24,
-    lineHeight: 22,
+    lineHeight: 20,
   },
   loadingContainer: {
     paddingVertical: 20,

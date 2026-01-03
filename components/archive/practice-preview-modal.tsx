@@ -10,6 +10,7 @@ import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import { useThemeScheme } from '@/contexts/theme-context';
 import { PracticeCompletion } from '@/types/archive';
 import { formatTime } from '@/utils/share';
+import { Button } from '@/components/ui/button';
 
 interface PracticePreviewModalProps {
   visible: boolean;
@@ -104,12 +105,16 @@ export function PracticePreviewModal({
             </View>
           )}
 
-          <TouchableOpacity style={styles.playButton} onPress={onPlay}>
-            <Ionicons name="play" size={24} color={colorScheme.textPrimary} />
-            <Text style={styles.playButtonText}>
-              {previousCompletion ? 'Play Again' : 'Start Puzzle'}
-            </Text>
-          </TouchableOpacity>
+          <Button
+            text={previousCompletion ? 'Play Again' : 'Start Puzzle'}
+            icon="play"
+            iconSize={24}
+            backgroundColor={colorScheme.brandPrimary}
+            textColor={colorScheme.textPrimary}
+            onPress={onPlay}
+            style={{ width: '100%', marginBottom: 16 }}
+            textStyle={{ fontSize: 18 }}
+          />
 
           <View style={styles.practiceInfo}>
             <MaterialCommunityIcons 
@@ -212,21 +217,6 @@ const createStyles = (colorScheme: any) =>
       fontSize: 14,
       color: colorScheme.textSecondary,
       lineHeight: 20,
-    },
-    playButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: 8,
-      backgroundColor: colorScheme.brandPrimary,
-      borderRadius: 12,
-      padding: 16,
-      marginBottom: 16,
-    },
-    playButtonText: {
-      fontSize: 18,
-      fontWeight: '700',
-      color: colorScheme.textPrimary,
     },
     practiceInfo: {
       flexDirection: 'row',

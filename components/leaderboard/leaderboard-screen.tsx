@@ -226,16 +226,23 @@ export function LeaderboardScreen({
                 )}
               </View>
               <View style={styles.leaderboardFullInfo}>
-                <Text
-                  style={[
-                    styles.leaderboardFullName,
-                    isCurrentUserEntry(entry) && styles.leaderboardFullNameCurrentUser,
-                  ]}
-                  numberOfLines={1}
-                >
-                  {entry.displayName || 'Anonymous'}
-                  {isCurrentUserEntry(entry) && ' (you)'}
-                </Text>
+                <View style={styles.leaderboardFullNameRow}>
+                  {entry.level && (
+                    <View style={styles.leaderboardLevelBadge}>
+                      <Text style={styles.leaderboardLevelText}>Lv {entry.level}</Text>
+                    </View>
+                  )}
+                  <Text
+                    style={[
+                      styles.leaderboardFullName,
+                      isCurrentUserEntry(entry) && styles.leaderboardFullNameCurrentUser,
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {entry.displayName || 'Anonymous'}
+                    {isCurrentUserEntry(entry) && ' (you)'}
+                  </Text>
+                </View>
                 <Text style={styles.leaderboardFullMeta}>
                   {entry.correctPlacements}/16 correct · {entry.mistakes} {entry.mistakes === 1 ? 'mistake' : 'mistakes'} · {formatTime(entry.timeSeconds)}
                 </Text>

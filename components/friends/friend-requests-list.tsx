@@ -12,6 +12,7 @@ import {
   View,
 } from 'react-native';
 import { ColorScheme } from '@/constants/theme';
+import { Button } from '@/components/ui/button';
 
 interface FriendRequestsListProps {
   incoming: FriendRequest[];
@@ -125,12 +126,14 @@ export function FriendRequestsList({
           {isProcessing ? (
             <ActivityIndicator size="small" color={colorScheme.brandPrimary} />
           ) : (
-            <TouchableOpacity
-              style={styles.cancelButton}
+            <Button
+              text="Cancel"
               onPress={() => onCancel(item.id)}
-            >
-              <Text style={styles.cancelButtonText}>Cancel</Text>
-            </TouchableOpacity>
+              variant="text"
+              backgroundColor={colorScheme.textSecondary}
+              style={{ paddingVertical: 8, paddingHorizontal: 12 }}
+              textStyle={{ fontSize: 14 }}
+            />
           )}
         </View>
       </View>
@@ -275,16 +278,5 @@ const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
     backgroundColor: colorScheme.backgroundTertiary,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  cancelButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    backgroundColor: colorScheme.backgroundTertiary,
-    borderRadius: 8,
-  },
-  cancelButtonText: {
-    fontSize: 14,
-    color: colorScheme.textSecondary,
-    fontWeight: '500',
   },
 });

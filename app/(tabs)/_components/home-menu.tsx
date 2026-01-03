@@ -1,14 +1,16 @@
 import { GradientButton } from '@/components/ui/gradient-button';
+import { Button } from '@/components/ui/button';
+import { SignInBenefitsCard } from '@/components/game';
+import { LeaderboardTabToggle, LeaderboardTab } from '@/components/leaderboard/leaderboard-tab-toggle';
+import { LeaderboardCompact } from '@/components/leaderboard/leaderboard-compact';
 import { LeaderboardEntry } from '@/data/puzzleApi';
 import { GameScore } from '@/types/game';
 import { logger } from '@/utils/logger';
 import { AntDesign, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { User } from '@supabase/supabase-js';
 import { Link, useRouter } from 'expo-router';
-import LottieView from 'lottie-react-native';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
   Animated,
   Image,
   KeyboardAvoidingView,
@@ -27,17 +29,6 @@ import { useThemeScheme } from '@/contexts/theme-context';
 
 import { createStyles } from '../index.styles';
 
-// Animation frame constants (total 182 frames at 30fps)
-const TOTAL_FRAMES = 182;
-const LOOP_START = 79;
-const LOOP_END = 148;
-const TAP_START = 149;
-const TAP_END = 182;
-// Normalized progress values (0-1)
-const LOOP_START_PROGRESS = LOOP_START / TOTAL_FRAMES;
-const LOOP_END_PROGRESS = LOOP_END / TOTAL_FRAMES;
-const TAP_START_PROGRESS = TAP_START / TOTAL_FRAMES;
-const TAP_END_PROGRESS = TAP_END / TOTAL_FRAMES;
 let hasPlayedEntranceAnimations = false;
 
 export interface HomeMenuProps {
@@ -48,6 +39,7 @@ export interface HomeMenuProps {
   loading: boolean;
   dailyCompleted: boolean;
   fetchingPuzzle: boolean;
+  level: number;
 
   leaderboard: LeaderboardEntry[];
   loadingLeaderboard: boolean;
@@ -111,6 +103,7 @@ export function HomeMenu({
   loading,
   dailyCompleted,
   fetchingPuzzle,
+  level,
   leaderboard,
   loadingLeaderboard,
   leaderboardLoaded,
@@ -154,23 +147,15 @@ export function HomeMenu({
 }: HomeMenuProps) {
   const router = useRouter();
   const displayNameInputRef = useRef<TextInput>(null);
-  const lottieRef = useRef<LottieView>(null);
-  const [animationPhase, setAnimationPhase] = useState<'intro' | 'loop' | 'tap'>('intro');
-  const [homeLeaderboardTab, setHomeLeaderboardTab] = useState<'global' | 'friends'>('global');
+  const [homeLeaderboardTab, setHomeLeaderboardTab] = useState<LeaderboardTab>('global');
   const [avatarLoadError, setAvatarLoadError] = useState(false);
-  const hasStarted = useRef(false);
   const { colorScheme } = useThemeScheme();
   const { width } = useWindowDimensions();
   const styles = useMemo(() => createStyles(colorScheme), [colorScheme]);
   const logoSize = Math.min(Math.max(width * 0.55, 210), 320);
   const logoFrameHeight = Math.round(logoSize * 0.9);
 
-  const isWeb = Platform.OS === 'web';
   const shouldPlayEntranceAnimations = showEntranceAnimations && !hasPlayedEntranceAnimations;
-
-  // Progress state for mobile (more reliable than play(start, end))
-  const [mobileProgress, setMobileProgress] = useState(LOOP_START_PROGRESS);
-  const animationFrameRef = useRef<number | null>(null);
 
   // Entrance animations
   const logoOpacity = useRef(new Animated.Value(shouldPlayEntranceAnimations ? 0 : 1)).current;
@@ -182,73 +167,6 @@ export function HomeMenu({
   const buttonsOpacity = useRef(new Animated.Value(shouldPlayEntranceAnimations ? 0 : 1)).current;
   const buttonsTranslateY = useRef(new Animated.Value(shouldPlayEntranceAnimations ? 30 : 0)).current;
   const footerOpacity = useRef(new Animated.Value(shouldPlayEntranceAnimations ? 0 : 1)).current;
-
-  // Start the loop animation for mobile using requestAnimationFrame
-  const startLoopAnimation = useCallback(() => {
-    if (isWeb) return;
-
-    // Cancel any existing animation
-    if (animationFrameRef.current) {
-      cancelAnimationFrame(animationFrameRef.current);
-    }
-
-    const loopDurationMs = ((LOOP_END - LOOP_START) / 30) * 1000;
-    let startTime: number | null = null;
-
-    const animate = (timestamp: number) => {
-      if (!startTime) startTime = timestamp;
-      const elapsed = timestamp - startTime;
-      const progressInLoop = (elapsed % loopDurationMs) / loopDurationMs;
-      const progress = LOOP_START_PROGRESS + progressInLoop * (LOOP_END_PROGRESS - LOOP_START_PROGRESS);
-
-      setMobileProgress(progress);
-      animationFrameRef.current = requestAnimationFrame(animate);
-    };
-
-    animationFrameRef.current = requestAnimationFrame(animate);
-  }, [isWeb]);
-
-  // Play tap animation for mobile
-  const playTapAnimation = useCallback(() => {
-    if (isWeb) return;
-
-    // Cancel any existing animation
-    if (animationFrameRef.current) {
-      cancelAnimationFrame(animationFrameRef.current);
-    }
-
-    const tapDurationMs = ((TAP_END - TAP_START) / 30) * 1000;
-    let startTime: number | null = null;
-
-    const animate = (timestamp: number) => {
-      if (!startTime) startTime = timestamp;
-      const elapsed = timestamp - startTime;
-
-      if (elapsed >= tapDurationMs) {
-        setMobileProgress(TAP_END_PROGRESS);
-        setAnimationPhase('loop');
-        return;
-      }
-
-      const progressInTap = elapsed / tapDurationMs;
-      const progress = TAP_START_PROGRESS + progressInTap * (TAP_END_PROGRESS - TAP_START_PROGRESS);
-
-      setMobileProgress(progress);
-      animationFrameRef.current = requestAnimationFrame(animate);
-    };
-
-    setMobileProgress(TAP_START_PROGRESS);
-    animationFrameRef.current = requestAnimationFrame(animate);
-  }, [isWeb]);
-
-  // Cleanup animation frame on unmount
-  useEffect(() => {
-    return () => {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-    };
-  }, []);
 
   useEffect(() => {
     if (!showDisplayNameModal) return;
@@ -262,14 +180,6 @@ export function HomeMenu({
   useEffect(() => {
     setAvatarLoadError(false);
   }, [avatarUrl]);
-
-  const playSegment = useCallback((start: number, end: number) => {
-    if (!lottieRef.current) return;
-
-    // Web needs segment + explicit start frame to actually begin playback.
-    lottieRef.current.play(start, end);
-    lottieRef.current.play(start);
-  }, []);
 
   // Entrance animations effect
   useEffect(() => {
@@ -337,66 +247,8 @@ export function HomeMenu({
     }
   }, [shouldPlayEntranceAnimations]);
 
-  // Start loop animation on mount (skip the intro animation)
-  useEffect(() => {
-    if (hasStarted.current) return;
-    hasStarted.current = true;
-    setAnimationPhase('loop');
-
-    const timer = setTimeout(() => {
-      if (isWeb) {
-        playSegment(LOOP_START, LOOP_END);
-      } else {
-        startLoopAnimation();
-      }
-    }, 100);
-
-    return () => clearTimeout(timer);
-  }, [isWeb, playSegment, startLoopAnimation]);
-
-  // Play the appropriate segment when phase changes (except intro which plays on mount)
-  useEffect(() => {
-    if (animationPhase === 'intro' || !hasStarted.current) return;
-
-    const timer = setTimeout(() => {
-      if (animationPhase === 'loop') {
-        if (isWeb) {
-          playSegment(LOOP_START, LOOP_END);
-        } else {
-          startLoopAnimation();
-        }
-      } else if (animationPhase === 'tap') {
-        if (isWeb) {
-          playSegment(TAP_START, TAP_END);
-        } else {
-          playTapAnimation();
-        }
-      }
-    }, 50);
-
-    return () => clearTimeout(timer);
-  }, [animationPhase, isWeb, playSegment, startLoopAnimation, playTapAnimation]);
-
-  // Only used for web - mobile uses Animated progress callbacks
-  const handleAnimationFinish = () => {
-    if (!isWeb) return;
-
-    if (animationPhase === 'intro') {
-      setAnimationPhase('loop');
-    } else if (animationPhase === 'tap') {
-      setAnimationPhase('loop');
-    } else if (animationPhase === 'loop') {
-      // Loop keeps replaying
-      setTimeout(() => {
-        playSegment(LOOP_START, LOOP_END);
-      }, 50);
-    }
-  };
-
   const handleLogoPress = () => {
-    if (animationPhase === 'loop') {
-      setAnimationPhase('tap');
-    }
+    // Logo press handler - can be used for future interactions
   };
 
   const displayNameModalContent = (
@@ -425,31 +277,27 @@ export function HomeMenu({
         <Text style={styles.displayNameErrorText}>{displayNameError}</Text>
       )}
 
-      <TouchableOpacity
-        style={[
-          styles.displayNameSaveButton,
-          (!displayNameInput.trim() || savingDisplayName) && styles.displayNameSaveButtonDisabled,
-        ]}
+      <Button
+        text={savingDisplayName ? 'Saving...' : 'Save'}
         onPress={onSaveDisplayName}
         disabled={!displayNameInput.trim() || savingDisplayName}
-        accessibilityRole="button"
-        accessibilityLabel={savingDisplayName ? 'Saving display name' : 'Save display name'}
-      >
-        <Text style={styles.displayNameSaveText}>{savingDisplayName ? 'Saving...' : 'Save'}</Text>
-      </TouchableOpacity>
+        loading={savingDisplayName}
+        backgroundColor={colorScheme.success}
+        textColor={colorScheme.textPrimary}
+        style={{ width: '100%' }}
+      />
 
       {displayName && (
-        <TouchableOpacity
-          style={styles.displayNameCancelButton}
+        <Button
+          text="Cancel"
           onPress={() => {
             setShowDisplayNameModal(false);
             setDisplayNameInput('');
           }}
-          accessibilityRole="button"
-          accessibilityLabel="Cancel editing display name"
-        >
-          <Text style={styles.displayNameCancelText}>Cancel</Text>
-        </TouchableOpacity>
+          variant="text"
+          backgroundColor={colorScheme.textTertiary}
+          style={{ width: '100%', marginTop: 12 }}
+        />
       )}
     </View>
   );
@@ -476,6 +324,11 @@ export function HomeMenu({
                   </View>
                 )}
               </TouchableOpacity>
+              {user && (
+                <View style={styles.headerLevelBadge}>
+                  <Text style={styles.headerLevelText}>Lv {level}</Text>
+                </View>
+              )}
               <TouchableOpacity style={styles.headerProfileButton} onPress={() => setShowProfileMenu(true)}>
                 <View style={styles.headerProfileIcon}>
                   {avatarUrl && !avatarLoadError ? (
@@ -493,9 +346,13 @@ export function HomeMenu({
               </TouchableOpacity>
             </>
           ) : (
-            <TouchableOpacity style={styles.headerSignInButton} onPress={() => setShowSignIn(true)}>
-              <Text style={styles.headerSignInText}>Sign In</Text>
-            </TouchableOpacity>
+            <Button
+              text="Sign In"
+              onPress={() => setShowSignIn(true)}
+              style={{ paddingHorizontal: 16, paddingVertical: 8 }}
+              textStyle={{ fontSize: 14 }}
+              glow
+            />
           )}
         </View>
       </View>
@@ -508,9 +365,13 @@ export function HomeMenu({
                 Sign in to see your global ranking, compete on the leaderboard, and sync across devices
               </Text>
             </View>
-            <TouchableOpacity style={styles.signInBannerButton} onPress={() => setShowSignIn(true)}>
-              <Text style={styles.signInBannerButtonText}>Sign In</Text>
-            </TouchableOpacity>
+            <Button
+              text="Sign In"
+              onPress={() => setShowSignIn(true)}
+              style={{ paddingHorizontal: 20, paddingVertical: 10 }}
+              textStyle={{ fontSize: 14 }}
+              glow
+            />
           </View>
           <TouchableOpacity style={styles.signInBannerDismiss} onPress={onDismissSignInBanner}>
             <Ionicons name="close" size={20} color="#666" />
@@ -533,26 +394,10 @@ export function HomeMenu({
           >
             <TouchableOpacity onPress={handleLogoPress} activeOpacity={0.8}>
               <View style={[styles.menuLogoFrame, { width: logoSize, height: logoFrameHeight }]}>
-                <LottieView
-                  ref={lottieRef}
-                  source={require('@/assets/lottie/anim_full_intersections_v2.json')}
+                <Image
+                  source={require('@/assets/images/intersections-splash.png')}
                   style={[styles.menuLogo, { width: logoSize, height: logoSize }]}
-                  webStyle={{ ...styles.menuLogo, width: logoSize, height: logoSize }}
-                  autoPlay={false}
-                  loop={false}
-                  progress={isWeb ? undefined : mobileProgress}
-                  onAnimationFinish={handleAnimationFinish}
-                  onAnimationLoaded={() => {
-                    if (!isWeb) return;
-                    // Always play the loop segment when animation loads on web
-                    // This handles both initial load and remount after OAuth redirect
-                    if (animationPhase === 'intro' || animationPhase === 'loop') {
-                      setAnimationPhase('loop');
-                      playSegment(LOOP_START, LOOP_END);
-                    } else if (animationPhase === 'tap') {
-                      playSegment(TAP_START, TAP_END);
-                    }
-                  }}
+                  resizeMode="contain"
                 />
               </View>
             </TouchableOpacity>
@@ -632,49 +477,18 @@ export function HomeMenu({
                           <Text style={styles.completedTitle}>Today&apos;s Leaderboard</Text>
                         </View>
                         {hasFriends && (
-                          <View style={styles.homeLeaderboardTabBar}>
-                            <TouchableOpacity
-                              style={[
-                                styles.homeLeaderboardTab,
-                                homeLeaderboardTab === 'global' && styles.homeLeaderboardTabActive,
-                              ]}
-                              onPress={(e) => {
-                                e.stopPropagation();
-                                setHomeLeaderboardTab('global');
-                              }}
-                            >
-                              <Text
-                                style={[
-                                  styles.homeLeaderboardTabText,
-                                  homeLeaderboardTab === 'global' && styles.homeLeaderboardTabTextActive,
-                                ]}
-                              >
-                                Global
-                              </Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                              style={[
-                                styles.homeLeaderboardTab,
-                                homeLeaderboardTab === 'friends' && styles.homeLeaderboardTabActive,
-                              ]}
-                              onPress={(e) => {
-                                e.stopPropagation();
-                                setHomeLeaderboardTab('friends');
-                                if (!friendsLeaderboardLoaded && !loadingFriendsLeaderboard) {
-                                  onLoadFriendsLeaderboard();
-                                }
-                              }}
-                            >
-                              <Text
-                                style={[
-                                  styles.homeLeaderboardTabText,
-                                  homeLeaderboardTab === 'friends' && styles.homeLeaderboardTabTextActive,
-                                ]}
-                              >
-                                Friends
-                              </Text>
-                            </TouchableOpacity>
-                          </View>
+                          <LeaderboardTabToggle
+                            activeTab={homeLeaderboardTab}
+                            onTabChange={(tab) => {
+                              setHomeLeaderboardTab(tab);
+                              if (tab === 'friends' && !friendsLeaderboardLoaded && !loadingFriendsLeaderboard) {
+                                onLoadFriendsLeaderboard();
+                              }
+                            }}
+                            containerStyle={{ width: '80%', padding: 2 }}
+                            tabStyle={{ paddingVertical: 3 }}
+                            tabTextStyle={{ fontSize: 13 }}
+                          />
                         )}
                         {homeLeaderboardTab === 'global' && userRank && (
                           <Text style={styles.completedRankText}>#{userRank} in the world</Text>
@@ -700,195 +514,32 @@ export function HomeMenu({
                     </View>
 
                     {homeLeaderboardTab === 'global' ? (
-                      <>
-                        {(loadingLeaderboard && !leaderboardLoaded) ||
-                        (user && leaderboardLoaded && leaderboard.length > 0 && userRank === null) ? (
-                          <View style={styles.leaderboardLoadingContainer}>
-                            <ActivityIndicator size="small" color="#6a9fff" />
-                            <Text style={styles.leaderboardLoadingText}>Loading rankings...</Text>
-                          </View>
-                        ) : leaderboard.length === 0 ? (
-                          <Text style={styles.leaderboardEmptyText}>No scores yet</Text>
-                        ) : (
-                          <View style={styles.leaderboardCompact}>
-                            {isRefreshing && (
-                              <View style={styles.refreshingOverlay}>
-                                <ActivityIndicator size="small" color="#6a9fff" />
-                              </View>
-                            )}
-                            {leaderboard.slice(0, 3).map((entry, index) => (
-                              <View
-                                key={index}
-                                style={[
-                                  styles.leaderboardCompactRow,
-                                  isCurrentUserEntry(entry) && styles.leaderboardCompactRowCurrentUser,
-                                ]}
-                              >
-                                <View style={styles.leaderboardCompactRank}>
-                                  {entry.rank === 1 ? (
-                                    <MaterialCommunityIcons name="medal" size={20} color="#ffd700" />
-                                  ) : entry.rank === 2 ? (
-                                    <MaterialCommunityIcons name="medal" size={20} color="#c0c0c0" />
-                                  ) : (
-                                    <MaterialCommunityIcons name="medal" size={20} color="#cd7f32" />
-                                  )}
-                                </View>
-                                <View style={styles.leaderboardCompactAvatar}>
-                                  {entry.avatarUrl ? (
-                                    <Image
-                                      source={{ uri: entry.avatarUrl }}
-                                      style={styles.leaderboardCompactAvatarImage}
-                                    />
-                                  ) : (
-                                    <Text style={styles.leaderboardCompactAvatarText}>
-                                      {(entry.displayName || 'A').charAt(0).toUpperCase()}
-                                    </Text>
-                                  )}
-                                </View>
-                                <Text
-                                  style={[
-                                    styles.leaderboardCompactName,
-                                    isCurrentUserEntry(entry) && styles.leaderboardCompactNameCurrentUser,
-                                  ]}
-                                  numberOfLines={1}
-                                >
-                                  {(isCurrentUserEntry(entry) && displayName) ? displayName : (entry.displayName || 'Anonymous')}
-                                  {isCurrentUserEntry(entry) && ' (you)'}
-                                </Text>
-                                <Text style={styles.leaderboardCompactCorrect}>{entry.correctPlacements}/16</Text>
-                                <Text
-                                  style={[
-                                    styles.leaderboardCompactScore,
-                                    isCurrentUserEntry(entry) && styles.leaderboardCompactScoreCurrentUser,
-                                  ]}
-                                >
-                                  {entry.score}
-                                </Text>
-                              </View>
-                            ))}
-
-                            {userRank && userRank > 3 && savedScore && (
-                              <>
-                                <View style={styles.leaderboardDivider}>
-                                  <Text style={styles.leaderboardDividerText}>...</Text>
-                                </View>
-                                <View style={[styles.leaderboardCompactRow, styles.leaderboardCompactRowCurrentUser]}>
-                                  <View style={styles.leaderboardCompactRank}>
-                                    <Text
-                                      style={styles.leaderboardCompactRankText}
-                                      numberOfLines={1}
-                                      adjustsFontSizeToFit
-                                      minimumFontScale={0.8}
-                                    >
-                                      #{userRank}
-                                    </Text>
-                                  </View>
-                                  <View style={styles.leaderboardCompactAvatar}>
-                                    {avatarUrl ? (
-                                      <Image
-                                        source={{ uri: avatarUrl }}
-                                        style={styles.leaderboardCompactAvatarImage}
-                                      />
-                                    ) : (
-                                      <Text style={styles.leaderboardCompactAvatarText}>
-                                        {(displayName || 'A').charAt(0).toUpperCase()}
-                                      </Text>
-                                    )}
-                                  </View>
-                                  <Text
-                                    style={[styles.leaderboardCompactName, styles.leaderboardCompactNameCurrentUser]}
-                                    numberOfLines={1}
-                                  >
-                                    {displayName || 'Anonymous'} (you)
-                                  </Text>
-                                  <Text style={styles.leaderboardCompactCorrect}>{savedScore.correctPlacements}/16</Text>
-                                  <Text style={[styles.leaderboardCompactScore, styles.leaderboardCompactScoreCurrentUser]}>
-                                    {savedScore.score}
-                                  </Text>
-                                </View>
-                              </>
-                            )}
-                          </View>
-                        )}
-                      </>
+                      <LeaderboardCompact
+                        leaderboard={leaderboard}
+                        loading={loadingLeaderboard || (user && leaderboardLoaded && leaderboard.length > 0 && userRank === null)}
+                        loaded={leaderboardLoaded}
+                        isRefreshing={isRefreshing}
+                        isCurrentUserEntry={isCurrentUserEntry}
+                        displayName={displayName}
+                        avatarUrl={avatarUrl}
+                        level={level}
+                        userRank={userRank}
+                        savedScore={savedScore}
+                        showUserRow={true}
+                      />
                     ) : (
-                      <>
-                        {loadingFriendsLeaderboard && !friendsLeaderboardLoaded ? (
-                          <View style={styles.leaderboardLoadingContainer}>
-                            <ActivityIndicator size="small" color="#6a9fff" />
-                            <Text style={styles.leaderboardLoadingText}>Loading friends...</Text>
-                          </View>
-                        ) : friendsLeaderboard.length === 0 ? (
-                          <Text style={styles.leaderboardEmptyText}>No friends have played yet</Text>
-                        ) : (
-                          <View style={styles.leaderboardCompact}>
-                            {isRefreshing && (
-                              <View style={styles.refreshingOverlay}>
-                                <ActivityIndicator size="small" color="#6a9fff" />
-                              </View>
-                            )}
-                            {friendsLeaderboard.slice(0, 3).map((entry, index) => (
-                              <View
-                                key={index}
-                                style={[
-                                  styles.leaderboardCompactRow,
-                                  isCurrentUserEntry(entry) && styles.leaderboardCompactRowCurrentUser,
-                                ]}
-                              >
-                                <View style={styles.leaderboardCompactRank}>
-                                  {entry.rank === 1 ? (
-                                    <MaterialCommunityIcons name="medal" size={20} color="#ffd700" />
-                                  ) : entry.rank === 2 ? (
-                                    <MaterialCommunityIcons name="medal" size={20} color="#c0c0c0" />
-                                  ) : entry.rank === 3 ? (
-                                    <MaterialCommunityIcons name="medal" size={20} color="#cd7f32" />
-                                  ) : (
-                                    <Text
-                                      style={styles.leaderboardCompactRankText}
-                                      numberOfLines={1}
-                                      adjustsFontSizeToFit
-                                      minimumFontScale={0.8}
-                                    >
-                                      #{entry.rank}
-                                    </Text>
-                                  )}
-                                </View>
-                                <View style={styles.leaderboardCompactAvatar}>
-                                  {entry.avatarUrl ? (
-                                    <Image
-                                      source={{ uri: entry.avatarUrl }}
-                                      style={styles.leaderboardCompactAvatarImage}
-                                    />
-                                  ) : (
-                                    <Text style={styles.leaderboardCompactAvatarText}>
-                                      {(entry.displayName || 'A').charAt(0).toUpperCase()}
-                                    </Text>
-                                  )}
-                                </View>
-                                <Text
-                                  style={[
-                                    styles.leaderboardCompactName,
-                                    isCurrentUserEntry(entry) && styles.leaderboardCompactNameCurrentUser,
-                                  ]}
-                                  numberOfLines={1}
-                                >
-                                  {(isCurrentUserEntry(entry) && displayName) ? displayName : (entry.displayName || 'Anonymous')}
-                                  {isCurrentUserEntry(entry) && ' (you)'}
-                                </Text>
-                                <Text style={styles.leaderboardCompactCorrect}>{entry.correctPlacements}/16</Text>
-                                <Text
-                                  style={[
-                                    styles.leaderboardCompactScore,
-                                    isCurrentUserEntry(entry) && styles.leaderboardCompactScoreCurrentUser,
-                                  ]}
-                                >
-                                  {entry.score}
-                                </Text>
-                              </View>
-                            ))}
-                          </View>
-                        )}
-                      </>
+                      <LeaderboardCompact
+                        leaderboard={friendsLeaderboard}
+                        loading={loadingFriendsLeaderboard}
+                        loaded={friendsLeaderboardLoaded}
+                        isRefreshing={isRefreshing}
+                        emptyText="No friends have played yet"
+                        isCurrentUserEntry={isCurrentUserEntry}
+                        displayName={displayName}
+                        avatarUrl={avatarUrl}
+                        level={level}
+                        showUserRow={false}
+                      />
                     )}
 
                     <View style={styles.tapForDetailsHint}>
@@ -897,61 +548,38 @@ export function HomeMenu({
                     </View>
                   </TouchableOpacity>
                 ) : (
-                  <TouchableOpacity
-                    style={styles.completedContainer}
-                    onPress={() => setShowSignIn(true)}
-                    activeOpacity={0.8}
-                  >
-                    <View style={styles.completedHeader}>
-                      <View style={styles.completedHeaderContent}>
-                        <View style={styles.completedHeaderTitleRow}>
-                          <MaterialCommunityIcons name="trophy" size={20} color="#ffd700" />
-                          <Text style={styles.completedTitle}>Today&apos;s Leaderboard</Text>
-                        </View>
-                      </View>
-                    </View>
-                    {savedScore && (
-                      <View style={styles.leaderboardCompact}>
-                        <View style={[styles.leaderboardCompactRow, styles.leaderboardCompactRowCurrentUser]}>
-                          <View style={styles.leaderboardCompactRank}>
-                            <Text style={styles.leaderboardCompactRankText}>?</Text>
-                          </View>
-                          <Text
-                            style={[styles.leaderboardCompactName, styles.leaderboardCompactNameCurrentUser]}
-                            numberOfLines={1}
-                          >
-                            You
-                          </Text>
-                          <Text style={styles.leaderboardCompactCorrect}>{savedScore.correctPlacements}/16</Text>
-                          <Text style={[styles.leaderboardCompactScore, styles.leaderboardCompactScoreCurrentUser]}>
-                            {savedScore.score}
-                          </Text>
-                        </View>
-                      </View>
-                    )}
-                    <Text style={styles.leaderboardEmptyText}>
-                      Sign in to see your global ranking and full leaderboard
-                    </Text>
-                    <View style={styles.tapForDetailsHint}>
-                      <Text style={styles.tapForDetailsText}>Sign in to continue</Text>
-                      <Ionicons name="chevron-forward" size={14} color="#666" />
-                    </View>
-                  </TouchableOpacity>
+                  <View style={{ paddingHorizontal: 16, marginTop: 8, alignItems: 'center' }}>
+                    <SignInBenefitsCard onSignInPress={() => setShowSignIn(true)} />
+                  </View>
                 )}
               </>
             )}
           </Animated.View>
 
           <View style={styles.secondaryButtonsRow}>
-            <TouchableOpacity style={styles.secondaryButton} onPress={() => router.push('/how-to-play')}>
-              <Ionicons name="help-circle-outline" size={20} color={colorScheme.brandPrimary} />
-              <Text style={styles.secondaryButtonText}>How to Play</Text>
-            </TouchableOpacity>
+            <Button
+              text="How to Play"
+              onPress={() => router.push('/how-to-play')}
+              variant="outlined"
+              backgroundColor={colorScheme.brandPrimary}
+              textColor={colorScheme.brandPrimary}
+              icon="help-circle"
+              iconColor={colorScheme.brandPrimary}
+              iconSize={20}
+              style={{ flex: 1 }}
+            />
 
-            <TouchableOpacity style={styles.secondaryButton} onPress={() => router.push('/archive')}>
-              <Ionicons name="calendar-outline" size={20} color={colorScheme.brandPrimary} />
-              <Text style={styles.secondaryButtonText}>Archive</Text>
-            </TouchableOpacity>
+            <Button
+              text="Archive"
+              onPress={() => router.push('/archive')}
+              variant="outlined"
+              backgroundColor={colorScheme.brandPrimary}
+              textColor={colorScheme.brandPrimary}
+              icon="calendar"
+              iconColor={colorScheme.brandPrimary}
+              iconSize={20}
+              style={{ flex: 1 }}
+            />
           </View>
 
           <Animated.View style={[styles.footerLinks, { opacity: footerOpacity }]}>
@@ -993,8 +621,12 @@ export function HomeMenu({
             <Text style={styles.signInModalTitle}>Sign In</Text>
             <Text style={styles.signInModalSubtitle}>Sync your scores and streaks across devices</Text>
 
-            <TouchableOpacity
-              style={styles.googleButton}
+            <Button
+              text={signingIn ? 'Signing in...' : 'Continue with Google'}
+              icon="google"
+              backgroundColor="#FFFFFF"
+              textColor="#000000"
+              iconColor="#4285f4"
               onPress={async () => {
                 setSigningIn(true);
                 try {
@@ -1007,16 +639,16 @@ export function HomeMenu({
                 }
               }}
               disabled={signingIn}
-            >
-              <View style={styles.googleButtonContent}>
-                <AntDesign name="google" size={20} color="#4285f4" style={{ marginRight: 8 }} />
-                <Text style={styles.googleButtonText}>{signingIn ? 'Signing in...' : 'Continue with Google'}</Text>
-              </View>
-            </TouchableOpacity>
+              loading={signingIn}
+              style={{ width: '100%', marginBottom: 12 }}
+            />
 
             {Platform.OS === 'ios' && (
-              <TouchableOpacity
-                style={styles.appleButton}
+              <Button
+                text={signingInWithApple ? 'Signing in...' : 'Continue with Apple'}
+                icon="apple"
+                backgroundColor="#000000"
+                textColor="#FFFFFF"
                 onPress={async () => {
                   setSigningInWithApple(true);
                   try {
@@ -1029,20 +661,18 @@ export function HomeMenu({
                   }
                 }}
                 disabled={signingInWithApple}
-                activeOpacity={0.8}
-              >
-                <View style={styles.appleButtonContent}>
-                  <Ionicons name="logo-apple" size={20} color="#fff" style={{ marginRight: 8 }} />
-                  <Text style={styles.appleButtonText}>
-                    {signingInWithApple ? 'Signing in...' : 'Continue with Apple'}
-                  </Text>
-                </View>
-              </TouchableOpacity>
+                loading={signingInWithApple}
+                style={{ width: '100%', marginBottom: 12 }}
+              />
             )}
 
-            <TouchableOpacity style={styles.signInCancelButton} onPress={() => setShowSignIn(false)}>
-              <Text style={styles.signInCancelText}>Cancel</Text>
-            </TouchableOpacity>
+            <Button
+              text="Cancel"
+              variant="text"
+              backgroundColor={colorScheme.textSecondary}
+              onPress={() => setShowSignIn(false)}
+              style={{ width: '100%' }}
+            />
           </View>
         </View>
       </Modal>
@@ -1071,6 +701,7 @@ export function HomeMenu({
               </View>
               <View style={styles.profileMenuInfo}>
                 <Text style={styles.profileMenuName}>{displayName || 'No display name'}</Text>
+                <Text style={styles.profileMenuLevel}>Level {level}</Text>
               </View>
             </View>
 

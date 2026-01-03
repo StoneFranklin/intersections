@@ -1,9 +1,9 @@
 import { supabase } from "@/lib/supabase";
-import { IntersectionsDailyPuzzle, Puzzle, Word } from "@/types/game";
-import { Friend, FriendRequest, UserSearchResult } from "@/types/friends";
 import { PracticeCompletion } from "@/types/archive";
-import { logger } from "@/utils/logger";
+import { Friend, FriendRequest, UserSearchResult } from "@/types/friends";
+import { IntersectionsDailyPuzzle, Puzzle, Word } from "@/types/game";
 import { validateDisplayName } from "@/utils/displayNameValidation";
+import { logger } from "@/utils/logger";
 
 const GRID_SIZE = 4;
 
@@ -448,6 +448,7 @@ export interface LeaderboardEntry {
   displayName: string | null;
   avatarUrl: string | null;
   isCurrentUser: boolean;
+  level: number | null;
 }
 
 async function fetchDisplayNames(userIds: string[]): Promise<Map<string, string>> {
@@ -497,6 +498,7 @@ async function fetchDisplayNames(userIds: string[]): Promise<Map<string, string>
 interface UserProfile {
   displayName: string | null;
   avatarUrl: string | null;
+  level: number | null;
 }
 
 async function fetchUserProfiles(userIds: string[]): Promise<Map<string, UserProfile>> {
@@ -506,17 +508,34 @@ async function fetchUserProfiles(userIds: string[]): Promise<Map<string, UserPro
   if (uniqueUserIds.length === 0) return profiles;
 
   try {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('id, display_name, avatar_url')
-      .in('id', uniqueUserIds);
+    // Fetch profiles and XP data in parallel
+    const [profilesData, xpData] = await Promise.all([
+      supabase
+        .from('profiles')
+        .select('id, display_name, avatar_url')
+        .in('id', uniqueUserIds),
+      supabase
+        .from('user_xp')
+        .select('user_id, level')
+        .in('user_id', uniqueUserIds)
+    ]);
 
-    if (!error && data) {
-      for (const profile of data) {
+    const xpMap = new Map<string, number>();
+    if (!xpData.error && xpData.data) {
+      for (const xp of xpData.data) {
+        if (xp?.user_id) {
+          xpMap.set(xp.user_id, xp.level || 1);
+        }
+      }
+    }
+
+    if (!profilesData.error && profilesData.data) {
+      for (const profile of profilesData.data) {
         if (profile?.id) {
           profiles.set(profile.id, {
             displayName: profile.display_name || null,
             avatarUrl: profile.avatar_url || null,
+            level: xpMap.get(profile.id) || null,
           });
         }
       }
@@ -529,16 +548,24 @@ async function fetchUserProfiles(userIds: string[]): Promise<Map<string, UserPro
   // Fallback to per-user queries (keeps working even if RLS behaves unexpectedly on .in())
   for (const userId of uniqueUserIds) {
     try {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('id, display_name, avatar_url')
-        .eq('id', userId)
-        .maybeSingle();
+      const [profileData, xpData] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('id, display_name, avatar_url')
+          .eq('id', userId)
+          .maybeSingle(),
+        supabase
+          .from('user_xp')
+          .select('level')
+          .eq('user_id', userId)
+          .maybeSingle()
+      ]);
 
-      if (profile) {
-        profiles.set(profile.id, {
-          displayName: profile.display_name || null,
-          avatarUrl: profile.avatar_url || null,
+      if (profileData.data) {
+        profiles.set(profileData.data.id, {
+          displayName: profileData.data.display_name || null,
+          avatarUrl: profileData.data.avatar_url || null,
+          level: xpData.data?.level || null,
         });
       }
     } catch {
@@ -595,6 +622,7 @@ export async function getTodayLeaderboardPage(params?: {
         displayName: profile?.displayName || null,
         avatarUrl: profile?.avatarUrl || null,
         isCurrentUser: currentUserId ? row.user_id === currentUserId : false,
+        level: profile?.level || null,
       };
     });
 
@@ -677,6 +705,7 @@ export async function getTodayLeaderboard(currentUserId?: string): Promise<Leade
         displayName: profile?.displayName || null,
         avatarUrl: profile?.avatarUrl || null,
         isCurrentUser: currentUserId ? entry.user_id === currentUserId : false,
+        level: profile?.level || null,
       };
     });
 
@@ -719,6 +748,7 @@ export async function getTodayLeaderboard(currentUserId?: string): Promise<Leade
             displayName: currentUserProfile?.displayName || null,
             avatarUrl: currentUserProfile?.avatarUrl || null,
             isCurrentUser: true,
+            level: currentUserProfile?.level || null,
           });
         }
       }
@@ -1407,6 +1437,7 @@ export async function getFriendsLeaderboardPage(params: {
         displayName: profile?.displayName || null,
         avatarUrl: profile?.avatarUrl || null,
         isCurrentUser: row.user_id === userId,
+        level: profile?.level || null,
       };
     });
 
@@ -1633,6 +1664,7 @@ export async function upsertPracticeScore(
       }
     } else {
       // No record exists - insert new one
+      const now = new Date().toISOString();
       const { error: insertError } = await supabase
         .from('practice_scores')
         .insert({
@@ -1643,6 +1675,8 @@ export async function upsertPracticeScore(
           best_mistakes: mistakes,
           best_correct_placements: correctPlacements,
           attempts: 1,
+          first_completed_at: now,
+          last_played_at: now,
         });
 
       if (insertError) {
@@ -1720,6 +1754,115 @@ export async function getPracticeScore(userId: string, puzzleDate: string): Prom
     };
   } catch (e) {
     logger.error('Error in getPracticeScore:', e);
+    return null;
+  }
+}
+
+// ================== XP/LEVELING API ==================
+
+export interface UserXP {
+  totalXP: number;
+  level: number;
+}
+
+/**
+ * Get user's current XP and level
+ */
+export async function getUserXP(userId: string): Promise<UserXP | null> {
+  try {
+    const { data, error } = await supabase
+      .from('user_xp')
+      .select('total_xp, level')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (error && error.code !== 'PGRST116') {
+      logger.error('Error fetching user XP:', error);
+      return null;
+    }
+
+    if (!data) {
+      return { totalXP: 0, level: 1 };
+    }
+
+    return {
+      totalXP: data.total_xp,
+      level: data.level,
+    };
+  } catch (e) {
+    logger.error('Error in getUserXP:', e);
+    return null;
+  }
+}
+
+/**
+ * Add XP to a user's account
+ * Returns the updated XP data and whether they leveled up
+ */
+export async function addUserXP(
+  userId: string,
+  xpToAdd: number,
+  levelFromXPFn: (xp: number) => number
+): Promise<{ success: boolean; newTotalXP: number; newLevel: number; leveledUp: boolean; previousLevel: number } | null> {
+  try {
+    // Get current XP
+    const { data: current, error: fetchError } = await supabase
+      .from('user_xp')
+      .select('total_xp, level')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (fetchError && fetchError.code !== 'PGRST116') {
+      logger.error('Error fetching current XP:', fetchError);
+      return null;
+    }
+
+    const currentXP = current?.total_xp || 0;
+    const previousLevel = current?.level || 1;
+    const newTotalXP = currentXP + xpToAdd;
+    const newLevel = levelFromXPFn(newTotalXP);
+    const leveledUp = newLevel > previousLevel;
+
+    if (current) {
+      // Update existing record
+      const { error: updateError } = await supabase
+        .from('user_xp')
+        .update({
+          total_xp: newTotalXP,
+          level: newLevel,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('user_id', userId);
+
+      if (updateError) {
+        logger.error('Error updating user XP:', updateError);
+        return null;
+      }
+    } else {
+      // Insert new record
+      const { error: insertError } = await supabase
+        .from('user_xp')
+        .insert({
+          user_id: userId,
+          total_xp: newTotalXP,
+          level: newLevel,
+        });
+
+      if (insertError) {
+        logger.error('Error inserting user XP:', insertError);
+        return null;
+      }
+    }
+
+    return {
+      success: true,
+      newTotalXP,
+      newLevel,
+      leveledUp,
+      previousLevel,
+    };
+  } catch (e) {
+    logger.error('Error in addUserXP:', e);
     return null;
   }
 }

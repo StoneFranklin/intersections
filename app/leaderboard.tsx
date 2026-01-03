@@ -1,14 +1,15 @@
 import { createStyles } from '@/app/(tabs)/index.styles';
 import { useAuth } from '@/contexts/auth-context';
 import { useThemeScheme } from '@/contexts/theme-context';
+import { LeaderboardTabToggle, LeaderboardTab } from '@/components/leaderboard/leaderboard-tab-toggle';
 import type { LeaderboardEntry } from '@/data/puzzleApi';
 import {
-  getFriendIds,
-  getFriendsLeaderboardPage,
-  getPercentile,
-  getTodayLeaderboard,
-  getTodayLeaderboardPage,
-  getUserTodayScore,
+    getFriendIds,
+    getFriendsLeaderboardPage,
+    getPercentile,
+    getTodayLeaderboard,
+    getTodayLeaderboardPage,
+    getUserTodayScore,
 } from '@/data/puzzleApi';
 import type { GameScore } from '@/types/game';
 import { formatTime, shareScore } from '@/utils/share';
@@ -17,8 +18,6 @@ import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, Image, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-type LeaderboardTab = 'global' | 'friends';
 
 export default function LeaderboardPage() {
   const { colorScheme } = useThemeScheme();
@@ -200,24 +199,10 @@ export default function LeaderboardPage() {
 
       {/* Tab Bar for Global/Friends */}
       {friendIds.length > 0 && (
-        <View style={styles.leaderboardTabBar}>
-          <TouchableOpacity
-            style={[styles.leaderboardTab, isGlobalTab && styles.leaderboardTabActive]}
-            onPress={() => handleTabChange('global')}
-          >
-            <Text style={[styles.leaderboardTabText, isGlobalTab && styles.leaderboardTabTextActive]}>
-              Global
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.leaderboardTab, !isGlobalTab && styles.leaderboardTabActive]}
-            onPress={() => handleTabChange('friends')}
-          >
-            <Text style={[styles.leaderboardTabText, !isGlobalTab && styles.leaderboardTabTextActive]}>
-              Friends
-            </Text>
-          </TouchableOpacity>
-        </View>
+        <LeaderboardTabToggle
+          activeTab={leaderboardTab}
+          onTabChange={handleTabChange}
+        />
       )}
 
       <View style={{ flex: 1 }}>
@@ -336,16 +321,23 @@ export default function LeaderboardPage() {
                 )}
               </View>
               <View style={styles.leaderboardFullInfo}>
-                <Text
-                  style={[
-                    styles.leaderboardFullName,
-                    isCurrentUserEntry(entry) && styles.leaderboardFullNameCurrentUser,
-                  ]}
-                  numberOfLines={1}
-                >
-                  {entry.displayName || 'Anonymous'}
-                  {isCurrentUserEntry(entry) && ' (you)'}
-                </Text>
+                <View style={styles.leaderboardFullNameRow}>
+                  {entry.level && (
+                    <View style={styles.leaderboardLevelBadge}>
+                      <Text style={styles.leaderboardLevelText}>Lv {entry.level}</Text>
+                    </View>
+                  )}
+                  <Text
+                    style={[
+                      styles.leaderboardFullName,
+                      isCurrentUserEntry(entry) && styles.leaderboardFullNameCurrentUser,
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {entry.displayName || 'Anonymous'}
+                    {isCurrentUserEntry(entry) && ' (you)'}
+                  </Text>
+                </View>
                 <Text style={styles.leaderboardFullMeta}>
                   {entry.correctPlacements}/16 correct · {entry.mistakes} {entry.mistakes === 1 ? 'mistake' : 'mistakes'} · {formatTime(entry.timeSeconds)}
                 </Text>

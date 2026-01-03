@@ -59,8 +59,8 @@ export const colorSchemes = {
     // Game cell colors
     cellEmpty: '#1a1a2e',
     cellFilled: '#2a2a4e',
-    cellCorrect: '#1a3d2d',
-    cellIncorrect: '#3d2d2d',
+    cellCorrect: '#166534',            // Darker green for better contrast
+    cellIncorrect: '#991b1b',          // Darker red for better contrast
     cellSelected: '#2a2a4e',
 
     // Overlay colors
@@ -121,13 +121,13 @@ export const colorSchemes = {
     borderSecondary: '#3a5a8a',        // Logo blue
     borderAccent: '#ffc721',           // Logo gold for accent
 
-    gridHeaderColBg: '#3a5a8a',        // Logo blue
-    gridHeaderRowBg: '#5a3a8a',        // Logo purple
+    gridHeaderColBg: '#0099ffff',        // Brighter blue
+    gridHeaderRowBg: '#d059ffff',        // Brighter purple
 
     cellEmpty: '#1a2d4a',              // Matches backgroundSecondary
     cellFilled: '#2a4268',             // Matches backgroundTertiary
-    cellCorrect: '#1a4a38',
-    cellIncorrect: '#2d1a1a',
+    cellCorrect: '#047857',            // Darker green for better contrast
+    cellIncorrect: '#b91c1c',          // Darker red for better contrast
     cellSelected: '#3a5a8a',           // Logo blue for selection
 
     overlayDark: 'rgba(13, 26, 45, 0.85)',
@@ -190,8 +190,8 @@ export const colorSchemes = {
 
     cellEmpty: '#1a2e1a',
     cellFilled: '#2a4a2a',
-    cellCorrect: '#064e3b',
-    cellIncorrect: '#3d2d2d',
+    cellCorrect: '#065f46',            // Darker green for better contrast
+    cellIncorrect: '#991b1b',          // Darker red for better contrast
     cellSelected: '#2a4a2a',
 
     overlayDark: 'rgba(15, 30, 15, 0.8)',
@@ -254,8 +254,8 @@ export const colorSchemes = {
 
     cellEmpty: '#2e1a0f',
     cellFilled: '#4a2a1a',
-    cellCorrect: '#064e3b',
-    cellIncorrect: '#3d2d2d',
+    cellCorrect: '#065f46',            // Darker green for better contrast
+    cellIncorrect: '#991b1b',          // Darker red for better contrast
     cellSelected: '#4a2a1a',
 
     overlayDark: 'rgba(26, 15, 10, 0.8)',
@@ -318,8 +318,8 @@ export const colorSchemes = {
 
     cellEmpty: '#2a2a10',
     cellFilled: '#3a3a18',
-    cellCorrect: '#1a3d2d',
-    cellIncorrect: '#3d2d2d',
+    cellCorrect: '#166534',            // Darker green for better contrast
+    cellIncorrect: '#991b1b',          // Darker red for better contrast
     cellSelected: '#3a3a18',
 
     overlayDark: 'rgba(26, 26, 10, 0.8)',
@@ -382,8 +382,8 @@ export const colorSchemes = {
 
     cellEmpty: '#2a1e0f',
     cellFilled: '#3a2a15',
-    cellCorrect: '#1a3d2d',
-    cellIncorrect: '#3d2d2d',
+    cellCorrect: '#166534',            // Darker green for better contrast
+    cellIncorrect: '#991b1b',          // Darker red for better contrast
     cellSelected: '#3a2a15',
 
     overlayDark: 'rgba(26, 18, 10, 0.8)',
@@ -446,8 +446,8 @@ export const colorSchemes = {
 
     cellEmpty: '#1e0f2a',
     cellFilled: '#2a153a',
-    cellCorrect: '#1a3d2d',
-    cellIncorrect: '#3d2d2d',
+    cellCorrect: '#166534',            // Darker green for better contrast
+    cellIncorrect: '#991b1b',          // Darker red for better contrast
     cellSelected: '#2a153a',
 
     overlayDark: 'rgba(18, 10, 26, 0.8)',
@@ -510,8 +510,8 @@ export const colorSchemes = {
 
     cellEmpty: '#1a0f2a',
     cellFilled: '#25153a',
-    cellCorrect: '#1a3d2d',
-    cellIncorrect: '#3d2d2d',
+    cellCorrect: '#166534',            // Darker green for better contrast
+    cellIncorrect: '#991b1b',          // Darker red for better contrast
     cellSelected: '#25153a',
 
     overlayDark: 'rgba(15, 10, 26, 0.8)',
@@ -574,8 +574,8 @@ export const colorSchemes = {
 
     cellEmpty: '#2a0f1e',
     cellFilled: '#3a152e',
-    cellCorrect: '#1a3d2d',
-    cellIncorrect: '#3d2d2d',
+    cellCorrect: '#166534',            // Darker green for better contrast
+    cellIncorrect: '#991b1b',          // Darker red for better contrast
     cellSelected: '#3a152e',
 
     overlayDark: 'rgba(26, 10, 20, 0.8)',
@@ -638,8 +638,8 @@ export const colorSchemes = {
 
     cellEmpty: '#0f0f1a',
     cellFilled: '#1a1a2a',
-    cellCorrect: '#002211',
-    cellIncorrect: '#330011',
+    cellCorrect: '#065f46',            // Darker green for better contrast
+    cellIncorrect: '#991b1b',          // Darker red for better contrast
     cellSelected: '#1a1a2a',
 
     overlayDark: 'rgba(10, 10, 15, 0.8)',

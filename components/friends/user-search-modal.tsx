@@ -17,6 +17,7 @@ import {
   View,
 } from 'react-native';
 import { ColorScheme } from '@/constants/theme';
+import { Button } from '@/components/ui/button';
 
 interface UserSearchModalProps {
   visible: boolean;
@@ -119,20 +120,19 @@ export function UserSearchModal({
         );
       default:
         return (
-          <TouchableOpacity
-            style={styles.addButton}
+          <Button
+            text="Add"
             onPress={() => handleSendRequest(user.id)}
             disabled={isSending}
-          >
-            {isSending ? (
-              <ActivityIndicator size="small" color={colorScheme.textPrimary} />
-            ) : (
-              <>
-                <Ionicons name="person-add" size={16} color={colorScheme.textPrimary} />
-                <Text style={styles.addButtonText}>Add</Text>
-              </>
-            )}
-          </TouchableOpacity>
+            loading={isSending}
+            icon="account-plus"
+            backgroundColor={colorScheme.success}
+            textColor={colorScheme.textPrimary}
+            iconColor={colorScheme.textPrimary}
+            iconSize={16}
+            style={{ paddingVertical: 8, paddingHorizontal: 12 }}
+            textStyle={{ fontSize: 14 }}
+          />
         );
     }
   }, [colorScheme, handleSendRequest, sendingTo, styles]);
@@ -223,9 +223,13 @@ export function UserSearchModal({
             </Text>
           )}
 
-          <TouchableOpacity style={styles.cancelButton} onPress={handleClose}>
-            <Text style={styles.cancelText}>Cancel</Text>
-          </TouchableOpacity>
+          <Button
+            text="Cancel"
+            onPress={handleClose}
+            variant="text"
+            backgroundColor={colorScheme.textTertiary}
+            style={{ marginTop: 12, width: '100%' }}
+          />
         </View>
       </KeyboardAvoidingView>
     </Modal>
@@ -344,20 +348,6 @@ const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
     color: colorScheme.textPrimary,
     fontWeight: '500',
   },
-  addButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colorScheme.success,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    gap: 4,
-  },
-  addButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colorScheme.textPrimary,
-  },
   statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -399,14 +389,5 @@ const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
     fontSize: 13,
     color: colorScheme.brandPrimary,
     fontWeight: '500',
-  },
-  cancelButton: {
-    marginTop: 12,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  cancelText: {
-    fontSize: 15,
-    color: colorScheme.textTertiary,
   },
 });

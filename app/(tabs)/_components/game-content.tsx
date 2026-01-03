@@ -1,18 +1,28 @@
-import { AdFallbackScreen } from '@/components/ads/ad-fallback-screen';
+import { DoubleXPModal } from '@/components/ads/double-xp-modal';
 import { RewardedAdModal } from '@/components/ads/rewarded-ad-modal';
 import { GameGrid, LeaveGameModal, WordTray } from '@/components/game';
+import { SignInBenefitsCard } from '@/components/game/sign-in-benefits-card';
+import { BackButton } from '@/components/ui/back-button';
+import { Button } from '@/components/ui/button';
+import { useXP } from '@/contexts/xp-context';
+import { useAuth } from '@/contexts/auth-context';
+import { SignInForXPPrompt } from '@/components/xp/sign-in-for-xp-prompt';
+import { XPProgressBar } from '@/components/xp/xp-progress-bar';
+import { LeaderboardCompact } from '@/components/leaderboard/leaderboard-compact';
 import { LeaderboardEntry, submitScore } from '@/data/puzzleApi';
 import { useGameState } from '@/hooks/use-game-state';
 import { useRewardedAd } from '@/hooks/use-rewarded-ad';
+import { useDoubleXPAd } from '@/hooks/use-double-xp-ad';
 import { CellPosition, GameScore, Puzzle } from '@/types/game';
 import { haptics } from '@/utils/haptics';
 import { logger } from '@/utils/logger';
 import { formatTime, shareScore } from '@/utils/share';
+import { calculateXP } from '@/utils/xp';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Platform, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { Platform, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useThemeScheme } from '@/contexts/theme-context';
@@ -52,6 +62,7 @@ export function GameContent({
 }: GameContentProps) {
   const { colorScheme } = useThemeScheme();
   const router = useRouter();
+  const { user } = useAuth();
   const styles = useMemo(() => createStyles(colorScheme), [colorScheme]);
   const {
     gameState,
@@ -72,13 +83,19 @@ export function GameContent({
   const [hasShownAdOffer, setHasShownAdOffer] = useState(false);
   const [adOfferDeclined, setAdOfferDeclined] = useState(false);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
-  const [isGracefulFallback, setIsGracefulFallback] = useState(false);
-  const [fallbackCountdown, setFallbackCountdown] = useState(3);
 
+  // XP state
+  const { awardPuzzleXP, level, totalXP, progress } = useXP();
+  const [showDoubleXPModal, setShowDoubleXPModal] = useState(false);
+  const [xpGained, setXpGained] = useState<number | null>(null);
+  const [leveledUp, setLeveledUp] = useState(false);
+  const [previousLevel, setPreviousLevel] = useState<number | null>(null);
+  const [xpAwarded, setXpAwarded] = useState(false);
+  const doubleXPAd = useDoubleXPAd();
   const rewardedAd = useRewardedAd();
 
   const isGameOver = gameState.lives <= 0;
-  const shouldShowGameOver = isGameOver && (adOfferDeclined || !showRewardedAdModal) && hasShownAdOffer && !isGracefulFallback;
+  const shouldShowGameOver = isGameOver && (adOfferDeclined || !showRewardedAdModal) && hasShownAdOffer;
   const isGameActive = !isReviewMode && !gameState.isSolved && !isGameOver && !gameEnded;
 
   const isCurrentUserEntry = (entry: LeaderboardEntry): boolean => {
@@ -88,9 +105,6 @@ export function GameContent({
     }
     return false;
   };
-
-  const getDisplayName = (entry: LeaderboardEntry) =>
-    (isCurrentUserEntry(entry) && displayName) ? displayName : (entry.displayName || 'Anonymous');
 
   useEffect(() => {
     if (isGameOver && !hasShownAdOffer && !isReviewMode) {
@@ -102,57 +116,70 @@ export function GameContent({
   useEffect(() => {
     setHasShownAdOffer(false);
     setAdOfferDeclined(false);
-    setIsGracefulFallback(false);
-    setFallbackCountdown(3);
   }, [puzzle]);
 
-
-  // Countdown timer for graceful fallback
-  useEffect(() => {
-    if (!isGracefulFallback) return;
-
-    if (fallbackCountdown <= 0) {
-      // Grant the reward and close modal
-      setShowRewardedAdModal(false);
-      setIsGracefulFallback(false);
-      grantExtraLife();
-      setAdOfferDeclined(false);
-      setHasShownAdOffer(false); // Allow another ad offer if they lose again
-      haptics.notification(Haptics.NotificationFeedbackType.Success);
-      return;
-    }
-
-    const timer = setTimeout(() => {
-      setFallbackCountdown(prev => prev - 1);
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, [isGracefulFallback, fallbackCountdown, grantExtraLife]);
-
   const handleWatchAd = async () => {
-    // Close the modal - the ad loading state will show in the modal while loading
     const result = await rewardedAd.loadAndShow();
 
     setShowRewardedAdModal(false);
 
-    if (result.success && result.rewarded) {
-      // User watched the ad and earned the reward
-      grantExtraLife();
-      setAdOfferDeclined(false);
-      setHasShownAdOffer(false); // Allow another ad offer if they lose again
-      haptics.notification(Haptics.NotificationFeedbackType.Success);
-    } else {
-      // Either ad failed to load/show, or user didn't complete it
-      // Go to graceful fallback - don't punish them
-      setIsGracefulFallback(true);
-      setFallbackCountdown(3);
-    }
+    // Grant extra life whether ad succeeded or failed - don't punish the user
+    grantExtraLife();
+    setAdOfferDeclined(false);
+    setHasShownAdOffer(false); // Allow another ad offer if they lose again
+    haptics.notification(Haptics.NotificationFeedbackType.Success);
   };
 
   const handleDeclineAd = () => {
     setShowRewardedAdModal(false);
     setAdOfferDeclined(true);
   };
+
+  // Calculate base XP for display
+  const baseXP = finalScore ? calculateXP(finalScore.score, true) : 0;
+
+  // Handle double XP ad
+  const handleWatchDoubleXPAd = async () => {
+    // Mark XP as awarded immediately to prevent modal from reopening
+    setXpAwarded(true);
+
+    await doubleXPAd.loadAndShow();
+    setShowDoubleXPModal(false);
+
+    // Award double XP whether ad succeeded or failed - don't punish the user
+    const xpResult = await awardPuzzleXP(finalScore?.score ?? 0, true, true);
+    if (xpResult) {
+      setXpGained(xpResult.xpGained);
+      setLeveledUp(xpResult.leveledUp);
+      setPreviousLevel(xpResult.previousLevel);
+    }
+    haptics.notification(Haptics.NotificationFeedbackType.Success);
+  };
+
+  const handleDeclineDoubleXP = async () => {
+    setShowDoubleXPModal(false);
+    // Award base XP
+    const xpResult = await awardPuzzleXP(finalScore?.score ?? 0, true, false);
+    if (xpResult) {
+      setXpGained(xpResult.xpGained);
+      setLeveledUp(xpResult.leveledUp);
+      setPreviousLevel(xpResult.previousLevel);
+    }
+    setXpAwarded(true);
+  };
+
+  // Show double XP modal when game ends (after score submission completes)
+  // Only show to authenticated users since anonymous users can't earn XP
+  useEffect(() => {
+    if (user && gameEnded && finalScore && !xpAwarded && !showDoubleXPModal && resultRank !== null) {
+      // Small delay to let results screen render first
+      const timer = setTimeout(() => {
+        setShowDoubleXPModal(true);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [user, gameEnded, finalScore, xpAwarded, showDoubleXPModal, resultRank]);
+
 
   // Handle leave game confirmation
   const handleLeaveRequest = useCallback(() => {
@@ -281,9 +308,7 @@ export function GameContent({
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={onBack} style={styles.headerBackButton}>
-            <Ionicons name="chevron-back" size={28} color={colorScheme.textPrimary} />
-          </TouchableOpacity>
+          <BackButton onPress={onBack} style={styles.headerBackButton} iconSize={28} />
           <View style={styles.headerCenter}>
             <Text style={styles.reviewHeaderTitle}>Your Results</Text>
           </View>
@@ -353,7 +378,7 @@ export function GameContent({
     const displayRank = userId ? (resultRank || userRank) : null;
 
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isWin ? colorScheme.successBg : colorScheme.errorBg }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: isWin ? colorScheme.successBg : colorScheme.errorBg }]} edges={['top', 'left', 'right', 'bottom']}>
         <ScrollView contentContainerStyle={styles.gameCompleteScrollContent}>
           <View style={styles.gameCompleteHeader}>
             {isWin ? (
@@ -384,6 +409,27 @@ export function GameContent({
             </View>
           </View>
 
+          {/* XP Gained Card */}
+          {user && xpAwarded && xpGained !== null && (
+            <View style={[styles.gameCompleteScoreCard, { marginTop: 0 }]}>
+              <View style={styles.xpGainedRow}>
+                <MaterialCommunityIcons name="star-circle" size={24} color={colorScheme.gold} />
+                <Text style={[styles.gameCompleteScoreValue, { color: colorScheme.gold, marginLeft: 8 }]}>
+                  +{xpGained} XP
+                </Text>
+              </View>
+              {leveledUp && previousLevel !== null && (
+                <View style={styles.levelUpRow}>
+                  <MaterialCommunityIcons name="arrow-up-circle" size={20} color={colorScheme.success} />
+                  <Text style={[styles.levelUpText, { color: colorScheme.success }]}>
+                    Level Up! You are now Level {level}
+                  </Text>
+                </View>
+              )}
+              <XPProgressBar currentLevel={level} progress={progress} leveledUp={leveledUp} />
+            </View>
+          )}
+
           {userId ? (
             <TouchableOpacity style={styles.gameCompleteLeaderboardCard} onPress={() => router.push('/leaderboard' as any)} activeOpacity={0.8}>
               <View style={styles.gameCompleteLeaderboardHeader}>
@@ -393,79 +439,17 @@ export function GameContent({
                 </View>
               </View>
 
-              {loadingLeaderboard && !leaderboardLoaded ? (
-                <ActivityIndicator size="small" color={colorScheme.brandPrimary} style={{ marginVertical: 16 }} />
-              ) : leaderboard.length === 0 ? (
-                <Text style={styles.leaderboardEmptyText}>No scores yet</Text>
-              ) : (
-                <View style={styles.leaderboardCompact}>
-                  {leaderboard.slice(0, 3).map((entry, index) => (
-                    <View
-                      key={index}
-                      style={[
-                        styles.leaderboardCompactRow,
-                        isCurrentUserEntry(entry) && styles.leaderboardCompactRowCurrentUser,
-                      ]}
-                    >
-                      <View style={styles.leaderboardCompactRank}>
-                        {entry.rank === 1 ? (
-                          <MaterialCommunityIcons name="medal" size={20} color={colorScheme.gold} />
-                        ) : entry.rank === 2 ? (
-                          <MaterialCommunityIcons name="medal" size={20} color={colorScheme.textSecondary} />
-                        ) : (
-                          <MaterialCommunityIcons name="medal" size={20} color={colorScheme.warning} />
-                        )}
-                      </View>
-                      <Text
-                        style={[
-                          styles.leaderboardCompactName,
-                          isCurrentUserEntry(entry) && styles.leaderboardCompactNameCurrentUser,
-                        ]}
-                        numberOfLines={1}
-                      >
-                        {getDisplayName(entry)}
-                        {isCurrentUserEntry(entry) && ' (you)'}
-                      </Text>
-                      <Text style={styles.leaderboardCompactCorrect}>{entry.correctPlacements}/16</Text>
-                      <Text
-                        style={[
-                          styles.leaderboardCompactScore,
-                          isCurrentUserEntry(entry) && styles.leaderboardCompactScoreCurrentUser,
-                        ]}
-                      >
-                        {entry.score}
-                      </Text>
-                    </View>
-                  ))}
-
-                  {displayRank && displayRank > 3 && displayScore && (
-                    <>
-                      <View style={styles.leaderboardDivider}>
-                        <Text style={styles.leaderboardDividerText}>...</Text>
-                      </View>
-                      <View style={[styles.leaderboardCompactRow, styles.leaderboardCompactRowCurrentUser]}>
-                        <View style={styles.leaderboardCompactRank}>
-                          <Text
-                            style={styles.leaderboardCompactRankText}
-                            numberOfLines={1}
-                            adjustsFontSizeToFit
-                            minimumFontScale={0.8}
-                          >
-                            #{displayRank}
-                          </Text>
-                        </View>
-                        <Text style={[styles.leaderboardCompactName, styles.leaderboardCompactNameCurrentUser]} numberOfLines={1}>
-                          {displayName || 'Anonymous'} (you)
-                        </Text>
-                        <Text style={styles.leaderboardCompactCorrect}>{displayScore.correctPlacements}/16</Text>
-                        <Text style={[styles.leaderboardCompactScore, styles.leaderboardCompactScoreCurrentUser]}>
-                          {displayScore.score}
-                        </Text>
-                      </View>
-                    </>
-                  )}
-                </View>
-              )}
+              <LeaderboardCompact
+                leaderboard={leaderboard}
+                loading={loadingLeaderboard}
+                loaded={leaderboardLoaded}
+                isCurrentUserEntry={isCurrentUserEntry}
+                displayName={displayName}
+                level={level}
+                userRank={displayRank}
+                savedScore={displayScore}
+                showUserRow={true}
+              />
 
               <View style={styles.tapForDetailsHint}>
                 <Text style={styles.tapForDetailsText}>Tap for full leaderboard</Text>
@@ -473,44 +457,7 @@ export function GameContent({
               </View>
             </TouchableOpacity>
           ) : (
-            <View style={styles.gameCompleteLeaderboardCard}>
-              <View style={styles.gameCompleteLeaderboardHeader}>
-                <View style={styles.gameCompleteLeaderboardHeaderLeft}>
-                  <MaterialCommunityIcons name="trophy" size={20} color={colorScheme.gold} />
-                  <Text style={styles.gameCompleteLeaderboardTitle}>Today&apos;s Leaderboard</Text>
-                </View>
-              </View>
-              {displayScore && (
-                <View style={styles.leaderboardCompact}>
-                  <View style={[styles.leaderboardCompactRow, styles.leaderboardCompactRowCurrentUser]}>
-                    <View style={styles.leaderboardCompactRank}>
-                      <Text style={styles.leaderboardCompactRankText}>?</Text>
-                    </View>
-                    <Text
-                      style={[styles.leaderboardCompactName, styles.leaderboardCompactNameCurrentUser]}
-                      numberOfLines={1}
-                    >
-                      You
-                    </Text>
-                    <Text style={styles.leaderboardCompactCorrect}>{displayScore.correctPlacements}/16</Text>
-                    <Text style={[styles.leaderboardCompactScore, styles.leaderboardCompactScoreCurrentUser]}>
-                      {displayScore.score}
-                    </Text>
-                  </View>
-                </View>
-              )}
-              <Text style={styles.leaderboardEmptyText}>
-                Sign in to see your global ranking and view today&apos;s leaderboard
-              </Text>
-              <TouchableOpacity
-                style={styles.gameCompleteSignInButton}
-                onPress={onShowSignIn}
-                activeOpacity={0.8}
-              >
-                <Ionicons name="log-in-outline" size={20} color={colorScheme.brandPrimary} />
-                <Text style={styles.gameCompleteSignInButtonText}>Sign In</Text>
-              </TouchableOpacity>
-            </View>
+            <SignInBenefitsCard onSignInPress={onShowSignIn} />
           )}
 
           <View style={styles.gameCompleteActions}>
@@ -525,17 +472,27 @@ export function GameContent({
             )}
           </View>
 
-          <TouchableOpacity style={styles.gameCompleteBackButton} onPress={onBack}>
-            <Text style={styles.gameCompleteBackButtonText}>Back to Home</Text>
-          </TouchableOpacity>
+          <Button
+            text="Back to Menu"
+            onPress={onBack}
+            icon="chevron-left"
+            backgroundColor={colorScheme.backgroundSecondary}
+            textColor={colorScheme.textPrimary}
+            iconColor={colorScheme.textPrimary}
+            style={{ marginTop: 16, width: '100%', maxWidth: 400 }}
+          />
         </ScrollView>
+
+        <DoubleXPModal
+          visible={showDoubleXPModal}
+          baseXP={baseXP}
+          isLoading={doubleXPAd.isLoading}
+          isShowing={doubleXPAd.isShowing}
+          onWatchAd={handleWatchDoubleXPAd}
+          onDecline={handleDeclineDoubleXP}
+        />
       </SafeAreaView>
     );
-  }
-
-  // Full-screen fallback when ad couldn't load but user wanted to watch
-  if (isGracefulFallback) {
-    return <AdFallbackScreen countdown={fallbackCountdown} />;
   }
 
   return (
