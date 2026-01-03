@@ -126,7 +126,7 @@ export const GameGrid = memo(function GameGrid({
             ]}
           >
             <Text
-              style={[styles.headerText, { fontSize: calculateHeaderFontSize(col.label, cellSize) }]}
+              style={[styles.colHeaderText, { fontSize: calculateHeaderFontSize(col.label, cellSize) }]}
               numberOfLines={2}
               adjustsFontSizeToFit
               minimumFontScale={0.3}
@@ -149,7 +149,7 @@ export const GameGrid = memo(function GameGrid({
             ]}
           >
             <Text
-              style={[styles.headerText, { fontSize: calculateHeaderFontSize(row.label, headerWidth) }]}
+              style={[styles.rowHeaderText, { fontSize: calculateHeaderFontSize(row.label, headerWidth) }]}
               numberOfLines={2}
               adjustsFontSizeToFit
               minimumFontScale={0.3}
@@ -197,20 +197,16 @@ const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
     margin: 2,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colorScheme.backgroundTertiary,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: colorScheme.borderSecondary,
   },
   colHeader: {
     margin: 2,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colorScheme.gridHeaderColBg,
+    backgroundColor: 'rgba(0, 153, 255, 0.15)', // Translucent blue center
     borderRadius: 8,
     padding: 4,
-    borderWidth: 1,
-    borderColor: colorScheme.borderSecondary,
+    borderWidth: 2,
+    borderColor: colorScheme.gridHeaderColBg, // Bright blue border
   },
   gridRow: {
     flexDirection: 'row',
@@ -219,14 +215,24 @@ const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
     margin: 2,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colorScheme.gridHeaderRowBg,
+    backgroundColor: 'rgba(122, 74, 189, 0.15)', // Translucent purple center
     borderRadius: 8,
     padding: 4,
-    borderWidth: 1,
-    borderColor: colorScheme.borderSecondary,
+    borderWidth: 2,
+    borderColor: colorScheme.gridHeaderRowBg, // Bright purple border
   },
   headerText: {
     color: colorScheme.textPrimary,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  colHeaderText: {
+    color: colorScheme.textPrimary, // White text for better contrast
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  rowHeaderText: {
+    color: colorScheme.textPrimary, // White text for better contrast
     fontWeight: '600',
     textAlign: 'center',
   },
