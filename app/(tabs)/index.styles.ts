@@ -20,6 +20,7 @@ export const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 4,
   },
   homeHeaderRight: {
     flexDirection: 'row',
@@ -1538,7 +1539,6 @@ export const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
   },
   headerHelpButton: {
     padding: 8,
-    width: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },

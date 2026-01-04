@@ -2,12 +2,12 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-    ActivityIndicator,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -16,9 +16,9 @@ import { ArchiveCalendar } from '@/components/archive';
 import { useAuth } from '@/contexts/auth-context';
 import { useThemeScheme } from '@/contexts/theme-context';
 import {
-    getAvailablePuzzleDates,
-    getPracticeCompletionDates,
-    getTodayDateString,
+  getAvailablePuzzleDates,
+  getPracticeCompletionDates,
+  getTodayDateString,
 } from '@/data/puzzleApi';
 
 export default function ArchiveScreen() {
@@ -150,7 +150,7 @@ export default function ArchiveScreen() {
                       color: availableCount > 0
                         ? (() => {
                             const percentage = Math.round((completedCount / availableCount) * 100);
-                            return percentage >= 100 ? '#4ade80' : // green
+                            return percentage >= 100 ? colorScheme.success : // green
                                    percentage >= 75 ? '#facc15' : // yellow
                                    percentage >= 50 ? '#fb923c' : // orange
                                    '#ef4444'; // red

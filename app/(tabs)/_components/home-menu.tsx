@@ -312,6 +312,9 @@ export function HomeMenu({
               <Text style={styles.headerStreakText}>{streak}</Text>
             </View>
           )}
+          <TouchableOpacity style={styles.headerHelpButton} onPress={() => router.push('/how-to-play')}>
+            <Ionicons name="help-circle-outline" size={24} color={colorScheme.textTertiary} />
+          </TouchableOpacity>
         </View>
         <View style={styles.homeHeaderRight}>
           {user ? (
@@ -411,7 +414,7 @@ export function HomeMenu({
               },
             ]}
           >
-            A Daily Word Puzzle
+            A Daily Trivia Puzzle
           </Animated.Text>
           {!loading && (
             <Animated.View
@@ -558,19 +561,7 @@ export function HomeMenu({
 
           <View style={styles.secondaryButtonsRow}>
             <Button
-              text="How to Play"
-              onPress={() => router.push('/how-to-play')}
-              variant="outlined"
-              backgroundColor={colorScheme.brandPrimary}
-              textColor={colorScheme.brandPrimary}
-              icon="help-circle"
-              iconColor={colorScheme.brandPrimary}
-              iconSize={20}
-              style={{ flex: 1 }}
-            />
-
-            <Button
-              text="Archive"
+              text="Play Past Puzzles"
               onPress={() => router.push('/archive')}
               variant="outlined"
               backgroundColor={colorScheme.brandPrimary}

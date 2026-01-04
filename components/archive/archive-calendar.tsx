@@ -1,8 +1,8 @@
-import React, { useMemo } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, useWindowDimensions } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { useThemeScheme } from '@/contexts/theme-context';
 import { CalendarDay } from '@/types/archive';
+import { Ionicons } from '@expo/vector-icons';
+import React, { useMemo } from 'react';
+import { StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 
 interface ArchiveCalendarProps {
   year: number;

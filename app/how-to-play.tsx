@@ -1,6 +1,6 @@
 import { createStyles as createSharedStyles } from '@/app/(tabs)/index.styles';
 import { useThemeScheme } from '@/contexts/theme-context';
-import { Ionicons } from '@expo/vector-icons';
+import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -34,25 +34,43 @@ export default function HowToPlayPage() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        {/* Overview */}
+        {/* Goal Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>The Goal</Text>
           <Text style={styles.paragraph}>
-            Place all 16 words into the 4x4 grid. Each word must belong to BOTH its row category AND column category.
+            Place all 16 words into the 4×4 grid. Each word must belong to <Text style={styles.highlight}>both</Text> its row category <Text style={styles.highlight}>and</Text> column category.
           </Text>
         </View>
 
-        {/* How to Play */}
+        {/* How to Play Steps */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>How to Play</Text>
-          <Text style={styles.paragraph}>
-            1. Tap a word from the bottom tray{'\n'}
-            2. Tap a grid cell to place it{'\n'}
-            3. Fill all 16 cells to win
-          </Text>
+
+          <View style={styles.stepsContainer}>
+            <View style={styles.step}>
+              <View style={styles.stepNumber}>
+                <Text style={styles.stepNumberText}>1</Text>
+              </View>
+              <Text style={styles.stepText}>Tap a word from the tray</Text>
+            </View>
+
+            <View style={styles.step}>
+              <View style={styles.stepNumber}>
+                <Text style={styles.stepNumberText}>2</Text>
+              </View>
+              <Text style={styles.stepText}>Tap a grid cell to place it</Text>
+            </View>
+
+            <View style={styles.step}>
+              <View style={styles.stepNumber}>
+                <Text style={styles.stepNumberText}>3</Text>
+              </View>
+              <Text style={styles.stepText}>Fill all 16 cells to win</Text>
+            </View>
+          </View>
         </View>
 
-        {/* Lives */}
+        {/* Lives Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Lives</Text>
           <Text style={styles.paragraph}>
@@ -60,11 +78,19 @@ export default function HowToPlayPage() {
           </Text>
         </View>
 
-        {/* Scoring */}
+        {/* Scoring Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Scoring</Text>
           <Text style={styles.paragraph}>
-            Your score is based on speed and accuracy. Maximum: 1000 points.
+            Your score is based on <Text style={styles.highlight}>speed</Text> and <Text style={styles.highlight}>accuracy</Text>. Maximum: <Text style={styles.highlight}>1000 points</Text>.
+          </Text>
+        </View>
+
+        {/* Example Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Example</Text>
+          <Text style={styles.paragraph}>
+            If the row is <Text style={styles.highlight}>"Fruits"</Text> and the column is <Text style={styles.highlight}>"Red Things"</Text>, the correct word is <Text style={styles.highlight}>"Apple"</Text> — it belongs to both!
           </Text>
         </View>
       </ScrollView>
@@ -88,48 +114,31 @@ const createStyles = (colorScheme: any) => StyleSheet.create({
     width: '100%',
   },
   section: {
-    marginBottom: 40,
+    marginBottom: 32,
   },
   sectionTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: '700',
     color: colorScheme.textPrimary,
-    marginBottom: 16,
+    marginBottom: 12,
   },
   paragraph: {
-    fontSize: 16,
-    lineHeight: 26,
-    color: colorScheme.textSecondary,
-    marginBottom: 16,
-  },
-  exampleBox: {
-    backgroundColor: colorScheme.backgroundSecondary,
-    borderRadius: 12,
-    padding: 20,
-    borderLeftWidth: 4,
-    borderLeftColor: colorScheme.success,
-  },
-  exampleTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colorScheme.success,
-    marginBottom: 8,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  exampleText: {
-    fontSize: 16,
+    fontSize: 15,
     lineHeight: 24,
     color: colorScheme.textSecondary,
   },
   highlight: {
-    color: colorScheme.textPrimary,
+    color: colorScheme.brandPrimary,
     fontWeight: '600',
+  },
+  // Steps
+  stepsContainer: {
+    gap: 10,
   },
   step: {
     flexDirection: 'row',
-    gap: 16,
-    marginBottom: 24,
+    gap: 12,
+    alignItems: 'center',
   },
   stepNumber: {
     width: 36,
@@ -138,130 +147,17 @@ const createStyles = (colorScheme: any) => StyleSheet.create({
     backgroundColor: colorScheme.brandPrimary,
     justifyContent: 'center',
     alignItems: 'center',
+    flexShrink: 0,
   },
   stepNumberText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: colorScheme.textPrimary,
-  },
-  stepContent: {
-    flex: 1,
-  },
-  stepTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colorScheme.textPrimary,
-    marginBottom: 4,
-  },
-  stepDesc: {
-    fontSize: 15,
-    lineHeight: 22,
-    color: colorScheme.textMuted,
-  },
-  livesBox: {
-    backgroundColor: 'rgba(239, 68, 68, 0.1)',
-    borderRadius: 12,
-    padding: 20,
-    alignItems: 'center',
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(239, 68, 68, 0.3)',
-  },
-  livesIcons: {
-    fontSize: 32,
-    marginBottom: 8,
-    color: colorScheme.error,
-  },
-  livesText: {
     fontSize: 16,
-    color: colorScheme.error,
-    fontWeight: '500',
+    fontWeight: '800',
+    color: colorScheme.warmBlack,
   },
-  tipBox: {
-    backgroundColor: 'rgba(251, 191, 36, 0.1)',
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(251, 191, 36, 0.3)',
-  },
-  tipTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#fbbf24',
-    marginBottom: 8,
-  },
-  tipText: {
-    fontSize: 15,
-    lineHeight: 22,
-    color: colorScheme.textSecondary,
-  },
-  scoreFactors: {
-    gap: 16,
-    marginBottom: 16,
-  },
-  scoreFactor: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
-    backgroundColor: colorScheme.backgroundSecondary,
-    borderRadius: 12,
-    padding: 16,
-  },
-  scoreFactorIcon: {
-    fontSize: 28,
-    color: colorScheme.textPrimary,
-  },
-  scoreFactorTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colorScheme.textPrimary,
-  },
-  scoreFactorDesc: {
-    fontSize: 14,
-    color: colorScheme.textMuted,
-  },
-  tipsList: {
-    gap: 16,
-  },
-  tipItem: {
-    flexDirection: 'row',
-    gap: 12,
-    alignItems: 'flex-start',
-  },
-  tipItemIcon: {
-    fontSize: 20,
-    color: colorScheme.textSecondary,
-  },
-  tipItemText: {
+  stepText: {
     flex: 1,
     fontSize: 15,
-    lineHeight: 22,
     color: colorScheme.textSecondary,
-  },
-  ctaSection: {
-    backgroundColor: colorScheme.backgroundSecondary,
-    borderRadius: 16,
-    padding: 32,
-    alignItems: 'center',
-    marginBottom: 40,
-    borderWidth: 1,
-    borderColor: colorScheme.borderPrimary,
-  },
-  ctaText: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: colorScheme.textPrimary,
-    marginBottom: 16,
-  },
-  ctaButton: {
-    backgroundColor: colorScheme.brandPrimary,
-    paddingVertical: 14,
-    paddingHorizontal: 28,
-    borderRadius: 10,
-  },
-  ctaButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colorScheme.textPrimary,
+    lineHeight: 22,
   },
 });
