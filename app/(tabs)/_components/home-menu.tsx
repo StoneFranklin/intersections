@@ -1,12 +1,12 @@
-import { GradientButton } from '@/components/ui/gradient-button';
-import { Button } from '@/components/ui/button';
 import { SignInBenefitsCard } from '@/components/game';
-import { LeaderboardTabToggle, LeaderboardTab } from '@/components/leaderboard/leaderboard-tab-toggle';
 import { LeaderboardCompact } from '@/components/leaderboard/leaderboard-compact';
+import { LeaderboardTab, LeaderboardTabToggle } from '@/components/leaderboard/leaderboard-tab-toggle';
+import { Button } from '@/components/ui/button';
+import { GradientButton } from '@/components/ui/gradient-button';
 import { LeaderboardEntry } from '@/data/puzzleApi';
 import { GameScore } from '@/types/game';
 import { logger } from '@/utils/logger';
-import { AntDesign, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { User } from '@supabase/supabase-js';
 import { Link, useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -152,8 +152,8 @@ export function HomeMenu({
   const { colorScheme } = useThemeScheme();
   const { width } = useWindowDimensions();
   const styles = useMemo(() => createStyles(colorScheme), [colorScheme]);
-  const logoSize = Math.min(Math.max(width * 0.55, 210), 320);
-  const logoFrameHeight = Math.round(logoSize * 0.9);
+  const logoSize = Math.min(Math.max(width * 0.40, 150), 200);
+  const logoFrameHeight = Math.round(logoSize * 0.8);
 
   const shouldPlayEntranceAnimations = showEntranceAnimations && !hasPlayedEntranceAnimations;
 

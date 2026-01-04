@@ -1,3 +1,4 @@
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -6,14 +7,13 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import { PracticeGameContent, PracticePreviewModal } from '@/components/archive';
 import { useAuth } from '@/contexts/auth-context';
 import { useThemeScheme } from '@/contexts/theme-context';
 import { fetchPuzzleForDate, getPracticeScore, upsertPracticeScore } from '@/data/puzzleApi';
-import { GameScore, Puzzle } from '@/types/game';
 import { PracticeCompletion } from '@/types/archive';
+import { GameScore, Puzzle } from '@/types/game';
 
 export default function PracticeScreen() {
   const { colorScheme } = useThemeScheme();

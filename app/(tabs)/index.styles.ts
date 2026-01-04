@@ -115,24 +115,21 @@ export const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
   // Main menu styles
   mainMenuScroll: {
     flexGrow: 1,
-    justifyContent: 'center',
   },
   mainMenu: {
     flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    paddingVertical: 24,
   },
   menuLogoFrame: {
     alignItems: 'center',
     justifyContent: 'flex-start',
     overflow: 'hidden',
-    marginBottom: -10,
+    marginTop: -30,
   },
   menuLogo: {
     width: 190,
-    height: 190,
+    height: 50,
     marginBottom: 0,
   },
   menuTitle: {
