@@ -8,7 +8,7 @@ import { GameScore } from '@/types/game';
 import { logger } from '@/utils/logger';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { User } from '@supabase/supabase-js';
-import { Link, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
@@ -166,7 +166,6 @@ export function HomeMenu({
   const dateRowTranslateY = useRef(new Animated.Value(shouldPlayEntranceAnimations ? 20 : 0)).current;
   const buttonsOpacity = useRef(new Animated.Value(shouldPlayEntranceAnimations ? 0 : 1)).current;
   const buttonsTranslateY = useRef(new Animated.Value(shouldPlayEntranceAnimations ? 30 : 0)).current;
-  const footerOpacity = useRef(new Animated.Value(shouldPlayEntranceAnimations ? 0 : 1)).current;
 
   useEffect(() => {
     if (!showDisplayNameModal) return;
@@ -235,11 +234,6 @@ export function HomeMenu({
             useNativeDriver: true,
           }),
         ]),
-        Animated.timing(footerOpacity, {
-          toValue: 1,
-          duration: 400,
-          useNativeDriver: true,
-        }),
       ]);
 
       animations.start();
@@ -313,7 +307,7 @@ export function HomeMenu({
             </View>
           )}
           <TouchableOpacity style={styles.headerHelpButton} onPress={() => router.push('/how-to-play')}>
-            <Ionicons name="help-circle-outline" size={24} color={colorScheme.textTertiary} />
+            <Ionicons name="help-circle-outline" size={28} color={colorScheme.textTertiary} />
           </TouchableOpacity>
         </View>
         <View style={styles.homeHeaderRight}>
@@ -572,32 +566,6 @@ export function HomeMenu({
               style={{ flex: 1 }}
             />
           </View>
-
-          <Animated.View style={[styles.footerLinks, { opacity: footerOpacity }]}>
-            <Link href={'/about' as any} asChild>
-              <TouchableOpacity>
-                <Text style={styles.footerLinkText}>About</Text>
-              </TouchableOpacity>
-            </Link>
-            <Text style={styles.footerLinkDivider}>|</Text>
-            <Link href={'/contact' as any} asChild>
-              <TouchableOpacity>
-                <Text style={styles.footerLinkText}>Contact</Text>
-              </TouchableOpacity>
-            </Link>
-            <Text style={styles.footerLinkDivider}>|</Text>
-            <Link href={'/privacy' as any} asChild>
-              <TouchableOpacity>
-                <Text style={styles.footerLinkText}>Privacy</Text>
-              </TouchableOpacity>
-            </Link>
-            <Text style={styles.footerLinkDivider}>|</Text>
-            <Link href={'/terms' as any} asChild>
-              <TouchableOpacity>
-                <Text style={styles.footerLinkText}>Terms</Text>
-              </TouchableOpacity>
-            </Link>
-          </Animated.View>
         </View>
       </ScrollView>
 

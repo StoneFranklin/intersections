@@ -116,9 +116,9 @@ export const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
   // Main menu styles
   mainMenuScroll: {
     flexGrow: 1,
+    justifyContent: 'center',
   },
   mainMenu: {
-    flex: 1,
     alignItems: 'center',
     padding: 20,
   },

@@ -1,7 +1,7 @@
 import { createStyles as createSharedStyles } from '@/app/(tabs)/index.styles';
 import { useThemeScheme } from '@/contexts/theme-context';
-import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { Link, useRouter } from 'expo-router';
 import React, { useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -93,6 +93,38 @@ export default function HowToPlayPage() {
             If the row is <Text style={styles.highlight}>"Fruits"</Text> and the column is <Text style={styles.highlight}>"Red Things"</Text>, the correct word is <Text style={styles.highlight}>"Apple"</Text> — it belongs to both!
           </Text>
         </View>
+
+        {/* Info Links Section */}
+        <View style={styles.linksSection}>
+          <Link href={'/about' as any} asChild>
+            <TouchableOpacity style={styles.linkItem}>
+              <Ionicons name="information-circle-outline" size={20} color={colorScheme.textTertiary} />
+              <Text style={styles.linkText}>About</Text>
+              <Ionicons name="chevron-forward" size={18} color={colorScheme.textTertiary} />
+            </TouchableOpacity>
+          </Link>
+          <Link href={'/contact' as any} asChild>
+            <TouchableOpacity style={styles.linkItem}>
+              <Ionicons name="mail-outline" size={20} color={colorScheme.textTertiary} />
+              <Text style={styles.linkText}>Contact</Text>
+              <Ionicons name="chevron-forward" size={18} color={colorScheme.textTertiary} />
+            </TouchableOpacity>
+          </Link>
+          <Link href={'/privacy' as any} asChild>
+            <TouchableOpacity style={styles.linkItem}>
+              <Ionicons name="shield-outline" size={20} color={colorScheme.textTertiary} />
+              <Text style={styles.linkText}>Privacy Policy</Text>
+              <Ionicons name="chevron-forward" size={18} color={colorScheme.textTertiary} />
+            </TouchableOpacity>
+          </Link>
+          <Link href={'/terms' as any} asChild>
+            <TouchableOpacity style={styles.linkItem}>
+              <Ionicons name="document-text-outline" size={20} color={colorScheme.textTertiary} />
+              <Text style={styles.linkText}>Terms of Service</Text>
+              <Ionicons name="chevron-forward" size={18} color={colorScheme.textTertiary} />
+            </TouchableOpacity>
+          </Link>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -159,5 +191,23 @@ const createStyles = (colorScheme: any) => StyleSheet.create({
     fontSize: 15,
     color: colorScheme.textSecondary,
     lineHeight: 22,
+  },
+  // Links section
+  linksSection: {
+    marginTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: colorScheme.border,
+    paddingTop: 24,
+  },
+  linkItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    gap: 12,
+  },
+  linkText: {
+    flex: 1,
+    fontSize: 15,
+    color: colorScheme.textSecondary,
   },
 });
