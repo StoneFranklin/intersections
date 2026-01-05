@@ -3,10 +3,10 @@ import { useRewardedAdWebBase, type AdResult, type UseRewardedAdReturn } from '.
 export type { AdResult, UseRewardedAdReturn };
 
 /**
- * Hook to manage rewarded ads (extra life) on web platform
- * Uses Google AdSense Ad Placements API (adBreak) for rewarded ads
- * Falls back to simulation if AdSense is not available
+ * Hook to manage full-screen ads (extra life) on web platform
+ * Uses Monetag Vignette Banner for full-screen ads
  */
 export function useRewardedAd(): UseRewardedAdReturn {
-  return useRewardedAdWebBase('extra-life');
+  const zoneId = process.env.EXPO_PUBLIC_MONETAG_EXTRA_LIFE_ZONE_ID || '10422328';
+  return useRewardedAdWebBase(zoneId);
 }

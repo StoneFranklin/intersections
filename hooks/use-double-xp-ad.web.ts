@@ -5,10 +5,11 @@ export type { AdResult };
 export type UseDoubleXPAdReturn = ReturnType<typeof useDoubleXPAd>;
 
 /**
- * Hook to manage double XP rewarded ads on web platform
- * Uses Google AdSense Ad Placements API (adBreak) for rewarded ads
- * Falls back to simulation if AdSense is not available
+ * Hook to manage double XP full-screen ads on web platform
+ * Uses Monetag Vignette Banner for full-screen ads
+ * Note: Monetag Vignette only supports one zone per page, so uses same zone as extra life.
  */
 export function useDoubleXPAd() {
-  return useRewardedAdWebBase('double-xp');
+  const zoneId = process.env.EXPO_PUBLIC_MONETAG_DOUBLE_XP_ZONE_ID || '10422328';
+  return useRewardedAdWebBase(zoneId);
 }

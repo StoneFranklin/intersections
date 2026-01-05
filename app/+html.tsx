@@ -22,12 +22,8 @@ export default function Root({ children }: PropsWithChildren) {
         <link rel="icon" type="image/png" href="/assets/images/intersections-logo.png" />
         <link rel="apple-touch-icon" sizes="180x180" href="/assets/images/intersections-logo.png" />
 
-        {/* Google AdSense for Web Ads */}
-        <script
-          async
-          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.EXPO_PUBLIC_ADSENSE_PUBLISHER_ID}`}
-          crossOrigin="anonymous"
-        />
+        {/* Monetag Vignette Banner Ads for Web */}
+        {/* Note: Vignette script is loaded dynamically via hooks when needed */}
 
         {/*
           Disable body scrolling on web. This makes ScrollView components work closer to how they do on native.
