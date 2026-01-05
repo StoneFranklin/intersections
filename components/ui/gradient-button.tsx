@@ -1,4 +1,5 @@
 import { useThemeScheme } from '@/contexts/theme-context';
+import { useResponsiveDimensions } from '@/hooks/use-responsive-dimensions';
 import { ColorScheme } from '@/constants/theme';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useMemo } from 'react';
@@ -28,7 +29,8 @@ export function GradientButton({
   icon,
 }: GradientButtonProps) {
   const { colorScheme } = useThemeScheme();
-  const styles = useMemo(() => createStyles(colorScheme), [colorScheme]);
+  const { isTablet } = useResponsiveDimensions();
+  const styles = useMemo(() => createStyles(colorScheme, isTablet), [colorScheme, isTablet]);
 
   // Logo-aligned gradient colors using theme
   const gradients = {
@@ -80,13 +82,13 @@ export function GradientButton({
   );
 }
 
-const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
+const createStyles = (colorScheme: ColorScheme, isTablet: boolean) => StyleSheet.create({
   touchable: {
     borderRadius: 16,
     overflow: 'hidden',
   },
   gradient: {
-    padding: 24,
+    padding: isTablet ? 32 : 24,
     alignItems: 'center',
     borderRadius: 16,
   },
@@ -97,7 +99,7 @@ const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
     marginBottom: 8,
   },
   label: {
-    fontSize: 24,
+    fontSize: isTablet ? 28 : 24,
     fontWeight: 'bold',
     color: colorScheme.textPrimary,
     marginBottom: 4,
@@ -106,7 +108,7 @@ const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
     color: colorScheme.warmBlack,
   },
   description: {
-    fontSize: 14,
+    fontSize: isTablet ? 16 : 14,
     color: colorScheme.textSecondary,
   },
   descriptionDark: {

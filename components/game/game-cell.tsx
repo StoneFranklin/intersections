@@ -91,7 +91,9 @@ export const GameCell = memo(function GameCell({
   const calculateFontSize = () => {
     if (!word) return size / 3;
 
-    const baseSize = Math.max(12, Math.min(size / 5, 18));
+    // Allow larger font sizes on tablets (up to 24px when cells are 150px)
+    const maxFontSize = size > 120 ? 24 : 18;
+    const baseSize = Math.max(12, Math.min(size / 5, maxFontSize));
     const textLength = word.text.length;
 
     // Find the longest word to ensure it fits on a single line

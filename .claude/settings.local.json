@@ -84,7 +84,9 @@
       "Bash(npm run build:*)",
       "Bash(du:*)",
       "Bash(git -C /Users/stonefranklin/code/web/intersections log --oneline -5)",
-      "Bash(ls -lah \"c:\\\\Users\\\\saf1\\\\Documents\\\\react-native\\\\word-game\\\\assets\\\\images\"\" | grep -i \"splash|logo|intersection \")"
+      "Bash(ls -lah \"c:\\\\Users\\\\saf1\\\\Documents\\\\react-native\\\\word-game\\\\assets\\\\images\"\" | grep -i \"splash|logo|intersection \")",
+      "Bash(xargs ls:*)",
+      "Bash(npm run ios:*)"
     ]
   }
 }

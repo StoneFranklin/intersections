@@ -24,6 +24,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Modal, Platform, Text, TouchableOpacity, View } from 'react-native';
 
 import { useThemeScheme } from '@/contexts/theme-context';
+import { useResponsiveDimensions } from '@/hooks/use-responsive-dimensions';
 import { GameContent } from './_components/game-content';
 import { HomeMenu } from './_components/home-menu';
 import { createStyles } from './index.styles';
@@ -35,6 +36,7 @@ export default function GameScreen() {
   const { user, signInWithGoogle, signInWithApple, signOut } = useAuth();
   const { level } = useXP();
   const { colorScheme } = useThemeScheme();
+  const { modalMaxWidth } = useResponsiveDimensions();
   const styles = useMemo(() => createStyles(colorScheme), [colorScheme]);
   const [puzzle, setPuzzle] = useState<Puzzle | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -786,7 +788,7 @@ export default function GameScreen() {
       onRequestClose={() => setShowSignIn(false)}
     >
       <View style={styles.modalOverlay}>
-        <View style={styles.signInModal}>
+        <View style={[styles.signInModal, { maxWidth: modalMaxWidth }]}>
           <Text style={styles.signInModalTitle}>Sign In</Text>
           <Text style={styles.signInModalSubtitle}>Sync your scores and streaks across devices</Text>
 

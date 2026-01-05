@@ -66,14 +66,22 @@ export const GameGrid = memo(function GameGrid({
   const effectiveCols = numCols + 0.3; // header is 1.3x width
   const maxCellWidth = availableWidth / effectiveCols;
   const maxCellHeight = availableHeight / numRows;
-  const cellSize = Math.min(maxCellWidth, maxCellHeight, Platform.OS === 'web' ? 90 : 90);
+
+  // Scale up for larger screens (tablets/iPads)
+  // Max cap is higher on wider screens to utilize iPad's space
+  const isLargeScreen = width > 600;
+  const maxCellSize = isLargeScreen ? 150 : 90;
+
+  const cellSize = Math.min(maxCellWidth, maxCellHeight, maxCellSize);
   
   // Header cells are slightly wider for labels
   const headerWidth = cellSize * 1.3;
 
   // Calculate font size for category headers (similar to game-cell logic)
   const calculateHeaderFontSize = (text: string, width: number): number => {
-    const baseSize = Math.max(10, Math.min(width / 5, 16));
+    // Allow larger font sizes on tablets
+    const maxHeaderFontSize = width > 120 ? 20 : 16;
+    const baseSize = Math.max(10, Math.min(width / 5, maxHeaderFontSize));
 
     // Find the longest word to ensure it fits on a single line
     const words = text.split(/\s+/);

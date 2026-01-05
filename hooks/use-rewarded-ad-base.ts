@@ -9,7 +9,7 @@ import MobileAds, {
 } from 'react-native-google-mobile-ads';
 
 // Timeout for loading ad (in ms)
-const AD_LOAD_TIMEOUT_MS = 10000;
+const AD_LOAD_TIMEOUT_MS = 30000;
 
 export type AdResult =
   | { success: true; rewarded: boolean }  // Ad shown, rewarded indicates if user completed it
