@@ -5,6 +5,14 @@ const distDir = path.join(__dirname, '..', 'dist');
 const fontsSourcePath = path.join(distDir, 'assets', 'node_modules', '@expo', 'vector-icons', 'build', 'vendor', 'react-native-vector-icons', 'Fonts');
 const fontsDestPath = path.join(distDir, 'assets', 'fonts');
 
+// Copy service worker for Monetag verification
+const swSourcePath = path.join(__dirname, '..', 'sw.js');
+const swDestPath = path.join(distDir, 'sw.js');
+if (fs.existsSync(swSourcePath)) {
+  fs.copyFileSync(swSourcePath, swDestPath);
+  console.log('Copied sw.js to dist/');
+}
+
 // Copy fonts to a shorter path
 if (fs.existsSync(fontsSourcePath)) {
   if (fs.existsSync(fontsDestPath)) {
