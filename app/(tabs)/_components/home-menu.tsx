@@ -506,7 +506,7 @@ export function HomeMenu({
                         disabled={isRefreshing || loadingLeaderboard || loadingFriendsLeaderboard}
                         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                       >
-                        <Ionicons name="refresh" size={18} color={isRefreshing ? '#666' : '#6a9fff'} />
+                        <Ionicons name="refresh" size={18} color={isRefreshing ? colorScheme.textMuted : colorScheme.brandPrimary} />
                       </TouchableOpacity>
                     </View>
 
