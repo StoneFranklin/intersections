@@ -3,10 +3,9 @@ import { useRewardedAdWebBase, type AdResult, type UseRewardedAdReturn } from '.
 export type { AdResult, UseRewardedAdReturn };
 
 /**
- * Hook to manage full-screen ads (extra life) on web platform
- * Uses Monetag Vignette Banner for full-screen ads
+ * Hook to manage rewarded ads (extra life) on web platform
+ * Currently disabled - grants reward immediately without showing ads
  */
 export function useRewardedAd(): UseRewardedAdReturn {
-  const zoneId = process.env.EXPO_PUBLIC_MONETAG_EXTRA_LIFE_ZONE_ID || '10422328';
-  return useRewardedAdWebBase(zoneId);
+  return useRewardedAdWebBase('');
 }

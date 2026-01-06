@@ -5,11 +5,9 @@ export type { AdResult };
 export type UseDoubleXPAdReturn = ReturnType<typeof useDoubleXPAd>;
 
 /**
- * Hook to manage double XP full-screen ads on web platform
- * Uses Monetag Vignette Banner for full-screen ads
- * Note: Monetag Vignette only supports one zone per page, so uses same zone as extra life.
+ * Hook to manage double XP ads on web platform
+ * Currently disabled - grants reward immediately without showing ads
  */
 export function useDoubleXPAd() {
-  const zoneId = process.env.EXPO_PUBLIC_MONETAG_DOUBLE_XP_ZONE_ID || '10422328';
-  return useRewardedAdWebBase(zoneId);
+  return useRewardedAdWebBase('');
 }
