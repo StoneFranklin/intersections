@@ -38,7 +38,7 @@ export default function HowToPlayPage() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>The Goal</Text>
           <Text style={styles.paragraph}>
-            Place all 16 words into the 4×4 grid. Each word must belong to <Text style={styles.highlight}>both</Text> its row category <Text style={styles.highlight}>and</Text> column category.
+            Place all 16 answers into the 4×4 grid. Each answer must belong to <Text style={styles.highlight}>both</Text> its row category <Text style={styles.highlight}>and</Text> column category.
           </Text>
         </View>
 
@@ -51,21 +51,21 @@ export default function HowToPlayPage() {
               <View style={styles.stepNumber}>
                 <Text style={styles.stepNumberText}>1</Text>
               </View>
-              <Text style={styles.stepText}>Tap a word from the tray</Text>
+              <Text style={styles.stepText}>Tap an answer from the tray</Text>
             </View>
 
             <View style={styles.step}>
               <View style={styles.stepNumber}>
                 <Text style={styles.stepNumberText}>2</Text>
               </View>
-              <Text style={styles.stepText}>Tap a grid cell to place it</Text>
+              <Text style={styles.stepText}>Tap a grid tile to place it</Text>
             </View>
 
             <View style={styles.step}>
               <View style={styles.stepNumber}>
                 <Text style={styles.stepNumberText}>3</Text>
               </View>
-              <Text style={styles.stepText}>Fill all 16 cells to win</Text>
+              <Text style={styles.stepText}>Fill all 16 tiles correctly to win</Text>
             </View>
           </View>
         </View>
@@ -74,7 +74,7 @@ export default function HowToPlayPage() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Lives</Text>
           <Text style={styles.paragraph}>
-            You have 3 lives. Each incorrect placement costs one life. Lose all 3 and the game ends.
+            You have 3 lives. Each incorrect placement costs one life.
           </Text>
         </View>
 
@@ -90,7 +90,7 @@ export default function HowToPlayPage() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Example</Text>
           <Text style={styles.paragraph}>
-            If the row is <Text style={styles.highlight}>"Fruits"</Text> and the column is <Text style={styles.highlight}>"Red Things"</Text>, the correct word is <Text style={styles.highlight}>"Apple"</Text> — it belongs to both!
+            If the row is <Text style={styles.highlight}>"Fruits"</Text> and the column is <Text style={styles.highlight}>"Red Things"</Text>, the correct answer is <Text style={styles.highlight}>"Apple"</Text> — it belongs to both!
           </Text>
         </View>
 
