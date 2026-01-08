@@ -43,55 +43,60 @@ export function GradientButton({
   const gradientColors = gradients[variant];
 
   return (
-    <TouchableOpacity
-      onPress={onPress}
-      disabled={disabled || loading}
-      activeOpacity={0.8}
-      style={[styles.touchable, style]}
-    >
-      <LinearGradient
-        colors={disabled ? disabledGradient : gradientColors}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}
-        locations={[0, 0.5, 1]}
-        style={styles.gradient}
+    <View style={[styles.shadowWrapper, style]}>
+      <TouchableOpacity
+        onPress={onPress}
+        disabled={disabled || loading}
+        activeOpacity={0.8}
+        style={styles.touchable}
       >
-        {loading ? (
-          <ActivityIndicator size="small" color={colorScheme.textPrimary} />
-        ) : (
-          <View style={styles.content}>
-            {icon && <View style={styles.iconContainer}>{icon}</View>}
-            <Text style={[
-              styles.label,
-              labelStyle,
-              variant === 'primary' && styles.labelDark,
-            ]}>
-              {label}
-            </Text>
-            {description && (
+        <LinearGradient
+          colors={disabled ? disabledGradient : gradientColors}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0, y: 1 }}
+          locations={[0, 0.5, 1]}
+          style={styles.gradient}
+        >
+          {loading ? (
+            <ActivityIndicator size="small" color={colorScheme.textPrimary} />
+          ) : (
+            <View style={styles.content}>
+              {icon && <View style={styles.iconContainer}>{icon}</View>}
               <Text style={[
-                styles.description,
-                variant === 'primary' && styles.descriptionDark,
+                styles.label,
+                labelStyle,
+                variant === 'primary' && styles.labelDark,
               ]}>
-                {description}
+                {label}
               </Text>
-            )}
-          </View>
-        )}
-      </LinearGradient>
-    </TouchableOpacity>
+              {description && (
+                <Text style={[
+                  styles.description,
+                  variant === 'primary' && styles.descriptionDark,
+                ]}>
+                  {description}
+                </Text>
+              )}
+            </View>
+          )}
+        </LinearGradient>
+      </TouchableOpacity>
+    </View>
   );
 }
 
 const createStyles = (colorScheme: ColorScheme, isTablet: boolean) => StyleSheet.create({
-  touchable: {
+  shadowWrapper: {
     borderRadius: 16,
-    overflow: 'hidden',
     shadowColor: '#FFD700',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.5,
     shadowRadius: 12,
     elevation: 8,
+  },
+  touchable: {
+    borderRadius: 16,
+    overflow: 'hidden',
   },
   gradient: {
     padding: isTablet ? 32 : 24,

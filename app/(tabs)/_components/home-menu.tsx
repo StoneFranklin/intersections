@@ -297,7 +297,7 @@ export function HomeMenu({
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={{ flex: 1, backgroundColor: colorScheme.backgroundPrimary }}>
       <Image
         source={require('@/assets/images/background_full.png')}
         style={{
@@ -307,7 +307,8 @@ export function HomeMenu({
           resizeMode: 'cover',
         }}
       />
-      <View style={styles.homeHeader}>
+      <SafeAreaView style={[styles.container, { backgroundColor: 'transparent' }]}>
+        <View style={styles.homeHeader}>
         <View style={styles.homeHeaderLeft}>
           {user && streak > 0 && (
             <View style={styles.headerStreakBadge}>
@@ -739,7 +740,8 @@ export function HomeMenu({
           </KeyboardAvoidingView>
         </Modal>
       )}
-    </SafeAreaView>
+      </SafeAreaView>
+    </View>
   );
 }
 
