@@ -54,11 +54,11 @@ export function RewardedAdModal({
           </View>
 
           {/* Title */}
-          <Text style={styles.title}>Out of Lives!</Text>
+          <Text style={styles.title}>Get an Extra Life!</Text>
 
           {/* Description */}
           <Text style={styles.description}>
-            Watch a short ad to get an extra life and continue playing
+            Continue playing by watching a short ad
           </Text>
 
           {/* Loading indicator - shown while ad is loading */}
@@ -81,7 +81,7 @@ export function RewardedAdModal({
             <View style={styles.buttonContainer}>
               {/* Watch Ad Button */}
               <Button
-                text="Watch Ad"
+                text="Continue Playing"
                 icon="play-circle"
                 iconSize={24}
                 backgroundColor={colorScheme.success}
