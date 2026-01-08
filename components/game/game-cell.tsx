@@ -88,43 +88,56 @@ export const GameCell = memo(function GameCell({
   };
 
   // Calculate font size based on text length and cell size
+  // Requirements: all text visible, no truncation, no mid-word breaks, max size possible
   const calculateFontSize = () => {
     if (!word) return size / 3;
 
-    // Allow larger font sizes on tablets (up to 24px when cells are 150px)
     const maxFontSize = size > 120 ? 24 : 18;
     const baseSize = Math.max(12, Math.min(size / 5, maxFontSize));
-    const textLength = word.text.length;
+    const maxLines = 4;
 
-    // Find the longest word to ensure it fits on a single line
-    const words = word.text.split(/\s+/);
-    const longestWord = Math.max(...words.map(w => w.length));
+    const wordList = word.text.split(/\s+/);
+    const longestWordLength = Math.max(...wordList.map(w => w.length));
+    const availableWidth = size - 12; // subtract padding more conservatively
+    const availableHeight = size - 8;
+    const lineHeight = 1.3;
 
-    // Estimate how much space we need
-    // Approximate characters per line based on cell width (accounting for padding)
-    const availableWidth = size - 8; // subtract padding
-    // Use 0.65 average char width ratio - accounts for wider characters like 'm', 'w', uppercase
-    const charsPerLine = Math.floor(availableWidth / (baseSize * 0.65));
+    let fontSize = baseSize;
 
-    // If the longest word is too long for one line, scale down to fit it
-    let adjustedFontSize = baseSize;
-    if (longestWord > charsPerLine) {
-      // Add 10% buffer to ensure it actually fits
-      const wordScaleFactor = Math.max(0.25, (charsPerLine / longestWord) * 0.9);
-      adjustedFontSize = baseSize * wordScaleFactor;
+    // Iteratively reduce font size until everything fits
+    for (let i = 0; i < 15; i++) {
+      // Check if longest word fits on one line (use conservative 0.7 ratio)
+      const longestWordWidth = longestWordLength * fontSize * 0.7;
+      if (longestWordWidth > availableWidth) {
+        fontSize *= 0.9;
+        continue;
+      }
+
+      // Calculate how many lines we need with word wrapping
+      const charsPerLine = Math.floor(availableWidth / (fontSize * 0.7));
+      let linesNeeded = 0;
+      let currentLineChars = 0;
+
+      for (const w of wordList) {
+        if (currentLineChars === 0) {
+          currentLineChars = w.length;
+          linesNeeded = 1;
+        } else if (currentLineChars + 1 + w.length <= charsPerLine) {
+          currentLineChars += 1 + w.length;
+        } else {
+          linesNeeded++;
+          currentLineChars = w.length;
+        }
+      }
+
+      const textHeight = linesNeeded * fontSize * lineHeight;
+      if (linesNeeded <= maxLines && textHeight <= availableHeight) {
+        break;
+      }
+      fontSize *= 0.9;
     }
 
-    // Recalculate with adjusted font size
-    const adjustedCharsPerLine = Math.floor(availableWidth / (adjustedFontSize * 0.6));
-    const estimatedLines = Math.ceil(textLength / adjustedCharsPerLine);
-
-    // If text would overflow 3 lines, scale down further
-    if (estimatedLines > 3) {
-      const scaleFactor = Math.max(0.3, 3 / estimatedLines);
-      adjustedFontSize = adjustedFontSize * scaleFactor;
-    }
-
-    return Math.max(adjustedFontSize, baseSize * 0.3); // minimum 30% of base
+    return Math.max(fontSize, 8);
   };
 
   const fontSize = calculateFontSize();
@@ -179,11 +192,8 @@ export const GameCell = memo(function GameCell({
         {word ? (
           <Text
             style={[styles.cellText, { fontSize, maxWidth: size - 8 }]}
-            numberOfLines={word.text.includes(' ') ? 3 : 1}
-            adjustsFontSizeToFit
-            minimumFontScale={0.2}
             allowFontScaling={false}
-            ellipsizeMode="tail"
+            textBreakStrategy="simple"
           >
             {word.text}
           </Text>
