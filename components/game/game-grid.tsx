@@ -80,8 +80,8 @@ export const GameGrid = memo(function GameGrid({
   // Calculate font size for category headers
   // Requirements: all text visible, no truncation, no mid-word breaks, max size possible
   const calculateHeaderFontSize = (text: string, width: number, height: number, maxLines: number): number => {
-    const maxHeaderFontSize = width > 120 ? 20 : 16;
-    const baseSize = Math.max(10, Math.min(width / 5, maxHeaderFontSize));
+    const maxHeaderFontSize = width > 120 ? 24 : 18;
+    const baseSize = Math.max(12, Math.min(width / 5, maxHeaderFontSize));
 
     const words = text.split(/\s+/);
     const longestWordLength = Math.max(...words.map(w => w.length));
@@ -94,7 +94,7 @@ export const GameGrid = memo(function GameGrid({
     // Iteratively reduce font size until everything fits
     for (let i = 0; i < 15; i++) {
       // Check if longest word fits on one line (use conservative 0.7 ratio)
-      const longestWordWidth = longestWordLength * fontSize * 0.7;
+      const longestWordWidth = longestWordLength * fontSize * 0.75;
       if (longestWordWidth > availableWidth) {
         fontSize *= 0.9;
         continue;
