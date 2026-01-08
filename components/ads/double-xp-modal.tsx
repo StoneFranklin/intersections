@@ -98,7 +98,7 @@ export function DoubleXPModal({
           {!isLoading && !isShowing && (
             <View style={styles.buttonContainer}>
               <Button
-                text="Watch Ad for 2x XP"
+                text="Get Double XP"
                 onPress={onWatchAd}
                 backgroundColor={colorScheme.gold}
                 textColor={colorScheme.warmBlack}
