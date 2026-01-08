@@ -152,7 +152,7 @@ export function HomeMenu({
   const { colorScheme } = useThemeScheme();
   const { width } = useWindowDimensions();
   const styles = useMemo(() => createStyles(colorScheme), [colorScheme]);
-  const logoSize = Math.min(Math.max(width * 0.40, 150), 200);
+  const logoSize = Math.min(Math.max(width * 0.6, 180), 250);
   const logoFrameHeight = Math.round(logoSize * 0.8);
 
   const shouldPlayEntranceAnimations = showEntranceAnimations && !hasPlayedEntranceAnimations;
@@ -298,6 +298,15 @@ export function HomeMenu({
 
   return (
     <SafeAreaView style={styles.container}>
+      <Image
+        source={require('@/assets/images/background_full.png')}
+        style={{
+          position: 'absolute',
+          width: '100%',
+          height: '100%',
+          resizeMode: 'cover',
+        }}
+      />
       <View style={styles.homeHeader}>
         <View style={styles.homeHeaderLeft}>
           {user && streak > 0 && (

@@ -34,7 +34,7 @@ export function GradientButton({
 
   // Logo-aligned gradient colors using theme
   const gradients = {
-    primary: [colorScheme.gold, colorScheme.orange] as const,
+    primary: ['#FFEB3B', '#FFD700', '#FFC400'] as const,
     secondary: [colorScheme.brandPrimary, colorScheme.brandSecondary] as const,
     success: [colorScheme.success, colorScheme.successDark] as const,
   };
@@ -52,7 +52,8 @@ export function GradientButton({
       <LinearGradient
         colors={disabled ? disabledGradient : gradientColors}
         start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
+        end={{ x: 0, y: 1 }}
+        locations={[0, 0.5, 1]}
         style={styles.gradient}
       >
         {loading ? (
@@ -86,6 +87,11 @@ const createStyles = (colorScheme: ColorScheme, isTablet: boolean) => StyleSheet
   touchable: {
     borderRadius: 16,
     overflow: 'hidden',
+    shadowColor: '#FFD700',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.5,
+    shadowRadius: 12,
+    elevation: 8,
   },
   gradient: {
     padding: isTablet ? 32 : 24,
