@@ -89,12 +89,14 @@ export const GameGrid = memo(function GameGrid({
 
     // Estimate how much space we need
     const availableWidth = width - 8; // subtract padding
-    const charsPerLine = Math.floor(availableWidth / (baseSize * 0.6));
+    // Use 0.65 average char width ratio - accounts for wider characters like 'm', 'w', uppercase
+    const charsPerLine = Math.floor(availableWidth / (baseSize * 0.65));
 
     // If the longest word is too long for one line, scale down to fit it
     let adjustedFontSize = baseSize;
     if (longestWord > charsPerLine) {
-      const wordScaleFactor = Math.max(0.3, charsPerLine / longestWord);
+      // Add 10% buffer to ensure it actually fits
+      const wordScaleFactor = Math.max(0.25, (charsPerLine / longestWord) * 0.9);
       adjustedFontSize = baseSize * wordScaleFactor;
     }
 
@@ -135,9 +137,9 @@ export const GameGrid = memo(function GameGrid({
           >
             <Text
               style={[styles.colHeaderText, { fontSize: calculateHeaderFontSize(col.label, cellSize) }]}
-              numberOfLines={2}
+              numberOfLines={col.label.includes(' ') ? 2 : 1}
               adjustsFontSizeToFit
-              minimumFontScale={0.3}
+              minimumFontScale={0.2}
               allowFontScaling={false}
             >
               {col.label}
@@ -158,9 +160,9 @@ export const GameGrid = memo(function GameGrid({
           >
             <Text
               style={[styles.rowHeaderText, { fontSize: calculateHeaderFontSize(row.label, headerWidth) }]}
-              numberOfLines={2}
+              numberOfLines={row.label.includes(' ') ? 2 : 1}
               adjustsFontSizeToFit
-              minimumFontScale={0.3}
+              minimumFontScale={0.2}
               allowFontScaling={false}
             >
               {row.label}
