@@ -57,19 +57,6 @@ export function PracticeGameContent({
   const gameStyles = useMemo(() => createGameStyles(colorScheme), [colorScheme]);
   const styles = useMemo(() => createStyles(colorScheme), [colorScheme]);
 
-  const {
-    gameState,
-    unplacedWords,
-    getWordAtCell,
-    selectWord,
-    placeWordAtCell,
-    removeWordFromCell,
-    isCellCorrect,
-    grantExtraLife,
-    elapsedTime,
-    finalScore,
-  } = useGameState(puzzle, { persistTimer: false });
-
   const [showRewardedAdModal, setShowRewardedAdModal] = useState(false);
   const [hasShownAdOffer, setHasShownAdOffer] = useState(false);
   const [adOfferDeclined, setAdOfferDeclined] = useState(false);
@@ -84,6 +71,22 @@ export function PracticeGameContent({
   const [xpAwarded, setXpAwarded] = useState(false);
   const doubleXPAd = useRewardedAd();
   const rewardedAd = useRewardedAd();
+
+  const {
+    gameState,
+    unplacedWords,
+    getWordAtCell,
+    selectWord,
+    placeWordAtCell,
+    removeWordFromCell,
+    isCellCorrect,
+    grantExtraLife,
+    elapsedTime,
+    finalScore,
+  } = useGameState(puzzle, {
+    persistTimer: false,
+    isPaused: rewardedAd.isShowing || doubleXPAd.isShowing,
+  });
 
   const isGameOver = gameState.lives <= 0;
   const shouldShowGameOver = isGameOver && (adOfferDeclined || !showRewardedAdModal) && hasShownAdOffer;

@@ -103,6 +103,12 @@ export function useRewardedAdBase(adUnitIds: AdUnitIds, adName: string = 'reward
       const unsubscribeLoaded = ad.addAdEventListener(RewardedAdEventType.LOADED, () => {
         if (resolved) return;
 
+        // Clear timeout immediately when ad loads successfully
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = null;
+        }
+
         setIsLoading(false);
         setIsShowing(true);
 

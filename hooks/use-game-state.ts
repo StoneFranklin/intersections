@@ -51,10 +51,12 @@ const STARTING_LIVES = 3;
 export interface UseGameStateOptions {
   /** If true, timer state will be persisted to AsyncStorage (for daily puzzle only) */
   persistTimer?: boolean;
+  /** If true, the timer will be paused (e.g., during ads) */
+  isPaused?: boolean;
 }
 
 export function useGameState(puzzle: Puzzle, options?: UseGameStateOptions): UseGameStateReturn {
-  const { persistTimer = true } = options || {};
+  const { persistTimer = true, isPaused = false } = options || {};
   const [shuffledWords, setShuffledWords] = useState(() => shuffleWords(puzzle));
   
   const [gameState, setGameState] = useState<GameState>(() => ({
@@ -70,7 +72,6 @@ export function useGameState(puzzle: Puzzle, options?: UseGameStateOptions): Use
   const [mistakes, setMistakes] = useState(0);
   const [finalScore, setFinalScore] = useState<GameScore | null>(null);
   const [timerInitialized, setTimerInitialized] = useState(false);
-  const startTimeRef = useRef<number>(Date.now());
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Load persisted start time on mount (for timer persistence when leaving/returning)
@@ -85,18 +86,14 @@ export function useGameState(puzzle: Puzzle, options?: UseGameStateOptions): Use
 
       try {
         const todayKey = getTodayKey();
-        const storedStartTime = await AsyncStorage.getItem(dailyGameStartKey(todayKey));
+        const storedElapsedTime = await AsyncStorage.getItem(dailyGameStartKey(todayKey));
 
-        if (storedStartTime) {
-          const parsedTime = parseInt(storedStartTime, 10);
-          if (!isNaN(parsedTime) && parsedTime > 0) {
-            startTimeRef.current = parsedTime;
-            // Calculate initial elapsed time from stored start
-            setElapsedTime(Math.floor((Date.now() - parsedTime) / 1000));
+        if (storedElapsedTime) {
+          const parsedTime = parseInt(storedElapsedTime, 10);
+          if (!isNaN(parsedTime) && parsedTime >= 0) {
+            // Restore elapsed time from storage
+            setElapsedTime(parsedTime);
           }
-        } else {
-          // No stored start time - this is a fresh game, save the current start time
-          await AsyncStorage.setItem(dailyGameStartKey(todayKey), Date.now().toString());
         }
       } catch (error) {
         // Silently fail - timer will just start fresh
@@ -107,7 +104,7 @@ export function useGameState(puzzle: Puzzle, options?: UseGameStateOptions): Use
     loadStartTime();
   }, [persistTimer]);
 
-  // Start/stop timer based on game state
+  // Start/stop timer based on game state and pause state
   useEffect(() => {
     // Wait for timer to be initialized from storage
     if (!timerInitialized) return;
@@ -118,10 +115,18 @@ export function useGameState(puzzle: Puzzle, options?: UseGameStateOptions): Use
       timerRef.current = null;
     }
 
-    // Start timer when game begins
-    if (!gameState.isSolved && gameState.lives > 0) {
+    // Start timer when game is active and not paused
+    if (!gameState.isSolved && gameState.lives > 0 && !isPaused) {
       timerRef.current = setInterval(() => {
-        setElapsedTime(Math.floor((Date.now() - startTimeRef.current) / 1000));
+        setElapsedTime(prev => {
+          const newTime = prev + 1;
+          // Persist timer for daily puzzle
+          if (persistTimer) {
+            const todayKey = getTodayKey();
+            AsyncStorage.setItem(dailyGameStartKey(todayKey), newTime.toString()).catch(() => {});
+          }
+          return newTime;
+        });
       }, 1000);
     }
 
@@ -131,7 +136,7 @@ export function useGameState(puzzle: Puzzle, options?: UseGameStateOptions): Use
         timerRef.current = null;
       }
     };
-  }, [gameState.isSolved, gameState.lives, timerInitialized]);
+  }, [gameState.isSolved, gameState.lives, timerInitialized, isPaused, persistTimer]);
 
   // Calculate correct placements
   const correctPlacements = useMemo(() => {
@@ -191,12 +196,11 @@ export function useGameState(puzzle: Puzzle, options?: UseGameStateOptions): Use
     setElapsedTime(0);
     setMistakes(0);
     setFinalScore(null);
-    startTimeRef.current = Date.now();
 
-    // Save new start time for the new puzzle (only for daily puzzle)
+    // Reset stored time for the new puzzle (only for daily puzzle)
     if (persistTimer) {
       const todayKey = getTodayKey();
-      AsyncStorage.setItem(dailyGameStartKey(todayKey), Date.now().toString()).catch(() => {
+      AsyncStorage.setItem(dailyGameStartKey(todayKey), '0').catch(() => {
         // Silently fail
       });
     }
@@ -318,12 +322,11 @@ export function useGameState(puzzle: Puzzle, options?: UseGameStateOptions): Use
       lives: prev.lives + 1,
     }));
     // Reset final score if it was set due to game over
+    // Timer will automatically resume when isPaused becomes false
     if (finalScore && !gameState.isSolved) {
       setFinalScore(null);
-      // Restart the timer
-      startTimeRef.current = Date.now() - (elapsedTime * 1000);
     }
-  }, [finalScore, gameState.isSolved, elapsedTime]);
+  }, [finalScore, gameState.isSolved]);
 
   return {
     gameState,

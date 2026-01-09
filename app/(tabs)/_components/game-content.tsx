@@ -63,6 +63,11 @@ export function GameContent({
   const router = useRouter();
   const { user } = useAuth();
   const styles = useMemo(() => createStyles(colorScheme), [colorScheme]);
+
+  // Ad hooks - must be declared before useGameState
+  const doubleXPAd = useDoubleXPAd();
+  const rewardedAd = useRewardedAd();
+
   const {
     gameState,
     unplacedWords,
@@ -74,7 +79,9 @@ export function GameContent({
     grantExtraLife,
     elapsedTime,
     finalScore,
-  } = useGameState(puzzle);
+  } = useGameState(puzzle, {
+    isPaused: rewardedAd.isShowing || doubleXPAd.isShowing,
+  });
 
   const [resultRank, setResultRank] = useState<number | null>(null);
   const [submittingScore, setSubmittingScore] = useState(false);
@@ -90,8 +97,6 @@ export function GameContent({
   const [leveledUp, setLeveledUp] = useState(false);
   const [previousLevel, setPreviousLevel] = useState<number | null>(null);
   const [xpAwarded, setXpAwarded] = useState(false);
-  const doubleXPAd = useDoubleXPAd();
-  const rewardedAd = useRewardedAd();
 
   const isGameOver = gameState.lives <= 0;
   const shouldShowGameOver = isGameOver && (adOfferDeclined || !showRewardedAdModal) && hasShownAdOffer;
