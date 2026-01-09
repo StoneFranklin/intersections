@@ -3,27 +3,28 @@ import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { createStyles as createGameStyles } from '@/app/(tabs)/index.styles';
 import { DoubleXPModal } from '@/components/ads/double-xp-modal';
 import { RewardedAdModal } from '@/components/ads/rewarded-ad-modal';
-import { GameGrid, WordTray, SignInBenefitsCard } from '@/components/game';
+import { GameGrid, SignInBenefitsCard, WordTray } from '@/components/game';
 import { BackButton } from '@/components/ui/back-button';
 import { Button } from '@/components/ui/button';
 import { XPProgressBar } from '@/components/xp/xp-progress-bar';
+import { useAuth } from '@/contexts/auth-context';
 import { useThemeScheme } from '@/contexts/theme-context';
 import { useXP } from '@/contexts/xp-context';
-import { useAuth } from '@/contexts/auth-context';
 import { useGameState } from '@/hooks/use-game-state';
 import { useRewardedAd } from '@/hooks/use-rewarded-ad';
 import { PracticeCompletion } from '@/types/archive';
 import { CellPosition, GameScore, Puzzle } from '@/types/game';
+import { formatPuzzleTitle, getPuzzleNumber } from '@/utils/archive';
 import { haptics } from '@/utils/haptics';
 import { formatTime } from '@/utils/share';
 import { calculateXP } from '@/utils/xp';
@@ -62,6 +63,9 @@ export function PracticeGameContent({
   const [adOfferDeclined, setAdOfferDeclined] = useState(false);
   const [hasCompleted, setHasCompleted] = useState(false);
 
+  // Puzzle number state
+  const [puzzleNumber, setPuzzleNumber] = useState<number>(0);
+
   // XP state
   const { awardPuzzleXP, level, progress } = useXP();
   const [showDoubleXPModal, setShowDoubleXPModal] = useState(false);
@@ -91,6 +95,17 @@ export function PracticeGameContent({
   const isGameOver = gameState.lives <= 0;
   const shouldShowGameOver = isGameOver && (adOfferDeclined || !showRewardedAdModal) && hasShownAdOffer;
   const isGameActive = !gameState.isSolved && !isGameOver && !gameEnded;
+
+  // Fetch puzzle number
+  useEffect(() => {
+    async function fetchPuzzleNumber() {
+      if (puzzleDate) {
+        const number = await getPuzzleNumber(puzzleDate);
+        setPuzzleNumber(number);
+      }
+    }
+    fetchPuzzleNumber();
+  }, [puzzleDate]);
 
   // Show ad offer when game is over
   useEffect(() => {
@@ -229,7 +244,9 @@ export function PracticeGameContent({
             </Text>
             <View style={styles.practiceBadge}>
               <MaterialCommunityIcons name="school" size={16} color={colorScheme.brandPrimary} />
-              <Text style={styles.practiceBadgeText}>Practice Mode</Text>
+              <Text style={styles.practiceBadgeText}>
+                {puzzleNumber > 0 ? formatPuzzleTitle(puzzleNumber) : 'Practice Mode'}
+              </Text>
             </View>
             <Text style={styles.resultsDate}>{formattedDate}</Text>
           </View>

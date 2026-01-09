@@ -1,4 +1,10 @@
-import React, { useMemo } from 'react';
+import { Button } from '@/components/ui/button';
+import { useThemeScheme } from '@/contexts/theme-context';
+import { PracticeCompletion } from '@/types/archive';
+import { formatPuzzleTitle, getPuzzleNumber } from '@/utils/archive';
+import { formatTime } from '@/utils/share';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Modal,
   StyleSheet,
@@ -6,11 +12,6 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
-import { useThemeScheme } from '@/contexts/theme-context';
-import { PracticeCompletion } from '@/types/archive';
-import { formatTime } from '@/utils/share';
-import { Button } from '@/components/ui/button';
 
 interface PracticePreviewModalProps {
   visible: boolean;
@@ -32,6 +33,18 @@ export function PracticePreviewModal({
   const { colorScheme } = useThemeScheme();
   const styles = useMemo(() => createStyles(colorScheme), [colorScheme]);
 
+  const [puzzleNumber, setPuzzleNumber] = useState<number | null>(null);
+
+  useEffect(() => {
+    async function fetchPuzzleNumber() {
+      if (visible && puzzleDate) {
+        const number = await getPuzzleNumber(puzzleDate);
+        setPuzzleNumber(number);
+      }
+    }
+    fetchPuzzleNumber();
+  }, [visible, puzzleDate]);
+
   return (
     <Modal
       visible={visible}
@@ -39,14 +52,14 @@ export function PracticePreviewModal({
       transparent={true}
       onRequestClose={onCancel}
     >
-      <TouchableOpacity 
-        style={styles.overlay} 
-        activeOpacity={1} 
+      <TouchableOpacity
+        style={styles.overlay}
+        activeOpacity={1}
         onPress={onCancel}
       >
-        <TouchableOpacity 
-          style={styles.modalContent} 
-          activeOpacity={1} 
+        <TouchableOpacity
+          style={styles.modalContent}
+          activeOpacity={1}
           onPress={(e) => e.stopPropagation()}
         >
           <TouchableOpacity style={styles.closeButton} onPress={onCancel}>
@@ -54,12 +67,16 @@ export function PracticePreviewModal({
           </TouchableOpacity>
 
           <View style={styles.header}>
-            <MaterialCommunityIcons 
-              name="calendar-clock" 
-              size={48} 
-              color={colorScheme.brandPrimary} 
+            <MaterialCommunityIcons
+              name="calendar-clock"
+              size={48}
+              color={colorScheme.brandPrimary}
             />
-            <Text style={styles.title}>Practice Puzzle</Text>
+            {puzzleNumber !== null && (
+              <Text style={styles.title}>
+                {formatPuzzleTitle(puzzleNumber)}
+              </Text>
+            )}
             <Text style={styles.date}>{formattedDate}</Text>
           </View>
 
@@ -115,17 +132,6 @@ export function PracticePreviewModal({
             style={{ width: '100%', marginBottom: 16 }}
             textStyle={{ fontSize: 18 }}
           />
-
-          <View style={styles.practiceInfo}>
-            <MaterialCommunityIcons 
-              name="school" 
-              size={16} 
-              color={colorScheme.textMuted} 
-            />
-            <Text style={styles.practiceInfoText}>
-              Practice Mode - Play as many times as you like
-            </Text>
-          </View>
         </TouchableOpacity>
       </TouchableOpacity>
     </Modal>

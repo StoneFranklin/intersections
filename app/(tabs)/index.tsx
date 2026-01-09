@@ -4,14 +4,14 @@ import { useXP } from '@/contexts/xp-context';
 import { fetchTodaysPuzzle, getAvailablePuzzleDates, getFriendIds, getFriendsLeaderboardPage, getOrCreateProfile, getPendingRequestCount, getPercentile, getPracticeCompletionDates, getTodayLeaderboard, getUserStreak, getUserTodayScore, hasUserCompletedToday, LeaderboardEntry, reconcileScoreOnSignIn, updateDisplayName, updateUserStreak } from '@/data/puzzleApi';
 import { GameScore, Puzzle } from '@/types/game';
 import {
-    dailyCompletedKey,
-    dailyRankKey,
-    dailyScoreKey,
-    extractClaimableAnonymousScore,
-    getStoredLocalUserId,
-    normalizeStoredDailyScore,
-    safeJsonParse,
-    serializeStoredDailyScore,
+  dailyCompletedKey,
+  dailyRankKey,
+  dailyScoreKey,
+  extractClaimableAnonymousScore,
+  getStoredLocalUserId,
+  normalizeStoredDailyScore,
+  safeJsonParse,
+  serializeStoredDailyScore,
 } from '@/utils/dailyScoreStorage';
 import { getTodayKey, getYesterdayKey } from '@/utils/dateKeys';
 import { validateDisplayName } from '@/utils/displayNameValidation';
