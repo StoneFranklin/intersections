@@ -23,7 +23,7 @@ export const WordTray = memo(function WordTray({ words, selectedWordId, onWordSe
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Tap a word, then tap a cell to place it:</Text>
+      <Text style={styles.title}>Tap an answer, then tap a tile to place it:</Text>
       <ScrollView 
         style={styles.scrollView}
         contentContainerStyle={styles.wordsContainer}

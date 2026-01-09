@@ -45,28 +45,28 @@ export function HowToPlayScreen({ onBack }: HowToPlayScreenProps) {
               <View style={styles.stepNumber}>
                 <Text style={styles.stepNumberText}>1</Text>
               </View>
-              <Text style={styles.stepText}>Tap a word from the tray</Text>
+              <Text style={styles.stepText}>Tap an answer from the tray</Text>
             </View>
 
             <View style={styles.step}>
               <View style={styles.stepNumber}>
                 <Text style={styles.stepNumberText}>2</Text>
               </View>
-              <Text style={styles.stepText}>Tap a cell in the grid to place it</Text>
+              <Text style={styles.stepText}>Tap a tile in the grid to place it</Text>
             </View>
 
             <View style={styles.step}>
               <View style={styles.stepNumber}>
                 <Text style={styles.stepNumberText}>3</Text>
               </View>
-              <Text style={styles.stepText}>Tap a placed word to remove it</Text>
+              <Text style={styles.stepText}>Tap a placed answer to remove it</Text>
             </View>
 
             <View style={styles.step}>
               <View style={styles.stepNumber}>
                 <Text style={styles.stepNumberText}>4</Text>
               </View>
-              <Text style={styles.stepText}>Fill all 16 cells correctly to win</Text>
+              <Text style={styles.stepText}>Fill all 16 tiles correctly to win</Text>
             </View>
           </View>
         </View>

@@ -45,9 +45,12 @@ export function PracticePreviewModal({
     fetchPuzzleNumber();
   }, [visible, puzzleDate]);
 
+  // Only show modal once puzzle number is loaded
+  const shouldShowModal = visible && puzzleNumber !== null;
+
   return (
     <Modal
-      visible={visible}
+      visible={shouldShowModal}
       animationType="fade"
       transparent={true}
       onRequestClose={onCancel}
@@ -72,11 +75,9 @@ export function PracticePreviewModal({
               size={48}
               color={colorScheme.brandPrimary}
             />
-            {puzzleNumber !== null && (
-              <Text style={styles.title}>
-                {formatPuzzleTitle(puzzleNumber)}
-              </Text>
-            )}
+            <Text style={styles.title}>
+              {formatPuzzleTitle(puzzleNumber!)}
+            </Text>
             <Text style={styles.date}>{formattedDate}</Text>
           </View>
 
