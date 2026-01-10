@@ -241,6 +241,12 @@ export function HomeMenu({
     }
   }, [shouldPlayEntranceAnimations]);
 
+  // Compute user's rank in friends leaderboard
+  const friendsUserRank = useMemo(() => {
+    const userEntry = friendsLeaderboard.find(entry => entry.isCurrentUser);
+    return userEntry?.rank ?? null;
+  }, [friendsLeaderboard]);
+
   const handleLogoPress = () => {
     // Logo press handler - can be used for future interactions
   };
@@ -545,7 +551,9 @@ export function HomeMenu({
                         displayName={displayName}
                         avatarUrl={avatarUrl}
                         level={level}
-                        showUserRow={false}
+                        userRank={friendsUserRank}
+                        savedScore={savedScore}
+                        showUserRow={true}
                       />
                     )}
 
