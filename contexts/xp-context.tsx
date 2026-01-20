@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { Platform } from 'react-native';
 import { useAuth } from './auth-context';
 import { addUserXP, getUserXP, getOrCreateProfile } from '@/data/puzzleApi';
@@ -6,6 +6,7 @@ import { calculateXP, getLevelProgress, levelFromXP } from '@/utils/xp';
 import { logger } from '@/utils/logger';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { areNotificationsEnabled, setNotificationsEnabled as setNotificationsEnabledService } from '@/utils/notificationService';
+import { router } from 'expo-router';
 
 const XP_STORAGE_KEY = 'user_xp_local';
 
@@ -51,6 +52,7 @@ export function XPProvider({ children }: { children: React.ReactNode }) {
   const [displayName, setDisplayNameState] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [notificationsEnabled, setNotificationsEnabledState] = useState(true);
+  const hasCheckedDisplayName = useRef(false);
 
   const levelProgress = getLevelProgress(totalXP);
 
@@ -73,6 +75,20 @@ export function XPProvider({ children }: { children: React.ReactNode }) {
         if (profile) {
           setDisplayNameState(profile.displayName || null);
           setAvatarUrl(profile.avatarUrl || null);
+
+          // Check if user needs to set display name (only once per session)
+          const hasDisplayName = profile.displayName && profile.displayName.trim().length > 0;
+          if (!hasDisplayName && !hasCheckedDisplayName.current) {
+            hasCheckedDisplayName.current = true;
+            // Navigate after a brief delay to ensure UI is ready
+            setTimeout(() => {
+              try {
+                router.replace('/set-display-name');
+              } catch (e) {
+                logger.error('Error navigating to set display name:', e);
+              }
+            }, 100);
+          }
         }
 
         // Load notification settings (non-web only)
@@ -104,6 +120,13 @@ export function XPProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     loadXP();
   }, [loadXP]);
+
+  // Reset the display name check flag when user logs out
+  useEffect(() => {
+    if (!user) {
+      hasCheckedDisplayName.current = false;
+    }
+  }, [user]);
 
   const awardPuzzleXP = useCallback(async (
     score: number,

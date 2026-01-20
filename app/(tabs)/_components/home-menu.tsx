@@ -147,13 +147,6 @@ export function HomeMenu({
     setAvatarLoadError(false);
   }, [avatarUrl]);
 
-  // Auto-navigate to set display name screen if user doesn't have a display name
-  useEffect(() => {
-    if (user && !displayName && !loading) {
-      router.push('/set-display-name' as any);
-    }
-  }, [user, displayName, loading, router]);
-
   // Entrance animations effect
   useEffect(() => {
     if (shouldPlayEntranceAnimations) {
