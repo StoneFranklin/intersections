@@ -63,19 +63,6 @@ export interface HomeMenuProps {
   signingInWithApple: boolean;
   setSigningInWithApple: (signingIn: boolean) => void;
 
-  showProfileMenu: boolean;
-  setShowProfileMenu: (show: boolean) => void;
-
-  showDisplayNameModal: boolean;
-  setShowDisplayNameModal: (show: boolean) => void;
-  displayNameInput: string;
-  setDisplayNameInput: (value: string) => void;
-  displayNameError: string | null;
-  savingDisplayName: boolean;
-  onSaveDisplayName: () => void;
-
-  notificationsEnabled: boolean;
-  onToggleNotifications: () => void;
 
   signInBannerDismissed: boolean;
   onDismissSignInBanner: () => void;
@@ -122,17 +109,6 @@ export function HomeMenu({
   setSigningIn,
   signingInWithApple,
   setSigningInWithApple,
-  showProfileMenu,
-  setShowProfileMenu,
-  showDisplayNameModal,
-  setShowDisplayNameModal,
-  displayNameInput,
-  setDisplayNameInput,
-  displayNameError,
-  savingDisplayName,
-  onSaveDisplayName,
-  notificationsEnabled,
-  onToggleNotifications,
   signInBannerDismissed,
   onDismissSignInBanner,
   isCurrentUserEntry,
@@ -146,7 +122,6 @@ export function HomeMenu({
   archiveCompletionPercentage,
 }: HomeMenuProps) {
   const router = useRouter();
-  const displayNameInputRef = useRef<TextInput>(null);
   const [homeLeaderboardTab, setHomeLeaderboardTab] = useState<LeaderboardTab>('global');
   const [avatarLoadError, setAvatarLoadError] = useState(false);
   const { colorScheme } = useThemeScheme();
@@ -167,18 +142,17 @@ export function HomeMenu({
   const buttonsOpacity = useRef(new Animated.Value(shouldPlayEntranceAnimations ? 0 : 1)).current;
   const buttonsTranslateY = useRef(new Animated.Value(shouldPlayEntranceAnimations ? 30 : 0)).current;
 
-  useEffect(() => {
-    if (!showDisplayNameModal) return;
-    const focusTimer = setTimeout(() => {
-      displayNameInputRef.current?.focus();
-    }, 150);
-    return () => clearTimeout(focusTimer);
-  }, [showDisplayNameModal]);
-
   // Reset avatar error state when avatarUrl changes
   useEffect(() => {
     setAvatarLoadError(false);
   }, [avatarUrl]);
+
+  // Auto-navigate to set display name screen if user doesn't have a display name
+  useEffect(() => {
+    if (user && !displayName && !loading) {
+      router.push('/set-display-name' as any);
+    }
+  }, [user, displayName, loading, router]);
 
   // Entrance animations effect
   useEffect(() => {
@@ -251,56 +225,6 @@ export function HomeMenu({
     // Logo press handler - can be used for future interactions
   };
 
-  const displayNameModalContent = (
-    <View style={styles.displayNameModal}>
-      <Text style={styles.displayNameTitle}>
-        {displayName ? 'Edit Display Name' : 'Set Your Display Name'}
-      </Text>
-      <Text style={styles.displayNameSubtitle}>This name will appear on the leaderboard</Text>
-
-      <TextInput
-        ref={displayNameInputRef}
-        style={styles.displayNameInput}
-        value={displayNameInput}
-        onChangeText={setDisplayNameInput}
-        placeholder="Enter display name"
-        placeholderTextColor="#666"
-        maxLength={20}
-        autoFocus
-        returnKeyType="done"
-        onSubmitEditing={onSaveDisplayName}
-        accessibilityLabel="Display name input"
-        accessibilityHint="Enter a name to show on the leaderboard"
-      />
-
-      {!!displayNameError && (
-        <Text style={styles.displayNameErrorText}>{displayNameError}</Text>
-      )}
-
-      <Button
-        text={savingDisplayName ? 'Saving...' : 'Save'}
-        onPress={onSaveDisplayName}
-        disabled={!displayNameInput.trim() || savingDisplayName}
-        loading={savingDisplayName}
-        backgroundColor={colorScheme.success}
-        textColor={colorScheme.textPrimary}
-        style={{ width: '100%' }}
-      />
-
-      {displayName && (
-        <Button
-          text="Cancel"
-          onPress={() => {
-            setShowDisplayNameModal(false);
-            setDisplayNameInput('');
-          }}
-          variant="text"
-          backgroundColor={colorScheme.textTertiary}
-          style={{ width: '100%', marginTop: 12 }}
-        />
-      )}
-    </View>
-  );
 
   return (
     <View style={{ flex: 1, backgroundColor: colorScheme.backgroundPrimary }}>
@@ -342,7 +266,7 @@ export function HomeMenu({
                   <Text style={styles.headerLevelText}>Lv {level}</Text>
                 </View>
               )}
-              <TouchableOpacity style={styles.headerProfileButton} onPress={() => setShowProfileMenu(true)}>
+              <TouchableOpacity style={styles.headerProfileButton} onPress={() => router.push('/settings' as any)}>
                 <View style={styles.headerProfileIcon}>
                   {avatarUrl && !avatarLoadError ? (
                     <Image
@@ -654,100 +578,6 @@ export function HomeMenu({
         </View>
       </Modal>
 
-      <Modal
-        visible={showProfileMenu}
-        animationType="fade"
-        transparent={true}
-        onRequestClose={() => setShowProfileMenu(false)}
-      >
-        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setShowProfileMenu(false)}>
-          <View style={styles.profileMenuModal}>
-            <View style={styles.profileMenuHeader}>
-              <View style={styles.profileMenuAvatar}>
-                {avatarUrl && !avatarLoadError ? (
-                  <Image
-                    source={{ uri: avatarUrl }}
-                    style={styles.profileMenuAvatarImage}
-                    onError={() => setAvatarLoadError(true)}
-                  />
-                ) : (
-                  <Text style={styles.profileMenuAvatarText}>
-                    {(displayName || user?.email || 'U').charAt(0).toUpperCase()}
-                  </Text>
-                )}
-              </View>
-              <View style={styles.profileMenuInfo}>
-                <Text style={styles.profileMenuName}>{displayName || 'No display name'}</Text>
-                <Text style={styles.profileMenuLevel}>Level {level}</Text>
-              </View>
-            </View>
-
-            <View style={styles.profileMenuDivider} />
-
-            <TouchableOpacity
-              style={styles.profileMenuItem}
-              onPress={() => {
-                setShowProfileMenu(false);
-                setDisplayNameInput(displayName || '');
-                setShowDisplayNameModal(true);
-              }}
-            >
-              <Ionicons name="pencil" size={18} color="#6a9fff" style={styles.profileMenuItemIcon} />
-              <Text style={styles.profileMenuItemText}>Edit Display Name</Text>
-            </TouchableOpacity>
-
-            <View style={styles.profileMenuDivider} />
-
-            {Platform.OS !== 'web' && (
-              <>
-                <TouchableOpacity style={styles.profileMenuItem} onPress={onToggleNotifications}>
-                  <Ionicons
-                    name={notificationsEnabled ? 'notifications' : 'notifications-outline'}
-                    size={18}
-                    color="#6a9fff"
-                    style={styles.profileMenuItemIcon}
-                  />
-                  <Text style={styles.profileMenuItemText}>Daily Notifications</Text>
-                  <View style={[styles.toggle, notificationsEnabled && styles.toggleOn]}>
-                    <View style={[styles.toggleThumb, notificationsEnabled && styles.toggleThumbOn]} />
-                  </View>
-                </TouchableOpacity>
-                <View style={styles.profileMenuDivider} />
-              </>
-            )}
-
-            <TouchableOpacity
-              style={styles.profileMenuItem}
-              onPress={() => {
-                setShowProfileMenu(false);
-                signOut();
-              }}
-            >
-              <Ionicons name="exit-outline" size={18} color="#ef4444" style={styles.profileMenuItemIcon} />
-              <Text style={styles.profileMenuItemTextDanger}>Sign Out</Text>
-            </TouchableOpacity>
-          </View>
-        </TouchableOpacity>
-      </Modal>
-
-      {Platform.OS === 'web' ? (
-        showDisplayNameModal ? (
-          <View style={[styles.modalOverlay, styles.modalOverlayWeb]}>
-            {displayNameModalContent}
-          </View>
-        ) : null
-      ) : (
-        <Modal
-          visible={showDisplayNameModal}
-          animationType="fade"
-          transparent={true}
-          onRequestClose={() => setShowDisplayNameModal(false)}
-        >
-          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalOverlay}>
-            {displayNameModalContent}
-          </KeyboardAvoidingView>
-        </Modal>
-      )}
       </SafeAreaView>
     </View>
   );

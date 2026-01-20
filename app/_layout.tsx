@@ -158,6 +158,8 @@ function RootLayoutContent() {
           <Stack.Screen name="archive" options={{ headerShown: false, title: 'Puzzle Archive' }} />
           <Stack.Screen name="practice" options={{ headerShown: false, title: 'Practice' }} />
           <Stack.Screen name="friends" options={{ headerShown: false, title: 'Friends' }} />
+          <Stack.Screen name="settings" options={{ headerShown: false, title: 'Settings' }} />
+          <Stack.Screen name="set-display-name" options={{ headerShown: false, title: 'Set Display Name' }} />
           <Stack.Screen name="privacy" options={{ headerShown: false, title: 'Privacy Policy' }} />
           <Stack.Screen name="terms" options={{ headerShown: false, title: 'Terms of Service' }} />
           <Stack.Screen name="about" options={{ headerShown: false, title: 'About' }} />

@@ -88,16 +88,8 @@ export default function GameScreen() {
   // Display name and avatar state
   const [displayName, setDisplayName] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [showDisplayNameModal, setShowDisplayNameModal] = useState(false);
-  const [displayNameInput, setDisplayNameInput] = useState('');
-  const [savingDisplayName, setSavingDisplayName] = useState(false);
-  const [displayNameError, setDisplayNameError] = useState<string | null>(null);
-  const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [signInBannerDismissed, setSignInBannerDismissed] = useState(true); // Start hidden until we check
   const displayNameRef = useRef<string | null>(null);
-
-  // Notification settings state
-  const [notificationsEnabled, setNotificationsEnabledState] = useState(true);
 
   // Archive completion percentage state
   const [archiveCompletionPercentage, setArchiveCompletionPercentage] = useState<number | null>(null);
@@ -139,20 +131,17 @@ export default function GameScreen() {
   // Track previous user for sign-out detection
   const prevUserForSignOutRef = useRef<string | null>(null);
 
-  // Fetch display name when user logs in, clear state on sign-out
+  // Display name and avatar are now managed by XP context
+  // Clear leaderboard state on sign-out
   useEffect(() => {
     if (user) {
+      // Set avatar URL from profile for local state (for leaderboard display)
       getOrCreateProfile(user.id).then(profile => {
         if (profile) {
           if (profile.displayName) {
             setDisplayName(profile.displayName);
-            setShowDisplayNameModal(false);
             displayNameRef.current = profile.displayName;
-          } else if (!displayNameRef.current) {
-            // Show modal only if we don't already have a local display name
-            setShowDisplayNameModal(true);
           }
-          // Set avatar URL from profile
           if (profile.avatarUrl) {
             setAvatarUrl(profile.avatarUrl);
           }
@@ -250,16 +239,7 @@ export default function GameScreen() {
     }, [user])
   );
 
-  // Load notification preference
-  useEffect(() => {
-    const loadNotificationPreference = async () => {
-      if (Platform.OS !== 'web') {
-        const enabled = await areNotificationsEnabled();
-        setNotificationsEnabledState(enabled);
-      }
-    };
-    loadNotificationPreference();
-  }, []);
+  // Notification preference is now loaded in XP context
 
   // Track previous user to detect sign-in events
   const prevUserRef = useRef<string | null>(null);
@@ -379,46 +359,6 @@ export default function GameScreen() {
     runReconciliation();
   }, [user]);
 
-  const handleToggleNotifications = async () => {
-    const newValue = !notificationsEnabled;
-    setNotificationsEnabledState(newValue);
-    await setNotificationsEnabled(newValue);
-  };
-
-  const handleSaveDisplayName = async () => {
-    if (!user) return;
-
-    const validation = validateDisplayName(displayNameInput);
-    if (!validation.ok) {
-      setDisplayNameError(validation.error || 'Invalid display name.');
-      return;
-    }
-
-    setSavingDisplayName(true);
-    try {
-      const result = await updateDisplayName(user.id, validation.normalized);
-      if (result.success) {
-        setDisplayName(validation.normalized);
-        displayNameRef.current = validation.normalized;
-        setShowDisplayNameModal(false);
-        setDisplayNameInput('');
-        setDisplayNameError(null);
-        const refreshedProfile = await getOrCreateProfile(user.id);
-        if (refreshedProfile?.displayName) {
-          setDisplayName(refreshedProfile.displayName);
-          displayNameRef.current = refreshedProfile.displayName;
-        }
-      } else {
-        if (result.error === 'taken') {
-          setDisplayNameError('That username is already taken.');
-        } else {
-          setDisplayNameError('Unable to save that display name.');
-        }
-      }
-    } finally {
-      setSavingDisplayName(false);
-    }
-  };
 
   // Load leaderboard data (for both preview and full modal)
   // This function loads all data atomically - leaderboard won't show until everything is ready
@@ -894,20 +834,6 @@ export default function GameScreen() {
         setSigningIn={setSigningIn}
         signingInWithApple={signingInWithApple}
         setSigningInWithApple={setSigningInWithApple}
-        showProfileMenu={showProfileMenu}
-        setShowProfileMenu={setShowProfileMenu}
-        showDisplayNameModal={showDisplayNameModal}
-        setShowDisplayNameModal={setShowDisplayNameModal}
-        displayNameInput={displayNameInput}
-        setDisplayNameInput={(value) => {
-          setDisplayNameInput(value);
-          if (displayNameError) setDisplayNameError(null);
-        }}
-        displayNameError={displayNameError}
-        savingDisplayName={savingDisplayName}
-        onSaveDisplayName={handleSaveDisplayName}
-        notificationsEnabled={notificationsEnabled}
-        onToggleNotifications={handleToggleNotifications}
         signInBannerDismissed={signInBannerDismissed}
         onDismissSignInBanner={dismissSignInBanner}
         isCurrentUserEntry={isCurrentUserEntry}

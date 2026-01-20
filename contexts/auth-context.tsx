@@ -27,24 +27,19 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 // Also updates avatar_url from OAuth provider metadata
 async function ensureProfile(userId: string, avatarUrl?: string | null) {
   try {
-    const { data } = await supabase
+    // Use upsert to handle both new profiles and re-created accounts after deletion
+    const { error } = await supabase
       .from('profiles')
-      .select('id, avatar_url')
-      .eq('id', userId)
-      .maybeSingle();
-
-    if (!data) {
-      // Create profile if it doesn't exist
-      await supabase.from('profiles').insert({
+      .upsert({
         id: userId,
         avatar_url: avatarUrl || null,
+      }, {
+        onConflict: 'id',
+        ignoreDuplicates: false, // Always update on conflict
       });
-    } else if (avatarUrl && !data.avatar_url) {
-      // Update avatar_url if we have one from OAuth but profile doesn't have one yet
-      await supabase
-        .from('profiles')
-        .update({ avatar_url: avatarUrl })
-        .eq('id', userId);
+
+    if (error) {
+      logger.error('Error upserting profile:', error);
     }
   } catch (e) {
     logger.error('Error ensuring profile:', e);
