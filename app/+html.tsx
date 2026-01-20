@@ -18,6 +18,13 @@ export default function Root({ children }: PropsWithChildren) {
 
         <title>Intersections</title>
 
+        {/* AdSense Verification and H5 Games */}
+        <script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6475460515852013"
+          crossOrigin="anonymous"
+        />
+
         {/* Favicon */}
         <link rel="icon" type="image/png" href="/assets/images/intersections-logo.png" />
         <link rel="apple-touch-icon" sizes="180x180" href="/assets/images/intersections-logo.png" />
