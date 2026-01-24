@@ -22,8 +22,8 @@
     },
     android: {
       adaptiveIcon: {
-        backgroundColor: "#0f0f1a",
-        foregroundImage: "./assets/images/intersections-logo.png"
+        backgroundColor: "#5a3a8a",
+        foregroundImage: "./assets/images/intersections-logo-adaptive.png"
       },
       edgeToEdgeEnabled: true,
       predictiveBackGestureEnabled: false,
