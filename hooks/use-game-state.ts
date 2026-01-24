@@ -319,7 +319,7 @@ export function useGameState(puzzle: Puzzle, options?: UseGameStateOptions): Use
   const grantExtraLife = useCallback(() => {
     setGameState(prev => ({
       ...prev,
-      lives: prev.lives + 1,
+      lives: STARTING_LIVES, // Restore all 3 lives instead of just adding 1
     }));
     // Reset final score if it was set due to game over
     // Timer will automatically resume when isPaused becomes false

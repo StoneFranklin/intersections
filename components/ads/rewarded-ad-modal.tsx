@@ -54,11 +54,11 @@ export function RewardedAdModal({
           </View>
 
           {/* Title */}
-          <Text style={styles.title}>Get an Extra Life!</Text>
+          <Text style={styles.title}>Restore All Lives!</Text>
 
           {/* Description */}
           <Text style={styles.description}>
-            Continue playing by watching a short ad
+            Get all 3 lives back by watching a short ad
           </Text>
 
           {/* Loading indicator - shown while ad is loading */}

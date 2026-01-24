@@ -1,4 +1,3 @@
-import { DoubleXPModal } from '@/components/ads/double-xp-modal';
 import { RewardedAdModal } from '@/components/ads/rewarded-ad-modal';
 import { GameGrid, LeaveGameModal, WordTray } from '@/components/game';
 import { SignInBenefitsCard } from '@/components/game/sign-in-benefits-card';
@@ -9,14 +8,12 @@ import { XPProgressBar } from '@/components/xp/xp-progress-bar';
 import { useAuth } from '@/contexts/auth-context';
 import { useXP } from '@/contexts/xp-context';
 import { LeaderboardEntry, submitScore } from '@/data/puzzleApi';
-import { useDoubleXPAd } from '@/hooks/use-double-xp-ad';
 import { useGameState } from '@/hooks/use-game-state';
 import { useRewardedAd } from '@/hooks/use-rewarded-ad';
 import { CellPosition, GameScore, Puzzle } from '@/types/game';
 import { haptics } from '@/utils/haptics';
 import { logger } from '@/utils/logger';
 import { formatTime, shareScore } from '@/utils/share';
-import { calculateXP } from '@/utils/xp';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
@@ -65,7 +62,6 @@ export function GameContent({
   const styles = useMemo(() => createStyles(colorScheme), [colorScheme]);
 
   // Ad hooks - must be declared before useGameState
-  const doubleXPAd = useDoubleXPAd();
   const rewardedAd = useRewardedAd();
 
   const {
@@ -80,7 +76,7 @@ export function GameContent({
     elapsedTime,
     finalScore,
   } = useGameState(puzzle, {
-    isPaused: rewardedAd.isShowing || doubleXPAd.isShowing,
+    isPaused: rewardedAd.isShowing,
   });
 
   const [resultRank, setResultRank] = useState<number | null>(null);
@@ -92,7 +88,6 @@ export function GameContent({
 
   // XP state
   const { awardPuzzleXP, level, totalXP, progress } = useXP();
-  const [showDoubleXPModal, setShowDoubleXPModal] = useState(false);
   const [xpGained, setXpGained] = useState<number | null>(null);
   const [leveledUp, setLeveledUp] = useState(false);
   const [previousLevel, setPreviousLevel] = useState<number | null>(null);
@@ -139,50 +134,23 @@ export function GameContent({
     setAdOfferDeclined(true);
   };
 
-  // Calculate base XP for display
-  const baseXP = finalScore ? calculateXP(finalScore.score, true) : 0;
-
-  // Handle double XP ad
-  const handleWatchDoubleXPAd = async () => {
-    // Mark XP as awarded immediately to prevent modal from reopening
-    setXpAwarded(true);
-
-    await doubleXPAd.loadAndShow();
-    setShowDoubleXPModal(false);
-
-    // Award double XP whether ad succeeded or failed - don't punish the user
-    const xpResult = await awardPuzzleXP(finalScore?.score ?? 0, true, true);
-    if (xpResult) {
-      setXpGained(xpResult.xpGained);
-      setLeveledUp(xpResult.leveledUp);
-      setPreviousLevel(xpResult.previousLevel);
-    }
-    haptics.notification(Haptics.NotificationFeedbackType.Success);
-  };
-
-  const handleDeclineDoubleXP = async () => {
-    setShowDoubleXPModal(false);
-    // Award base XP
-    const xpResult = await awardPuzzleXP(finalScore?.score ?? 0, true, false);
-    if (xpResult) {
-      setXpGained(xpResult.xpGained);
-      setLeveledUp(xpResult.leveledUp);
-      setPreviousLevel(xpResult.previousLevel);
-    }
-    setXpAwarded(true);
-  };
-
-  // Show double XP modal when game ends (after score submission completes)
-  // Only show to authenticated users since anonymous users can't earn XP
+  // Award XP when game ends (after score submission completes)
+  // Only award to authenticated users since anonymous users can't earn XP
   useEffect(() => {
-    if (user && gameEnded && finalScore && !xpAwarded && !showDoubleXPModal && resultRank !== null) {
-      // Small delay to let results screen render first
-      const timer = setTimeout(() => {
-        setShowDoubleXPModal(true);
-      }, 300);
-      return () => clearTimeout(timer);
+    if (user && gameEnded && finalScore && !xpAwarded && resultRank !== null) {
+      // Award base XP immediately (no more double XP ad)
+      const awardXP = async () => {
+        const xpResult = await awardPuzzleXP(finalScore.score, true);
+        if (xpResult) {
+          setXpGained(xpResult.xpGained);
+          setLeveledUp(xpResult.leveledUp);
+          setPreviousLevel(xpResult.previousLevel);
+        }
+        setXpAwarded(true);
+      };
+      awardXP();
     }
-  }, [user, gameEnded, finalScore, xpAwarded, showDoubleXPModal, resultRank]);
+  }, [user, gameEnded, finalScore, xpAwarded, resultRank, awardPuzzleXP]);
 
 
   // Handle leave game confirmation
@@ -486,15 +454,6 @@ export function GameContent({
             style={{ marginTop: 16, width: '100%', maxWidth: 400 }}
           />
         </ScrollView>
-
-        <DoubleXPModal
-          visible={showDoubleXPModal}
-          baseXP={baseXP}
-          isLoading={doubleXPAd.isLoading}
-          isShowing={doubleXPAd.isShowing}
-          onWatchAd={handleWatchDoubleXPAd}
-          onDecline={handleDeclineDoubleXP}
-        />
       </SafeAreaView>
     );
   }

@@ -32,10 +32,9 @@ interface XPContextType {
    * Award XP for completing a puzzle
    * @param score - The puzzle score (0-1000)
    * @param isDaily - Whether this is a daily puzzle (full XP) or archive (50% XP)
-   * @param doubled - Whether XP should be doubled (from watching an ad)
    * @returns XP gain result or null if failed
    */
-  awardPuzzleXP: (score: number, isDaily: boolean, doubled?: boolean) => Promise<XPGainResult | null>;
+  awardPuzzleXP: (score: number, isDaily: boolean) => Promise<XPGainResult | null>;
   /** Refresh XP data from server/storage */
   refreshXP: () => Promise<void>;
   setDisplayName: (name: string | null) => void;
@@ -130,8 +129,7 @@ export function XPProvider({ children }: { children: React.ReactNode }) {
 
   const awardPuzzleXP = useCallback(async (
     score: number,
-    isDaily: boolean,
-    doubled: boolean = false
+    isDaily: boolean
   ): Promise<XPGainResult | null> => {
     try {
       // Anonymous users don't earn XP
@@ -139,13 +137,8 @@ export function XPProvider({ children }: { children: React.ReactNode }) {
         return null;
       }
 
-      // Calculate base XP
-      let xpGained = calculateXP(score, isDaily);
-
-      // Apply double XP if user watched an ad
-      if (doubled) {
-        xpGained *= 2;
-      }
+      // Calculate base XP (no more double XP from ads)
+      const xpGained = calculateXP(score, isDaily);
 
       if (xpGained <= 0) {
         // Return result with 0 XP to show progress bar even when earning no XP
@@ -176,7 +169,7 @@ export function XPProvider({ children }: { children: React.ReactNode }) {
       logger.error('Error awarding XP:', e);
       return null;
     }
-  }, [user, level]);
+  }, [user, level, totalXP]);
 
   const refreshXP = useCallback(async () => {
     await loadXP();

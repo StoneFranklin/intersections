@@ -11,7 +11,6 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { createStyles as createGameStyles } from '@/app/(tabs)/index.styles';
-import { DoubleXPModal } from '@/components/ads/double-xp-modal';
 import { RewardedAdModal } from '@/components/ads/rewarded-ad-modal';
 import { GameGrid, SignInBenefitsCard, WordTray } from '@/components/game';
 import { BackButton } from '@/components/ui/back-button';
@@ -27,7 +26,6 @@ import { CellPosition, GameScore, Puzzle } from '@/types/game';
 import { formatPuzzleTitle, getPuzzleNumber } from '@/utils/archive';
 import { haptics } from '@/utils/haptics';
 import { formatTime } from '@/utils/share';
-import { calculateXP } from '@/utils/xp';
 
 interface PracticeGameContentProps {
   puzzle: Puzzle;
@@ -68,12 +66,10 @@ export function PracticeGameContent({
 
   // XP state
   const { awardPuzzleXP, level, progress } = useXP();
-  const [showDoubleXPModal, setShowDoubleXPModal] = useState(false);
   const [xpGained, setXpGained] = useState<number | null>(null);
   const [leveledUp, setLeveledUp] = useState(false);
   const [previousLevel, setPreviousLevel] = useState<number | null>(null);
   const [xpAwarded, setXpAwarded] = useState(false);
-  const doubleXPAd = useRewardedAd();
   const rewardedAd = useRewardedAd();
 
   const {
@@ -89,7 +85,7 @@ export function PracticeGameContent({
     finalScore,
   } = useGameState(puzzle, {
     persistTimer: false,
-    isPaused: rewardedAd.isShowing || doubleXPAd.isShowing,
+    isPaused: rewardedAd.isShowing,
   });
 
   const isGameOver = gameState.lives <= 0;
@@ -140,50 +136,23 @@ export function PracticeGameContent({
     setAdOfferDeclined(true);
   };
 
-  // Calculate base XP for display (archive gives 50% XP)
-  const baseXP = finalScore ? calculateXP(finalScore.score, false) : 0;
-
-  // Handle double XP ad for archive
-  const handleWatchDoubleXPAd = async () => {
-    // Mark XP as awarded immediately to prevent modal from reopening
-    setXpAwarded(true);
-
-    await doubleXPAd.loadAndShow();
-    setShowDoubleXPModal(false);
-
-    // Award double XP whether ad succeeded or failed - don't punish the user
-    const xpResult = await awardPuzzleXP(finalScore?.score ?? 0, false, true);
-    if (xpResult) {
-      setXpGained(xpResult.xpGained);
-      setLeveledUp(xpResult.leveledUp);
-      setPreviousLevel(xpResult.previousLevel);
-    }
-    haptics.notification(Haptics.NotificationFeedbackType.Success);
-  };
-
-  const handleDeclineDoubleXP = async () => {
-    setShowDoubleXPModal(false);
-    // Award base XP
-    const xpResult = await awardPuzzleXP(finalScore?.score ?? 0, false, false);
-    if (xpResult) {
-      setXpGained(xpResult.xpGained);
-      setLeveledUp(xpResult.leveledUp);
-      setPreviousLevel(xpResult.previousLevel);
-    }
-    setXpAwarded(true);
-  };
-
-  // Show double XP modal when game ends
-  // Only show to authenticated users since anonymous users can't earn XP
+  // Award XP when game ends (archive puzzles give 50% XP)
+  // Only award to authenticated users since anonymous users can't earn XP
   useEffect(() => {
-    if (user && gameEnded && savedScore && !xpAwarded && !showDoubleXPModal) {
-      // Small delay to let results screen render first
-      const timer = setTimeout(() => {
-        setShowDoubleXPModal(true);
-      }, 500);
-      return () => clearTimeout(timer);
+    if (user && gameEnded && savedScore && !xpAwarded) {
+      // Award base XP immediately (no more double XP ad)
+      const awardXP = async () => {
+        const xpResult = await awardPuzzleXP(savedScore.score, false);
+        if (xpResult) {
+          setXpGained(xpResult.xpGained);
+          setLeveledUp(xpResult.leveledUp);
+          setPreviousLevel(xpResult.previousLevel);
+        }
+        setXpAwarded(true);
+      };
+      awardXP();
     }
-  }, [user, gameEnded, savedScore, xpAwarded, showDoubleXPModal]);
+  }, [user, gameEnded, savedScore, xpAwarded, awardPuzzleXP]);
 
 
   const handleLeaveRequest = useCallback(() => {
@@ -313,15 +282,6 @@ export function PracticeGameContent({
             />
           </View>
         </ScrollView>
-
-        <DoubleXPModal
-          visible={showDoubleXPModal}
-          baseXP={baseXP}
-          isLoading={doubleXPAd.isLoading}
-          isShowing={doubleXPAd.isShowing}
-          onWatchAd={handleWatchDoubleXPAd}
-          onDecline={handleDeclineDoubleXP}
-        />
       </SafeAreaView>
     );
   }
