@@ -2,7 +2,7 @@
   expo: {
     name: "IntersectionsGame",
     slug: "intersections",
-    version: "1.0.0",
+    version: "1.1.0",
     orientation: "portrait",
     icon: "./assets/images/intersections-logo.png",
     scheme: "intersections",
