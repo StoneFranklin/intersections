@@ -87,7 +87,8 @@
       "Bash(ls -lah \"c:\\\\Users\\\\saf1\\\\Documents\\\\react-native\\\\word-game\\\\assets\\\\images\"\" | grep -i \"splash|logo|intersection \")",
       "Bash(xargs ls:*)",
       "Bash(npm run ios:*)",
-      "Bash(./gradlew clean:*)"
+      "Bash(./gradlew clean:*)",
+      "Bash(curl:*)"
     ]
   }
 }
