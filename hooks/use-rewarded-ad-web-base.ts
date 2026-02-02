@@ -35,6 +35,13 @@ export function useRewardedAdWebBase(_zoneId: string): UseRewardedAdReturn {
     if (typeof window === 'undefined' || !window.adBreak) {
       console.log('[H5 Ads] adBreak not available - granting reward immediately');
       console.log('[H5 Ads] window.adBreak:', typeof window !== 'undefined' ? typeof window.adBreak : 'window undefined');
+      console.log('[H5 Ads] Checking for adsbygoogle script...');
+      const adsScript = document.querySelector('script[src*="adsbygoogle.js"]');
+      console.log('[H5 Ads] Script element found:', !!adsScript);
+      if (adsScript) {
+        console.log('[H5 Ads] Script src:', adsScript.getAttribute('src'));
+      }
+      console.log('[H5 Ads] window.adsbygoogle:', typeof (window as any).adsbygoogle);
       // Fallback: grant reward immediately if ads not available
       return { success: true, rewarded: true };
     }
