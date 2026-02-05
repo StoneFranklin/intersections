@@ -138,7 +138,7 @@ export function GameContent({
   // Only award to authenticated users since anonymous users can't earn XP
   useEffect(() => {
     if (user && gameEnded && finalScore && !xpAwarded && resultRank !== null) {
-      // Award base XP immediately (no more double XP ad)
+      // Award XP to the user
       const awardXP = async () => {
         const xpResult = await awardPuzzleXP(finalScore.score, true);
         if (xpResult) {

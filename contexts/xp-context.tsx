@@ -137,7 +137,7 @@ export function XPProvider({ children }: { children: React.ReactNode }) {
         return null;
       }
 
-      // Calculate base XP (no more double XP from ads)
+      // Calculate XP based on score
       const xpGained = calculateXP(score, isDaily);
 
       if (xpGained <= 0) {

@@ -140,7 +140,7 @@ export function PracticeGameContent({
   // Only award to authenticated users since anonymous users can't earn XP
   useEffect(() => {
     if (user && gameEnded && savedScore && !xpAwarded) {
-      // Award base XP immediately (no more double XP ad)
+      // Award XP to the user
       const awardXP = async () => {
         const xpResult = await awardPuzzleXP(savedScore.score, false);
         if (xpResult) {

@@ -34,7 +34,7 @@ interface AdUnitIds {
  * Loads ad on-demand when user requests to watch.
  *
  * @param adUnitIds - Platform-specific ad unit IDs (ios and android)
- * @param adName - Name of the ad type for logging purposes (e.g., "rewarded", "double-xp")
+ * @param adName - Name of the ad type for logging purposes (e.g., "rewarded")
  */
 export function useRewardedAdBase(adUnitIds: AdUnitIds, adName: string = 'rewarded'): UseRewardedAdReturn {
   const [isLoading, setIsLoading] = useState(false);

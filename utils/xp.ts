@@ -2,8 +2,6 @@
  * XP and leveling system utilities
  *
  * XP is earned from puzzle scores. Daily puzzles give full XP, archive puzzles give 50%.
- * Players can watch an ad after completing a puzzle to double their XP gain.
- *
  * Level progression uses an exponential curve where each level requires more XP.
  */
 
@@ -11,7 +9,7 @@
  * Calculate XP earned from a puzzle score
  * @param score - The puzzle score (0-1000)
  * @param isDaily - Whether this is a daily puzzle (true) or archive puzzle (false)
- * @returns The base XP earned (before any multipliers like double XP)
+ * @returns The XP earned
  */
 export function calculateXP(score: number, isDaily: boolean): number {
   // Base XP is score / 10 (so max 100 XP per puzzle)
