@@ -125,43 +125,48 @@ export interface GameScore {
 }
 
 /**
- * Calculate score based on correct placements, time, and mistakes
- * Partial completion gets proportional base score
- * Full completion gets a bonus
- * Max score is 1000
- * Minimum score is 1 per correct placement (never 0 if you got at least 1 right)
+ * Calculate score based on correct placements and mistakes
+ *
+ * Scoring hierarchy (strict):
+ * 1. CORRECT PLACEMENTS: More correct ALWAYS beats fewer correct
+ * 2. MISTAKES: Fewer mistakes ALWAYS beats more mistakes (same correct count)
+ * 3. TIME: Handled externally - the leaderboard and database already use
+ *    time_seconds as a tiebreaker when scores are equal (see getScoreRank)
+ *
+ * Score range: 1-1000 (whole numbers)
+ *
+ * Structure: Each correct placement owns a 62-point band.
+ * Within each band, each mistake reduces the score by 1 point.
+ * This guarantees the hierarchy for up to 61 mistakes per band.
+ * With extreme mistakes, scores clamp to the band floor (1 point above
+ * the previous band's ceiling) to preserve "more correct always wins".
  */
 export function calculateScore(
-  timeSeconds: number, 
+  timeSeconds: number,
   mistakes: number,
   correctPlacements: number = 16,
   totalCells: number = 16
 ): number {
-  const MAX_SCORE = 1000;
-  const BASE_SCORE = 800;              // Base for full completion
-  const COMPLETION_BONUS = 200;        // +200 for completing the puzzle (800 + 200 = 1000 max)
-  const TIME_PENALTY_PER_SECOND = 2;   // -2 points per second
-  const MISTAKE_PENALTY = 25;          // -25 points per mistake
-  
-  // Minimum score: 1 point per correct placement
-  const minimumScore = correctPlacements > 0 ? correctPlacements : 0;
-  
-  // Proportional base score based on correct placements
-  const proportionalBase = Math.floor((correctPlacements / totalCells) * BASE_SCORE);
-  
-  // Bonus for full completion
-  const completed = correctPlacements === totalCells;
-  const completionBonus = completed ? COMPLETION_BONUS : 0;
-  
-  // Time penalty caps at 50% of base score
-  const maxTimePenalty = proportionalBase * 0.5;
-  const timePenalty = Math.min(Math.floor(timeSeconds * TIME_PENALTY_PER_SECOND), maxTimePenalty);
-  
-  const mistakePenalty = mistakes * MISTAKE_PENALTY;
-  
-  const score = proportionalBase + completionBonus - timePenalty - mistakePenalty;
-  
-  // Score between minimum and MAX_SCORE
-  return Math.max(minimumScore, Math.min(MAX_SCORE, score));
+  if (correctPlacements === 0) {
+    return 1;
+  }
+
+  // Each correct placement gets a 62-point band
+  // 16 * 62 = 992, plus 8-point bonus for perfect game = 1000
+  const BAND_SIZE = 62;
+  const PERFECT_BONUS = totalCells * BAND_SIZE < 1000 ? 1000 - totalCells * BAND_SIZE : 0; // 8 points
+
+  // Band ceiling for this correctness level (best possible score)
+  const ceiling = correctPlacements * BAND_SIZE + (correctPlacements === totalCells ? PERFECT_BONUS : 0);
+
+  // Band floor: 1 point above the previous level's ceiling
+  // This guarantees more correct ALWAYS wins
+  const floor = (correctPlacements - 1) * BAND_SIZE + 1;
+
+  // Each mistake costs 1 point within the band
+  const score = ceiling - mistakes;
+
+  // Clamp to band floor (never drop into previous correctness band)
+  return Math.max(floor, Math.min(1000, score));
 }
 
