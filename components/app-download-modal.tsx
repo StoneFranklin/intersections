@@ -1,7 +1,7 @@
 import { useThemeScheme } from '@/contexts/theme-context';
-import { AntDesign } from '@expo/vector-icons';
+import { AntDesign, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
-import { Modal, Platform, Pressable, StyleSheet, Text, View, Linking } from 'react-native';
+import { Modal, Platform, Pressable, StyleSheet, Text, View, Linking, Image } from 'react-native';
 
 const APP_STORE_URL = 'https://apps.apple.com/us/app/intersections-daily-trivia/id6756741688';
 const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.stonefranklin.intersections';
@@ -64,10 +64,12 @@ export function AppDownloadModal() {
             <AntDesign name="close" size={24} color={colorScheme.textSecondary} />
           </Pressable>
 
-          {/* Icon */}
-          <View style={[styles.iconContainer, { backgroundColor: '#5a3a8a' }]}>
-            <Text style={styles.iconText}>🎯</Text>
-          </View>
+          {/* App Logo */}
+          <Image
+            source={require('@/assets/images/intersections-logo.png')}
+            style={styles.appLogo}
+            resizeMode="contain"
+          />
 
           {/* Title */}
           <Text style={[styles.title, { color: colorScheme.textPrimary }]}>
@@ -86,7 +88,7 @@ export function AppDownloadModal() {
                 style={[styles.storeButton, { backgroundColor: '#000000' }]}
                 onPress={handleAppStorePress}
               >
-                <AntDesign name="apple1" size={24} color="#ffffff" />
+                <MaterialCommunityIcons name="apple" size={24} color="#ffffff" />
                 <View style={styles.buttonTextContainer}>
                   <Text style={styles.buttonSubtext}>Download on the</Text>
                   <Text style={styles.buttonText}>App Store</Text>
@@ -99,7 +101,7 @@ export function AppDownloadModal() {
                 style={[styles.storeButton, { backgroundColor: '#000000' }]}
                 onPress={handlePlayStorePress}
               >
-                <AntDesign name="android1" size={24} color="#ffffff" />
+                <MaterialCommunityIcons name="google" size={24} color="#ffffff" />
                 <View style={styles.buttonTextContainer}>
                   <Text style={styles.buttonSubtext}>Get it on</Text>
                   <Text style={styles.buttonText}>Google Play</Text>
@@ -149,16 +151,10 @@ const styles = StyleSheet.create({
     right: 16,
     zIndex: 1,
   },
-  iconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
+  appLogo: {
+    width: 100,
+    height: 100,
     marginBottom: 24,
-  },
-  iconText: {
-    fontSize: 40,
   },
   title: {
     fontSize: 24,
