@@ -1,4 +1,3 @@
-import { AppDownloadModal } from '@/components/app-download-modal';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { AuthProvider } from '@/contexts/auth-context';
 import { AppThemeProvider, useThemeScheme } from '@/contexts/theme-context';
@@ -167,7 +166,6 @@ function RootLayoutContent() {
           <Stack.Screen name="contact" options={{ headerShown: false, title: 'Contact Us' }} />
         </Stack>
         <StatusBar style="light" />
-        {Platform.OS === 'web' && <AppDownloadModal />}
       </ThemeProvider>
     </View>
   );

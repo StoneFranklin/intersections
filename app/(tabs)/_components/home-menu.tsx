@@ -1,3 +1,4 @@
+import { AppDownloadModal } from '@/components/app-download-modal';
 import { SignInBenefitsCard } from '@/components/game';
 import { LeaderboardCompact } from '@/components/leaderboard/leaderboard-compact';
 import { LeaderboardTab, LeaderboardTabToggle } from '@/components/leaderboard/leaderboard-tab-toggle';
@@ -570,6 +571,8 @@ export function HomeMenu({
           </View>
         </View>
       </Modal>
+
+      <AppDownloadModal />
 
       </SafeAreaView>
     </View>
