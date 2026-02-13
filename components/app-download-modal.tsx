@@ -76,11 +76,6 @@ export function AppDownloadModal() {
             Get the Intersections App
           </Text>
 
-          {/* Description */}
-          <Text style={[styles.description, { color: colorScheme.textSecondary }]}>
-            Download our native app for the best experience, offline play, and exclusive features!
-          </Text>
-
           {/* Store buttons */}
           <View style={styles.buttonsContainer}>
             {(isIOS || !isAndroid) && (
