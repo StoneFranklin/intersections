@@ -13,7 +13,7 @@ import {
   safeJsonParse,
   serializeStoredDailyScore,
 } from '@/utils/dailyScoreStorage';
-import { getTodayKey, getYesterdayKey } from '@/utils/dateKeys';
+import { getTodayKey, getYesterdayKey, getTodayDate, getYesterdayDate } from '@/utils/dateKeys';
 import { validateDisplayName } from '@/utils/displayNameValidation';
 import { logger } from '@/utils/logger';
 import { areNotificationsEnabled, scheduleDailyNotification, setNotificationsEnabled } from '@/utils/notificationService';
@@ -551,9 +551,9 @@ export default function GameScreen() {
           // Get streak from database
           const dbStreak = await getUserStreak(user.id);
           if (dbStreak) {
-            const todayDate = new Date().toISOString().split('T')[0];
-            const yesterdayDate = new Date(Date.now() - 86400000).toISOString().split('T')[0];
-            
+            const todayDate = getTodayDate();
+            const yesterdayDate = getYesterdayDate();
+
             if (dbStreak.lastPlayedDate === todayDate || dbStreak.lastPlayedDate === yesterdayDate) {
               setStreak(dbStreak.currentStreak);
             } else {
@@ -648,8 +648,8 @@ export default function GameScreen() {
     try {
       const todayKey = getTodayKey();
       const yesterdayKey = getYesterdayKey();
-      const todayDate = new Date().toISOString().split('T')[0];
-      const yesterdayDate = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+      const todayDate = getTodayDate();
+      const yesterdayDate = getYesterdayDate();
 
       // Always save to local storage with userId to track who played
       await AsyncStorage.setItem(dailyCompletedKey(todayKey), 'true');
