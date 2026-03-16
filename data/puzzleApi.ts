@@ -762,6 +762,308 @@ export async function getTodayLeaderboard(currentUserId?: string): Promise<Leade
 }
 
 /**
+ * Get leaderboard for a specific puzzle date (top 10 + current user if not in top 10).
+ * Works for both daily and archive puzzles.
+ */
+export async function getLeaderboardForDate(puzzleDate: string, currentUserId?: string): Promise<LeaderboardEntry[]> {
+  try {
+    const { data, error } = await supabase
+      .from('puzzle_scores')
+      .select('score, time_seconds, correct_placements, mistakes, user_id')
+      .eq('puzzle_date', puzzleDate)
+      .not('user_id', 'is', null)
+      .order('score', { ascending: false })
+      .order('time_seconds', { ascending: true })
+      .limit(50);
+
+    if (error) {
+      logger.error('Error fetching leaderboard for date:', error);
+      return [];
+    }
+
+    if (!data || data.length === 0) {
+      return [];
+    }
+
+    // Dedupe by user (keep best score per user)
+    const userBestScores = new Map<string, typeof data[0]>();
+    for (const entry of data) {
+      const key = entry.user_id as string;
+      const existing = userBestScores.get(key);
+      if (!existing || entry.score > existing.score ||
+          (entry.score === existing.score && entry.time_seconds < existing.time_seconds)) {
+        userBestScores.set(key, entry);
+      }
+    }
+
+    const sortedEntries = Array.from(userBestScores.values())
+      .sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        return a.time_seconds - b.time_seconds;
+      })
+      .slice(0, 10);
+
+    const userIds = sortedEntries
+      .filter(e => e.user_id)
+      .map(e => e.user_id as string);
+
+    const userProfiles = await fetchUserProfiles(userIds);
+
+    const leaderboard: LeaderboardEntry[] = sortedEntries.map((entry, index) => {
+      const profile = entry.user_id ? userProfiles.get(entry.user_id) : null;
+      return {
+        rank: index + 1,
+        score: entry.score,
+        timeSeconds: entry.time_seconds,
+        correctPlacements: entry.correct_placements || 0,
+        mistakes: entry.mistakes || 0,
+        displayName: profile?.displayName || null,
+        avatarUrl: profile?.avatarUrl || null,
+        isCurrentUser: currentUserId ? entry.user_id === currentUserId : false,
+        level: profile?.level || null,
+      };
+    });
+
+    // If current user is not in top 10, find their position
+    if (currentUserId) {
+      const userInTop10 = leaderboard.some(e => e.isCurrentUser);
+
+      if (!userInTop10) {
+        const { data: userEntry, error: userEntryError } = await supabase
+          .from('puzzle_scores')
+          .select('score, time_seconds, correct_placements, mistakes, user_id')
+          .eq('puzzle_date', puzzleDate)
+          .eq('user_id', currentUserId)
+          .order('score', { ascending: false })
+          .order('time_seconds', { ascending: true })
+          .limit(1)
+          .maybeSingle();
+
+        if (userEntryError) {
+          logger.error('Error fetching current user score for date:', userEntryError);
+        }
+
+        if (userEntry) {
+          const rank = await getScoreRank(puzzleDate, userEntry.score, userEntry.time_seconds);
+          if (!userProfiles.has(currentUserId)) {
+            const extraProfiles = await fetchUserProfiles([currentUserId]);
+            for (const [id, profile] of extraProfiles.entries()) {
+              userProfiles.set(id, profile);
+            }
+          }
+          const currentUserProfile = userProfiles.get(currentUserId);
+
+          leaderboard.push({
+            rank,
+            score: userEntry.score,
+            timeSeconds: userEntry.time_seconds,
+            correctPlacements: userEntry.correct_placements || 0,
+            mistakes: userEntry.mistakes || 0,
+            displayName: currentUserProfile?.displayName || null,
+            avatarUrl: currentUserProfile?.avatarUrl || null,
+            isCurrentUser: true,
+            level: currentUserProfile?.level || null,
+          });
+        }
+      }
+    }
+
+    return leaderboard;
+  } catch (e) {
+    logger.error('Error in getLeaderboardForDate:', e);
+    return [];
+  }
+}
+
+export async function getLeaderboardPageForDate(params: {
+  puzzleDate: string;
+  from?: number;
+  pageSize?: number;
+  currentUserId?: string;
+}): Promise<{ entries: LeaderboardEntry[]; hasMore: boolean; nextFrom: number }> {
+  const { puzzleDate, from = 0, pageSize = 50, currentUserId } = params;
+
+  try {
+    const { data, error } = await supabase
+      .from('puzzle_scores')
+      .select('score, time_seconds, correct_placements, mistakes, user_id')
+      .eq('puzzle_date', puzzleDate)
+      .not('user_id', 'is', null)
+      .order('score', { ascending: false })
+      .order('time_seconds', { ascending: true })
+      .range(from, from + pageSize);
+
+    if (error) {
+      logger.error('Error fetching leaderboard page for date:', error);
+      return { entries: [], hasMore: false, nextFrom: from };
+    }
+
+    const rows = data || [];
+    const hasMore = rows.length > pageSize;
+    const pageRows = rows.slice(0, pageSize);
+
+    const userIds = pageRows
+      .filter(r => r.user_id)
+      .map(r => r.user_id as string);
+
+    const userProfiles = await fetchUserProfiles(userIds);
+
+    const entries: LeaderboardEntry[] = pageRows.map((row, index) => {
+      const profile = row.user_id ? userProfiles.get(row.user_id) : null;
+      return {
+        rank: from + index + 1,
+        score: row.score,
+        timeSeconds: row.time_seconds,
+        correctPlacements: row.correct_placements || 0,
+        mistakes: row.mistakes || 0,
+        displayName: profile?.displayName || null,
+        avatarUrl: profile?.avatarUrl || null,
+        isCurrentUser: currentUserId ? row.user_id === currentUserId : false,
+        level: profile?.level || null,
+      };
+    });
+
+    return { entries, hasMore, nextFrom: from + pageRows.length };
+  } catch (e) {
+    logger.error('Error in getLeaderboardPageForDate:', e);
+    return { entries: [], hasMore: false, nextFrom: from };
+  }
+}
+
+export async function getFriendsLeaderboardPageForDate(params: {
+  puzzleDate: string;
+  userId: string;
+  from?: number;
+  pageSize?: number;
+}): Promise<{ entries: LeaderboardEntry[]; hasMore: boolean; nextFrom: number }> {
+  const { puzzleDate, userId, from = 0, pageSize = 50 } = params;
+
+  try {
+    const friendIds = await getFriendIds(userId);
+    const userIdsToInclude = [userId, ...friendIds];
+
+    if (userIdsToInclude.length === 0) {
+      return { entries: [], hasMore: false, nextFrom: from };
+    }
+
+    const { data, error } = await supabase
+      .from('puzzle_scores')
+      .select('score, time_seconds, correct_placements, mistakes, user_id')
+      .eq('puzzle_date', puzzleDate)
+      .in('user_id', userIdsToInclude)
+      .order('score', { ascending: false })
+      .order('time_seconds', { ascending: true })
+      .range(from, from + pageSize);
+
+    if (error) {
+      logger.error('Error fetching friends leaderboard page for date:', error);
+      return { entries: [], hasMore: false, nextFrom: from };
+    }
+
+    const rows = data || [];
+    const hasMore = rows.length > pageSize;
+    const pageRows = rows.slice(0, pageSize);
+
+    const userIds = pageRows
+      .filter(r => r.user_id)
+      .map(r => r.user_id as string);
+
+    const userProfiles = await fetchUserProfiles(userIds);
+
+    const entries: LeaderboardEntry[] = pageRows.map((row, index) => {
+      const profile = row.user_id ? userProfiles.get(row.user_id) : null;
+      return {
+        rank: from + index + 1,
+        score: row.score,
+        timeSeconds: row.time_seconds,
+        correctPlacements: row.correct_placements || 0,
+        mistakes: row.mistakes || 0,
+        displayName: profile?.displayName || null,
+        avatarUrl: profile?.avatarUrl || null,
+        isCurrentUser: row.user_id === userId,
+        level: profile?.level || null,
+      };
+    });
+
+    return { entries, hasMore, nextFrom: from + pageRows.length };
+  } catch (e) {
+    logger.error('Error in getFriendsLeaderboardPageForDate:', e);
+    return { entries: [], hasMore: false, nextFrom: from };
+  }
+}
+
+/**
+ * Submit a score for an archive puzzle.
+ * Inserts into puzzle_scores (for leaderboard) and practice_scores (for archive tracking).
+ */
+export async function submitArchiveScore(
+  puzzleDate: string,
+  score: number,
+  timeSeconds: number,
+  mistakes: number,
+  correctPlacements: number,
+  userId?: string
+): Promise<{ rank: number; scoreId: string } | null> {
+  try {
+    // Check for existing score to prevent duplicates
+    if (userId) {
+      const { data: existing } = await supabase
+        .from('puzzle_scores')
+        .select('id, score, time_seconds')
+        .eq('puzzle_date', puzzleDate)
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (existing) {
+        const rank = await getScoreRank(puzzleDate, existing.score, existing.time_seconds);
+        return { rank, scoreId: existing.id };
+      }
+    }
+
+    const scoreData: {
+      puzzle_date: string;
+      score: number;
+      time_seconds: number;
+      mistakes: number;
+      correct_placements: number;
+      user_id?: string;
+    } = {
+      puzzle_date: puzzleDate,
+      score,
+      time_seconds: timeSeconds,
+      mistakes,
+      correct_placements: correctPlacements,
+    };
+
+    if (userId) {
+      scoreData.user_id = userId;
+    }
+
+    const { data, error: insertError } = await supabase
+      .from('puzzle_scores')
+      .insert(scoreData)
+      .select('id')
+      .single();
+
+    if (insertError || !data) {
+      logger.error('Error submitting archive score:', insertError);
+      return null;
+    }
+
+    // Also insert into practice_scores for archive tracking
+    if (userId) {
+      await upsertPracticeScore(userId, puzzleDate, score, timeSeconds, mistakes, correctPlacements);
+    }
+
+    const rank = await getScoreRank(puzzleDate, score, timeSeconds);
+    return { rank, scoreId: data.id };
+  } catch (e) {
+    logger.error('Error in submitArchiveScore:', e);
+    return null;
+  }
+}
+
+/**
  * Get or create user profile
  */
 export async function getOrCreateProfile(userId: string): Promise<{ displayName: string | null; avatarUrl: string | null } | null> {
@@ -1449,6 +1751,79 @@ export async function getFriendsLeaderboardPage(params: {
 }
 
 /**
+ * Get friends leaderboard for a specific puzzle date (top 10 + current user).
+ */
+export async function getFriendsLeaderboardForDate(
+  puzzleDate: string,
+  userId: string
+): Promise<LeaderboardEntry[]> {
+  try {
+    const friendIds = await getFriendIds(userId);
+    const userIdsToInclude = [userId, ...friendIds];
+
+    if (userIdsToInclude.length === 0) {
+      return [];
+    }
+
+    const { data, error } = await supabase
+      .from('puzzle_scores')
+      .select('score, time_seconds, correct_placements, mistakes, user_id')
+      .eq('puzzle_date', puzzleDate)
+      .in('user_id', userIdsToInclude)
+      .order('score', { ascending: false })
+      .order('time_seconds', { ascending: true })
+      .limit(50);
+
+    if (error) {
+      logger.error('Error fetching friends leaderboard for date:', error);
+      return [];
+    }
+
+    if (!data || data.length === 0) {
+      return [];
+    }
+
+    // Dedupe by user
+    const userBestScores = new Map<string, typeof data[0]>();
+    for (const entry of data) {
+      const key = entry.user_id as string;
+      const existing = userBestScores.get(key);
+      if (!existing || entry.score > existing.score ||
+          (entry.score === existing.score && entry.time_seconds < existing.time_seconds)) {
+        userBestScores.set(key, entry);
+      }
+    }
+
+    const sortedEntries = Array.from(userBestScores.values())
+      .sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        return a.time_seconds - b.time_seconds;
+      });
+
+    const userIds = sortedEntries.map(e => e.user_id as string);
+    const userProfiles = await fetchUserProfiles(userIds);
+
+    return sortedEntries.map((entry, index) => {
+      const profile = entry.user_id ? userProfiles.get(entry.user_id) : null;
+      return {
+        rank: index + 1,
+        score: entry.score,
+        timeSeconds: entry.time_seconds,
+        correctPlacements: entry.correct_placements || 0,
+        mistakes: entry.mistakes || 0,
+        displayName: profile?.displayName || null,
+        avatarUrl: profile?.avatarUrl || null,
+        isCurrentUser: entry.user_id === userId,
+        level: profile?.level || null,
+      };
+    });
+  } catch (e) {
+    logger.error('Error in getFriendsLeaderboardForDate:', e);
+    return [];
+  }
+}
+
+/**
  * Get count of pending incoming requests (for badge)
  */
 export async function getPendingRequestCount(userId: string): Promise<number> {
@@ -1611,8 +1986,8 @@ export async function puzzleExistsForDate(date: string): Promise<boolean> {
 }
 
 /**
- * Upsert a practice score to the practice_scores table.
- * If no record exists, creates one. If record exists, updates only if the new score is better.
+ * Insert a practice score to the practice_scores table.
+ * Each user can only play a puzzle once, so this only inserts if no record exists.
  * This is called both when completing daily puzzles and when playing from archive.
  */
 export async function upsertPracticeScore(
@@ -1624,65 +1999,27 @@ export async function upsertPracticeScore(
   correctPlacements: number
 ): Promise<{ success: boolean }> {
   try {
-    // First, check if a record exists
-    const { data: existing, error: fetchError } = await supabase
+    const now = new Date().toISOString();
+    const { error: insertError } = await supabase
       .from('practice_scores')
-      .select('id, best_score, attempts')
-      .eq('user_id', userId)
-      .eq('puzzle_date', puzzleDate)
-      .maybeSingle();
+      .upsert({
+        user_id: userId,
+        puzzle_date: puzzleDate,
+        best_score: score,
+        best_time_seconds: timeSeconds,
+        best_mistakes: mistakes,
+        best_correct_placements: correctPlacements,
+        attempts: 1,
+        first_completed_at: now,
+        last_played_at: now,
+      }, {
+        onConflict: 'user_id,puzzle_date',
+        ignoreDuplicates: true,
+      });
 
-    if (fetchError) {
-      logger.error('Error checking existing practice score:', fetchError);
+    if (insertError) {
+      logger.error('Error inserting practice score:', insertError);
       return { success: false };
-    }
-
-    if (existing) {
-      // Record exists - update if new score is better, always increment attempts
-      const shouldUpdateScore = score > existing.best_score;
-
-      const updateData: any = {
-        attempts: existing.attempts + 1,
-        last_played_at: new Date().toISOString(),
-      };
-
-      if (shouldUpdateScore) {
-        updateData.best_score = score;
-        updateData.best_time_seconds = timeSeconds;
-        updateData.best_mistakes = mistakes;
-        updateData.best_correct_placements = correctPlacements;
-      }
-
-      const { error: updateError } = await supabase
-        .from('practice_scores')
-        .update(updateData)
-        .eq('id', existing.id);
-
-      if (updateError) {
-        logger.error('Error updating practice score:', updateError);
-        return { success: false };
-      }
-    } else {
-      // No record exists - insert new one
-      const now = new Date().toISOString();
-      const { error: insertError } = await supabase
-        .from('practice_scores')
-        .insert({
-          user_id: userId,
-          puzzle_date: puzzleDate,
-          best_score: score,
-          best_time_seconds: timeSeconds,
-          best_mistakes: mistakes,
-          best_correct_placements: correctPlacements,
-          attempts: 1,
-          first_completed_at: now,
-          last_played_at: now,
-        });
-
-      if (insertError) {
-        logger.error('Error inserting practice score:', insertError);
-        return { success: false };
-      }
     }
 
     return { success: true };

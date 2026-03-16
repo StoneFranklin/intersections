@@ -157,6 +157,7 @@ function RootLayoutContent() {
           <Stack.Screen name="leaderboard" options={{ headerShown: false, title: 'Leaderboard' }} />
           <Stack.Screen name="archive" options={{ headerShown: false, title: 'Puzzle Archive' }} />
           <Stack.Screen name="practice" options={{ headerShown: false, title: 'Practice' }} />
+          <Stack.Screen name="archive-result" options={{ headerShown: false, title: 'Archive Result' }} />
           <Stack.Screen name="friends" options={{ headerShown: false, title: 'Friends' }} />
           <Stack.Screen name="settings" options={{ headerShown: false, title: 'Settings' }} />
           <Stack.Screen name="set-display-name" options={{ headerShown: false, title: 'Set Display Name' }} />

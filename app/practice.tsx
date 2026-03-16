@@ -8,11 +8,13 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { PracticeGameContent, PracticePreviewModal } from '@/components/archive';
+import { PracticeGameContent, PracticePreviewScreen } from '@/components/archive';
 import { useAuth } from '@/contexts/auth-context';
 import { useThemeScheme } from '@/contexts/theme-context';
-import { fetchPuzzleForDate, getPracticeScore, upsertPracticeScore } from '@/data/puzzleApi';
-import { PracticeCompletion } from '@/types/archive';
+import {
+  fetchPuzzleForDate,
+  submitArchiveScore,
+} from '@/data/puzzleApi';
 import { GameScore, Puzzle } from '@/types/game';
 
 export default function PracticeScreen() {
@@ -27,12 +29,9 @@ export default function PracticeScreen() {
   const [puzzle, setPuzzle] = useState<Puzzle | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [previousCompletion, setPreviousCompletion] = useState<PracticeCompletion | null>(null);
   const [gameEnded, setGameEnded] = useState(false);
   const [savedScore, setSavedScore] = useState<GameScore | null>(null);
-  const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [gameKey, setGameKey] = useState(0); // Key to force remount of game component
 
   const loadPuzzle = useCallback(async () => {
     if (!puzzleDate) {
@@ -45,11 +44,7 @@ export default function PracticeScreen() {
     setError(null);
 
     try {
-      // Load puzzle and previous completion (if user is signed in)
-      const [puzzleData, completion] = await Promise.all([
-        fetchPuzzleForDate(puzzleDate),
-        user?.id ? getPracticeScore(user.id, puzzleDate) : Promise.resolve(null),
-      ]);
+      const puzzleData = await fetchPuzzleForDate(puzzleDate);
 
       if (!puzzleData) {
         setError('Puzzle not found for this date');
@@ -58,16 +53,13 @@ export default function PracticeScreen() {
       }
 
       setPuzzle(puzzleData);
-      setPreviousCompletion(completion);
-      // Show preview modal after loading
-      setShowPreviewModal(true);
     } catch (e) {
       console.error('Error loading puzzle:', e);
       setError('Failed to load puzzle');
     } finally {
       setLoading(false);
     }
-  }, [puzzleDate, user?.id]);
+  }, [puzzleDate]);
 
   useEffect(() => {
     loadPuzzle();
@@ -76,43 +68,26 @@ export default function PracticeScreen() {
   const handleComplete = useCallback(async (score: GameScore) => {
     if (!puzzleDate) return;
 
-    // Upsert practice score to database (if user is signed in)
-    // This updates best score if the new score is better
-    if (user?.id) {
-      await upsertPracticeScore(
-        user.id,
-        puzzleDate,
-        score.score,
-        score.timeSeconds,
-        score.mistakes,
-        score.correctPlacements
-      );
-    }
+    await submitArchiveScore(
+      puzzleDate,
+      score.score,
+      score.timeSeconds,
+      score.mistakes,
+      score.correctPlacements,
+      user?.id
+    );
 
     setSavedScore(score);
     setGameEnded(true);
   }, [puzzleDate, user?.id]);
 
   const handleBack = useCallback(() => {
-    // Go back to the archive screen (which preserves its month state)
     router.back();
   }, [router]);
 
   const handlePlay = useCallback(() => {
-    setShowPreviewModal(false);
     setIsPlaying(true);
-    // Reset game state
-    setGameEnded(false);
-    setSavedScore(null);
-    // Increment key to force remount and reset timer
-    setGameKey(prev => prev + 1);
   }, []);
-
-  const handleCancelPreview = useCallback(() => {
-    setShowPreviewModal(false);
-    // Go back to the archive screen (which preserves its month state)
-    router.back();
-  }, [router]);
 
   const formattedDate = useMemo(() => {
     if (!puzzleDate) return '';
@@ -149,39 +124,27 @@ export default function PracticeScreen() {
     );
   }
 
-  return (
-    <>
-      {!isPlaying && (
-        <SafeAreaView style={styles.container}>
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={colorScheme.brandPrimary} />
-            <Text style={styles.loadingText}>Loading...</Text>
-          </View>
-        </SafeAreaView>
-      )}
-      <PracticePreviewModal
-        visible={showPreviewModal && !isPlaying}
+  if (!isPlaying) {
+    return (
+      <PracticePreviewScreen
         puzzleDate={puzzleDate || ''}
         formattedDate={formattedDate}
-        previousCompletion={previousCompletion}
         onPlay={handlePlay}
-        onCancel={handleCancelPreview}
+        onBack={handleBack}
       />
-      {isPlaying && (
-        <PracticeGameContent
-          key={gameKey}
-          puzzle={puzzle}
-          puzzleDate={puzzleDate}
-          formattedDate={formattedDate}
-          onBack={handleBack}
-          onComplete={handleComplete}
-          onRetry={handlePlay}
-          previousCompletion={previousCompletion}
-          gameEnded={gameEnded}
-          savedScore={savedScore}
-        />
-      )}
-    </>
+    );
+  }
+
+  return (
+    <PracticeGameContent
+      puzzle={puzzle}
+      puzzleDate={puzzleDate}
+      formattedDate={formattedDate}
+      onBack={handleBack}
+      onComplete={handleComplete}
+      gameEnded={gameEnded}
+      savedScore={savedScore}
+    />
   );
 }
 

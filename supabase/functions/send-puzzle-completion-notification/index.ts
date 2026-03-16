@@ -115,6 +115,16 @@ Deno.serve(async (req) => {
       puzzle_date = payload.puzzle_date
     }
 
+    // Skip if not today's puzzle (archive plays should not trigger notifications)
+    const today = new Date().toISOString().split('T')[0]
+    if (puzzle_date !== today) {
+      console.log('Skipping notification for non-today puzzle:', puzzle_date)
+      return new Response(
+        JSON.stringify({ success: true, skipped: true, reason: 'Not today\'s puzzle' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
     // Skip if no user_id (anonymous submission)
     if (!user_id) {
       console.log('Skipping notification for anonymous score submission')

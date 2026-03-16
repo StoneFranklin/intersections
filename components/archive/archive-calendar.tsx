@@ -140,8 +140,7 @@ export function ArchiveCalendar({
 
   const getDayStyle = (day: CalendarDay) => {
     const isAvailable = availableDates.has(day.date);
-    const puzzleData = completedPuzzles.get(day.date);
-    const isFullySolved = puzzleData?.correctPlacements === 16;
+    const isPlayed = completedPuzzles.has(day.date);
 
     if (!day.isCurrentMonth) {
       return styles.dayOtherMonth;
@@ -155,12 +154,8 @@ export function ArchiveCalendar({
       return styles.dayFuture;
     }
 
-    if (isFullySolved) {
+    if (isPlayed) {
       return styles.dayCompleted;
-    }
-
-    if (puzzleData) {
-      return styles.dayAttempted;
     }
 
     if (isAvailable) {
@@ -172,8 +167,7 @@ export function ArchiveCalendar({
 
   const getDayTextStyle = (day: CalendarDay) => {
     const isAvailable = availableDates.has(day.date);
-    const puzzleData = completedPuzzles.get(day.date);
-    const isFullySolved = puzzleData?.correctPlacements === 16;
+    const isPlayed = completedPuzzles.has(day.date);
 
     if (!day.isCurrentMonth) {
       return styles.dayTextOtherMonth;
@@ -187,12 +181,8 @@ export function ArchiveCalendar({
       return styles.dayTextFuture;
     }
 
-    if (isFullySolved) {
+    if (isPlayed) {
       return styles.dayTextCompleted;
-    }
-
-    if (puzzleData) {
-      return styles.dayTextAttempted;
     }
 
     if (isAvailable) {
@@ -265,16 +255,7 @@ export function ArchiveCalendar({
             borderColor: colorScheme.success,
             borderWidth: 2,
           }]} />
-          <Text style={styles.legendText}>Solved</Text>
-        </View>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendDot, {
-            backgroundColor: colorScheme.warningBg,
-            borderColor: colorScheme.warning,
-            borderWidth: 2,
-            opacity: 0.8,
-          }]} />
-          <Text style={styles.legendText}>Attempted</Text>
+          <Text style={styles.legendText}>Played</Text>
         </View>
       </View>
     </View>
@@ -349,12 +330,6 @@ const createStyles = (colorScheme: any) => StyleSheet.create({
     borderWidth: 2,
     borderColor: colorScheme.success,
   },
-  dayAttempted: {
-    backgroundColor: colorScheme.warningBg,
-    borderWidth: 2,
-    borderColor: colorScheme.warning,
-    opacity: 0.8,
-  },
   dayAvailable: {
     backgroundColor: colorScheme.backgroundSecondary,
     borderWidth: 2,
@@ -383,11 +358,6 @@ const createStyles = (colorScheme: any) => StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: colorScheme.success,
-  },
-  dayTextAttempted: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: colorScheme.warning,
   },
   dayTextAvailable: {
     fontSize: 15,

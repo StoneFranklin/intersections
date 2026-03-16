@@ -98,15 +98,18 @@ export default function ArchiveScreen() {
     if (date === todayDate) {
       // Today's puzzle - go to regular game
       router.push('/');
-    } else {
-      // Past puzzle - go to practice mode
-      router.push(`/practice?date=${date}` as any);
+      return;
     }
-  }, [router, todayDate]);
+    // Already played - show results/leaderboard
+    if (completedPuzzles.has(date)) {
+      router.push(`/archive-result?date=${date}` as any);
+      return;
+    }
+    // New puzzle - go to practice mode
+    router.push(`/practice?date=${date}` as any);
+  }, [router, todayDate, completedPuzzles]);
 
-  const completedCount = Array.from(completedPuzzles.values()).filter(
-    puzzle => puzzle.correctPlacements === 16
-  ).length;
+  const completedCount = completedPuzzles.size;
   const availableCount = availableDates.size;
 
   return (

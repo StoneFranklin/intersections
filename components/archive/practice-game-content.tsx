@@ -1,4 +1,4 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -6,6 +6,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -13,15 +14,17 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { createStyles as createGameStyles } from '@/app/(tabs)/index.styles';
 import { RewardedAdModal } from '@/components/ads/rewarded-ad-modal';
 import { GameGrid, SignInBenefitsCard, WordTray } from '@/components/game';
+import { LeaderboardCompact } from '@/components/leaderboard/leaderboard-compact';
 import { BackButton } from '@/components/ui/back-button';
 import { Button } from '@/components/ui/button';
 import { XPProgressBar } from '@/components/xp/xp-progress-bar';
 import { useAuth } from '@/contexts/auth-context';
 import { useThemeScheme } from '@/contexts/theme-context';
 import { useXP } from '@/contexts/xp-context';
+import type { LeaderboardEntry } from '@/data/puzzleApi';
+import { getLeaderboardForDate, getOrCreateProfile } from '@/data/puzzleApi';
 import { useGameState } from '@/hooks/use-game-state';
 import { useRewardedAd } from '@/hooks/use-rewarded-ad';
-import { PracticeCompletion } from '@/types/archive';
 import { CellPosition, GameScore, Puzzle } from '@/types/game';
 import { formatPuzzleTitle, getPuzzleNumber } from '@/utils/archive';
 import { haptics } from '@/utils/haptics';
@@ -33,8 +36,6 @@ interface PracticeGameContentProps {
   formattedDate: string;
   onBack: () => void;
   onComplete: (score: GameScore) => void;
-  onRetry: () => void;
-  previousCompletion: PracticeCompletion | null;
   gameEnded: boolean;
   savedScore: GameScore | null;
 }
@@ -45,8 +46,6 @@ export function PracticeGameContent({
   formattedDate,
   onBack,
   onComplete,
-  onRetry,
-  previousCompletion,
   gameEnded,
   savedScore,
 }: PracticeGameContentProps) {
@@ -70,6 +69,13 @@ export function PracticeGameContent({
   const [leveledUp, setLeveledUp] = useState(false);
   const [previousLevel, setPreviousLevel] = useState<number | null>(null);
   const [xpAwarded, setXpAwarded] = useState(false);
+  // Leaderboard state
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [loadingLeaderboard, setLoadingLeaderboard] = useState(false);
+  const [leaderboardLoaded, setLeaderboardLoaded] = useState(false);
+  const [userRank, setUserRank] = useState<number | null>(null);
+  const [userDisplayName, setUserDisplayName] = useState<string | null>(null);
+
   const rewardedAd = useRewardedAd();
 
   const {
@@ -135,6 +141,39 @@ export function PracticeGameContent({
     setShowRewardedAdModal(false);
     setAdOfferDeclined(true);
   };
+
+  // Load leaderboard and user profile when game ends
+  useEffect(() => {
+    if (gameEnded && puzzleDate && !leaderboardLoaded) {
+      const loadLeaderboard = async () => {
+        setLoadingLeaderboard(true);
+        try {
+          const [entries, profile] = await Promise.all([
+            getLeaderboardForDate(puzzleDate, user?.id),
+            user?.id ? getOrCreateProfile(user.id) : null,
+          ]);
+          setLeaderboard(entries);
+          if (profile?.displayName) {
+            setUserDisplayName(profile.displayName);
+          }
+          const userEntry = entries.find(e => e.isCurrentUser);
+          if (userEntry) {
+            setUserRank(userEntry.rank);
+          }
+          setLeaderboardLoaded(true);
+        } catch (e) {
+          console.error('Error loading leaderboard:', e);
+        } finally {
+          setLoadingLeaderboard(false);
+        }
+      };
+      loadLeaderboard();
+    }
+  }, [gameEnded, puzzleDate, user?.id, leaderboardLoaded]);
+
+  const isCurrentUserEntry = useCallback((entry: LeaderboardEntry): boolean => {
+    return entry.isCurrentUser;
+  }, []);
 
   // Award XP when game ends (archive puzzles give 50% XP)
   // Only award to authenticated users since anonymous users can't earn XP
@@ -261,17 +300,40 @@ export function PracticeGameContent({
           {/* Sign-in benefits card for anonymous users */}
           {!user && <SignInBenefitsCard onSignInPress={() => router.push('/(tabs)')} />}
 
-          <View style={styles.actionButtons}>
-            {!isWin && (
-              <Button
-                text="Try Again"
-                onPress={onRetry}
-                icon="refresh"
-                backgroundColor={colorScheme.brandPrimary}
-                textColor={colorScheme.backgroundPrimary}
-                iconColor={colorScheme.backgroundPrimary}
+          {/* Compact leaderboard */}
+          {user && (
+            <TouchableOpacity
+              style={gameStyles.gameCompleteLeaderboardCard}
+              onPress={() => router.replace(`/archive-result?date=${puzzleDate}` as any)}
+              activeOpacity={0.8}
+            >
+              <View style={gameStyles.gameCompleteLeaderboardHeader}>
+                <View style={gameStyles.gameCompleteLeaderboardHeaderLeft}>
+                  <MaterialCommunityIcons name="trophy" size={20} color={colorScheme.gold} />
+                  <Text style={gameStyles.gameCompleteLeaderboardTitle}>Leaderboard</Text>
+                </View>
+              </View>
+
+              <LeaderboardCompact
+                leaderboard={leaderboard}
+                loading={loadingLeaderboard}
+                loaded={leaderboardLoaded}
+                isCurrentUserEntry={isCurrentUserEntry}
+                displayName={userDisplayName}
+                level={level}
+                userRank={userRank}
+                savedScore={savedScore}
+                showUserRow={true}
               />
-            )}
+
+              <View style={gameStyles.tapForDetailsHint}>
+                <Text style={gameStyles.tapForDetailsText}>Tap for full leaderboard</Text>
+                <Ionicons name="chevron-forward" size={14} color={colorScheme.textMuted} />
+              </View>
+            </TouchableOpacity>
+          )}
+
+          <View style={styles.actionButtons}>
             <Button
               text="Back to Archive"
               onPress={onBack}
