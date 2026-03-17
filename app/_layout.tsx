@@ -147,25 +147,25 @@ function RootLayoutContent() {
           headerShadowVisible: false,
           // Enable iOS swipe-back gesture for all screens
           gestureEnabled: true,
-          fullScreenGestureEnabled: true,
+          fullScreenGestureEnabled: false,
           animation: 'slide_from_right',
         }}>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="auth" options={{ headerShown: false, title: 'Intersections' }} />
           <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
           <Stack.Screen name="how-to-play" options={{ headerShown: false, title: 'How to Play' }} />
-          <Stack.Screen name="leaderboard" options={{ headerShown: false, title: 'Leaderboard', fullScreenGestureEnabled: false }} />
-          <Stack.Screen name="archive" options={{ headerShown: false, title: 'Puzzle Archive', fullScreenGestureEnabled: false }} />
+          <Stack.Screen name="leaderboard" options={{ headerShown: false, title: 'Leaderboard' }} />
+          <Stack.Screen name="archive" options={{ headerShown: false, title: 'Puzzle Archive' }} />
           <Stack.Screen name="practice" options={{ headerShown: false, title: 'Practice' }} />
           <Stack.Screen name="archive-result" options={{ headerShown: false, title: 'Archive Result' }} />
-          <Stack.Screen name="friends" options={{ headerShown: false, title: 'Friends', fullScreenGestureEnabled: false }} />
+          <Stack.Screen name="friends" options={{ headerShown: false, title: 'Friends' }} />
           <Stack.Screen name="settings" options={{ headerShown: false, title: 'Settings' }} />
           <Stack.Screen name="set-display-name" options={{ headerShown: false, title: 'Set Display Name' }} />
-          <Stack.Screen name="privacy" options={{ headerShown: false, title: 'Privacy Policy', fullScreenGestureEnabled: false }} />
-          <Stack.Screen name="terms" options={{ headerShown: false, title: 'Terms of Service', fullScreenGestureEnabled: false }} />
+          <Stack.Screen name="privacy" options={{ headerShown: false, title: 'Privacy Policy' }} />
+          <Stack.Screen name="terms" options={{ headerShown: false, title: 'Terms of Service' }} />
           <Stack.Screen name="about" options={{ headerShown: false, title: 'About' }} />
           <Stack.Screen name="contact" options={{ headerShown: false, title: 'Contact Us' }} />
-          <Stack.Screen name="correct-answers" options={{ headerShown: false, title: 'Correct Answers', fullScreenGestureEnabled: false }} />
+          <Stack.Screen name="correct-answers" options={{ headerShown: false, title: 'Correct Answers' }} />
         </Stack>
         <StatusBar style="light" />
       </ThemeProvider>
