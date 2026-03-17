@@ -216,6 +216,15 @@ export default function ArchiveResultScreen() {
         </TouchableOpacity>
       </View>
 
+      {/* View Correct Answers */}
+      <TouchableOpacity
+        style={styles.viewAnswersButton}
+        onPress={() => router.push(`/correct-answers?date=${puzzleDate}` as any)}
+      >
+        <Ionicons name="grid-outline" size={18} color={colorScheme.brandPrimary} />
+        <Text style={styles.viewAnswersText}>View Correct Answers</Text>
+      </TouchableOpacity>
+
       {/* Tab toggle */}
       {friendIds.length > 0 && (
         <LeaderboardTabToggle
@@ -382,5 +391,23 @@ const createLocalStyles = (colorScheme: any) =>
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
+    },
+    viewAnswersButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 8,
+      paddingVertical: 12,
+      marginHorizontal: 16,
+      marginTop: 8,
+      marginBottom: 8,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colorScheme.brandPrimary,
+    },
+    viewAnswersText: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: colorScheme.brandPrimary,
     },
   });

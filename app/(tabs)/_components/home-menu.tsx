@@ -489,7 +489,20 @@ export function HomeMenu({
             )}
           </Animated.View>
 
-          <View style={styles.secondaryButtonsRow}>
+          <View style={styles.secondaryButtonsColumn}>
+            {dailyCompleted && (
+              <Button
+                text="View Today's Answers"
+                onPress={() => router.push('/correct-answers' as any)}
+                variant="outlined"
+                backgroundColor={colorScheme.brandPrimary}
+                textColor={colorScheme.brandPrimary}
+                icon="grid"
+                iconColor={colorScheme.brandPrimary}
+                iconSize={20}
+                style={{ width: '100%' }}
+              />
+            )}
             <Button
               text="Play Past Puzzles"
               onPress={() => router.push('/archive')}
@@ -499,7 +512,7 @@ export function HomeMenu({
               icon="calendar"
               iconColor={colorScheme.brandPrimary}
               iconSize={20}
-              style={{ flex: 1 }}
+              style={{ width: '100%' }}
             />
           </View>
         </View>

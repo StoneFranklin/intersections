@@ -8,6 +8,7 @@ import { XPProgressBar } from '@/components/xp/xp-progress-bar';
 import { useAuth } from '@/contexts/auth-context';
 import { useXP } from '@/contexts/xp-context';
 import { LeaderboardEntry, submitScore } from '@/data/puzzleApi';
+import { useGameOverAnimation } from '@/hooks/use-game-over-animation';
 import { useGameState } from '@/hooks/use-game-state';
 import { useRewardedAd } from '@/hooks/use-rewarded-ad';
 import { CellPosition, GameScore, Puzzle } from '@/types/game';
@@ -85,6 +86,8 @@ export function GameContent({
   const [hasShownAdOffer, setHasShownAdOffer] = useState(false);
   const [adOfferDeclined, setAdOfferDeclined] = useState(false);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [isShowingAnswers, setIsShowingAnswers] = useState(false);
+  const [answerAnimationDone, setAnswerAnimationDone] = useState(false);
 
   // XP state
   const { awardPuzzleXP, level, totalXP, progress } = useXP();
@@ -96,6 +99,25 @@ export function GameContent({
   const isGameOver = gameState.lives <= 0;
   const shouldShowGameOver = isGameOver && (adOfferDeclined || !showRewardedAdModal) && hasShownAdOffer;
   const isGameActive = !isReviewMode && !gameState.isSolved && !isGameOver && !gameEnded;
+
+  // Game over answer reveal animation
+  const handleAnimationComplete = useCallback(() => {
+    setAnswerAnimationDone(true);
+  }, []);
+
+  const revealAnimation = useGameOverAnimation({
+    puzzle,
+    placements: gameState.placements,
+    isActive: isShowingAnswers,
+    onComplete: handleAnimationComplete,
+  });
+
+  // Trigger answer reveal when game over (not win)
+  useEffect(() => {
+    if (shouldShowGameOver && !gameState.isSolved && !isShowingAnswers && !answerAnimationDone && !isReviewMode) {
+      setIsShowingAnswers(true);
+    }
+  }, [shouldShowGameOver, gameState.isSolved, isShowingAnswers, answerAnimationDone, isReviewMode]);
 
   const isCurrentUserEntry = (entry: LeaderboardEntry): boolean => {
     if (entry.isCurrentUser) return true;
@@ -205,7 +227,10 @@ export function GameContent({
   useEffect(() => {
     if (isReviewMode) return;
 
-    const didEnd = gameState.isSolved || shouldShowGameOver;
+    // For wins, proceed immediately. For game over, wait for animation to finish.
+    const isWinEnd = gameState.isSolved;
+    const isLossEnd = shouldShowGameOver && answerAnimationDone;
+    const didEnd = isWinEnd || isLossEnd;
     if (didEnd && finalScore && !submittingScore && resultRank === null) {
       onComplete(finalScore, null);
 
@@ -231,6 +256,7 @@ export function GameContent({
   }, [
     gameState.isSolved,
     shouldShowGameOver,
+    answerAnimationDone,
     finalScore,
     submittingScore,
     resultRank,
@@ -471,22 +497,28 @@ export function GameContent({
       <View style={styles.gridContainer}>
         <GameGrid
           puzzle={puzzle}
-          getWordAtCell={getWordAtCell}
-          isCellCorrect={isCellCorrect}
-          selectedWordId={gameState.selectedWordId}
+          getWordAtCell={isShowingAnswers ? revealAnimation.getWordAtCell : getWordAtCell}
+          isCellCorrect={isShowingAnswers ? revealAnimation.isCellCorrect : isCellCorrect}
+          selectedWordId={isShowingAnswers ? null : gameState.selectedWordId}
           onCellPress={handleCellPress}
           onCellLongPress={handleCellLongPress}
         />
       </View>
 
-      <View style={styles.livesContainer}>
-        <Text style={styles.livesLabel}>Lives</Text>
-        {[1, 2, 3].map((i) => (
-          <View key={i} style={[styles.heart, i <= gameState.lives ? styles.heartFilled : styles.heartEmpty]} />
-        ))}
-      </View>
+      {isShowingAnswers ? (
+        <View style={styles.livesContainer}>
+          <Text style={[styles.livesLabel, { color: colorScheme.textSecondary }]}>Revealing answers...</Text>
+        </View>
+      ) : (
+        <View style={styles.livesContainer}>
+          <Text style={styles.livesLabel}>Lives</Text>
+          {[1, 2, 3].map((i) => (
+            <View key={i} style={[styles.heart, i <= gameState.lives ? styles.heartFilled : styles.heartEmpty]} />
+          ))}
+        </View>
+      )}
 
-      {unplacedWords.length > 0 && (
+      {!isShowingAnswers && unplacedWords.length > 0 && (
         <WordTray words={unplacedWords} selectedWordId={gameState.selectedWordId} onWordSelect={handleWordSelect} />
       )}
 

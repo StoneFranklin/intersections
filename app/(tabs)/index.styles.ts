@@ -805,6 +805,12 @@ export const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
   },
+  secondaryButtonsColumn: {
+    marginTop: 16,
+    width: '100%',
+    maxWidth: 400,
+    gap: 12,
+  },
   // Sign in banner styles
   signInBanner: {
     backgroundColor: colorScheme.backgroundSecondary,

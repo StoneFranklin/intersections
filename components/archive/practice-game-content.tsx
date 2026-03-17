@@ -23,6 +23,7 @@ import { useThemeScheme } from '@/contexts/theme-context';
 import { useXP } from '@/contexts/xp-context';
 import type { LeaderboardEntry } from '@/data/puzzleApi';
 import { getLeaderboardForDate, getOrCreateProfile } from '@/data/puzzleApi';
+import { useGameOverAnimation } from '@/hooks/use-game-over-animation';
 import { useGameState } from '@/hooks/use-game-state';
 import { useRewardedAd } from '@/hooks/use-rewarded-ad';
 import { CellPosition, GameScore, Puzzle } from '@/types/game';
@@ -94,9 +95,31 @@ export function PracticeGameContent({
     isPaused: rewardedAd.isShowing,
   });
 
+  const [isShowingAnswers, setIsShowingAnswers] = useState(false);
+  const [answerAnimationDone, setAnswerAnimationDone] = useState(false);
+
   const isGameOver = gameState.lives <= 0;
   const shouldShowGameOver = isGameOver && (adOfferDeclined || !showRewardedAdModal) && hasShownAdOffer;
   const isGameActive = !gameState.isSolved && !isGameOver && !gameEnded;
+
+  // Game over answer reveal animation
+  const handleAnimationComplete = useCallback(() => {
+    setAnswerAnimationDone(true);
+  }, []);
+
+  const revealAnimation = useGameOverAnimation({
+    puzzle,
+    placements: gameState.placements,
+    isActive: isShowingAnswers,
+    onComplete: handleAnimationComplete,
+  });
+
+  // Trigger answer reveal when game over (not win)
+  useEffect(() => {
+    if (shouldShowGameOver && !gameState.isSolved && !isShowingAnswers && !answerAnimationDone) {
+      setIsShowingAnswers(true);
+    }
+  }, [shouldShowGameOver, gameState.isSolved, isShowingAnswers, answerAnimationDone]);
 
   // Fetch puzzle number
   useEffect(() => {
@@ -119,12 +142,15 @@ export function PracticeGameContent({
 
   // Handle game completion
   useEffect(() => {
-    const didEnd = gameState.isSolved || shouldShowGameOver;
+    // For wins, proceed immediately. For game over, wait for animation to finish.
+    const isWinEnd = gameState.isSolved;
+    const isLossEnd = shouldShowGameOver && answerAnimationDone;
+    const didEnd = isWinEnd || isLossEnd;
     if (didEnd && finalScore && !hasCompleted) {
       setHasCompleted(true);
       onComplete(finalScore);
     }
-  }, [gameState.isSolved, shouldShowGameOver, finalScore, hasCompleted, onComplete]);
+  }, [gameState.isSolved, shouldShowGameOver, answerAnimationDone, finalScore, hasCompleted, onComplete]);
 
   const handleWatchAd = async () => {
     const result = await rewardedAd.loadAndShow();
@@ -362,22 +388,28 @@ export function PracticeGameContent({
       <View style={gameStyles.gridContainer}>
         <GameGrid
           puzzle={puzzle}
-          getWordAtCell={getWordAtCell}
-          isCellCorrect={isCellCorrect}
-          selectedWordId={gameState.selectedWordId}
+          getWordAtCell={isShowingAnswers ? revealAnimation.getWordAtCell : getWordAtCell}
+          isCellCorrect={isShowingAnswers ? revealAnimation.isCellCorrect : isCellCorrect}
+          selectedWordId={isShowingAnswers ? null : gameState.selectedWordId}
           onCellPress={handleCellPress}
           onCellLongPress={handleCellLongPress}
         />
       </View>
 
-      <View style={gameStyles.livesContainer}>
-        <Text style={gameStyles.livesLabel}>Lives</Text>
-        {[1, 2, 3].map((i) => (
-          <View key={i} style={[gameStyles.heart, i <= gameState.lives ? gameStyles.heartFilled : gameStyles.heartEmpty]} />
-        ))}
-      </View>
+      {isShowingAnswers ? (
+        <View style={gameStyles.livesContainer}>
+          <Text style={[gameStyles.livesLabel, { color: colorScheme.textSecondary }]}>Revealing answers...</Text>
+        </View>
+      ) : (
+        <View style={gameStyles.livesContainer}>
+          <Text style={gameStyles.livesLabel}>Lives</Text>
+          {[1, 2, 3].map((i) => (
+            <View key={i} style={[gameStyles.heart, i <= gameState.lives ? gameStyles.heartFilled : gameStyles.heartEmpty]} />
+          ))}
+        </View>
+      )}
 
-      {unplacedWords.length > 0 && (
+      {!isShowingAnswers && unplacedWords.length > 0 && (
         <WordTray words={unplacedWords} selectedWordId={gameState.selectedWordId} onWordSelect={handleWordSelect} />
       )}
 

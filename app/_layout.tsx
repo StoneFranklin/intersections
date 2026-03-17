@@ -165,6 +165,7 @@ function RootLayoutContent() {
           <Stack.Screen name="terms" options={{ headerShown: false, title: 'Terms of Service' }} />
           <Stack.Screen name="about" options={{ headerShown: false, title: 'About' }} />
           <Stack.Screen name="contact" options={{ headerShown: false, title: 'Contact Us' }} />
+          <Stack.Screen name="correct-answers" options={{ headerShown: false, title: 'Correct Answers' }} />
         </Stack>
         <StatusBar style="light" />
       </ThemeProvider>
