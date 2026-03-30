@@ -13,10 +13,12 @@ import {
 } from '@/data/puzzleApi';
 import type { GameScore } from '@/types/game';
 import { formatTime, shareScore } from '@/utils/share';
+import { ShareCard } from '@/components/game/share-card';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, FlatList, Image, Text, TouchableOpacity, View } from 'react-native';
+import ViewShot from 'react-native-view-shot';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function LeaderboardPage() {
@@ -24,6 +26,7 @@ export default function LeaderboardPage() {
   const styles = useMemo(() => createStyles(colorScheme), [colorScheme]);
   const { user } = useAuth();
   const router = useRouter();
+  const shareCardRef = useRef<ViewShot | null>(null);
 
   // Leaderboard state
   const [fullLeaderboard, setFullLeaderboard] = useState<LeaderboardEntry[]>([]);
@@ -241,7 +244,7 @@ export default function LeaderboardPage() {
                   {savedScore && (
                     <TouchableOpacity
                       style={styles.userRankShareButton}
-                      onPress={() => shareScore(savedScore, userRank)}
+                      onPress={() => shareScore(savedScore, userRank, shareCardRef)}
                     >
                       <Ionicons name="share-outline" size={18} color={colorScheme.success} />
                     </TouchableOpacity>
@@ -266,7 +269,7 @@ export default function LeaderboardPage() {
                     {savedScore && (
                       <TouchableOpacity
                         style={styles.userRankShareButton}
-                        onPress={() => shareScore(savedScore, userRank)}
+                        onPress={() => shareScore(savedScore, userRank, shareCardRef)}
                       >
                         <Ionicons name="share-outline" size={18} color={colorScheme.success} />
                       </TouchableOpacity>
@@ -369,6 +372,9 @@ export default function LeaderboardPage() {
           }
         />
       </View>
+      {savedScore && (
+        <ShareCard ref={shareCardRef} score={savedScore} rank={userRank} />
+      )}
     </SafeAreaView>
   );
 }

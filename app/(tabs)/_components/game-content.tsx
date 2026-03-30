@@ -1,5 +1,6 @@
 import { RewardedAdModal } from '@/components/ads/rewarded-ad-modal';
 import { GameGrid, LeaveGameModal, WordTray } from '@/components/game';
+import { ShareCard } from '@/components/game/share-card';
 import { SignInBenefitsCard } from '@/components/game/sign-in-benefits-card';
 import { LeaderboardCompact } from '@/components/leaderboard/leaderboard-compact';
 import { BackButton } from '@/components/ui/back-button';
@@ -18,7 +19,8 @@ import { formatTime, shareScore } from '@/utils/share';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import ViewShot from 'react-native-view-shot';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -61,6 +63,7 @@ export function GameContent({
   const router = useRouter();
   const { user } = useAuth();
   const styles = useMemo(() => createStyles(colorScheme), [colorScheme]);
+  const shareCardRef = useRef<ViewShot | null>(null);
 
   // Ad hooks - must be declared before useGameState
   const rewardedAd = useRewardedAd();
@@ -353,10 +356,13 @@ export function GameContent({
           {savedScore && (
             <TouchableOpacity
               style={styles.reviewShareButton}
-              onPress={() => shareScore(savedScore, userId ? userRank ?? null : null)}
+              onPress={() => shareScore(savedScore, userId ? userRank ?? null : null, shareCardRef)}
             >
               <Text style={styles.reviewShareButtonText}>Share</Text>
             </TouchableOpacity>
+          )}
+          {savedScore && (
+            <ShareCard ref={shareCardRef} score={savedScore} rank={userId ? userRank ?? null : null} />
           )}
           {!userId && (
             <View style={styles.reviewPercentileRow}>
@@ -462,13 +468,17 @@ export function GameContent({
             {displayScore && (
               <TouchableOpacity
                 style={styles.gameCompleteShareButton}
-                onPress={() => shareScore(displayScore, displayRank ?? null)}
+                onPress={() => shareScore(displayScore, displayRank ?? null, shareCardRef)}
               >
                 <Ionicons name="share-outline" size={20} color={colorScheme.warmBlack} />
                 <Text style={styles.gameCompleteShareButtonText}>Share Score</Text>
               </TouchableOpacity>
             )}
           </View>
+
+          {displayScore && (
+            <ShareCard ref={shareCardRef} score={displayScore} rank={displayRank ?? null} />
+          )}
 
           <Button
             text="Back to Menu"

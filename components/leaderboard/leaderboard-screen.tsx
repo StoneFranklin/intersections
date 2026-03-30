@@ -4,8 +4,10 @@ import type { LeaderboardEntry } from '@/data/puzzleApi';
 import type { GameScore } from '@/types/game';
 import { formatTime, shareScore } from '@/utils/share';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { ActivityIndicator, FlatList, Image, Text, TouchableOpacity, View } from 'react-native';
+import ViewShot from 'react-native-view-shot';
+import { ShareCard } from '@/components/game/share-card';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 type LeaderboardTab = 'global' | 'friends';
@@ -56,6 +58,7 @@ export function LeaderboardScreen({
 }: LeaderboardScreenProps) {
   const { colorScheme } = useThemeScheme();
   const styles = useMemo(() => createStyles(colorScheme), [colorScheme]);
+  const shareCardRef = useRef<ViewShot | null>(null);
 
   // Determine which data to show based on active tab
   const isGlobalTab = activeTab === 'global';
@@ -146,7 +149,7 @@ export function LeaderboardScreen({
                   {savedScore && (
                     <TouchableOpacity
                       style={styles.userRankShareButton}
-                      onPress={() => shareScore(savedScore, userRank)}
+                      onPress={() => shareScore(savedScore, userRank, shareCardRef)}
                     >
                       <Ionicons name="share-outline" size={18} color={colorScheme.success} />
                     </TouchableOpacity>
@@ -171,7 +174,7 @@ export function LeaderboardScreen({
                     {savedScore && (
                       <TouchableOpacity
                         style={styles.userRankShareButton}
-                        onPress={() => shareScore(savedScore, userRank)}
+                        onPress={() => shareScore(savedScore, userRank, shareCardRef)}
                       >
                         <Ionicons name="share-outline" size={18} color={colorScheme.success} />
                       </TouchableOpacity>
@@ -274,6 +277,9 @@ export function LeaderboardScreen({
           }
         />
       </View>
+      {savedScore && (
+        <ShareCard ref={shareCardRef} score={savedScore} rank={userRank} />
+      )}
     </SafeAreaView>
   );
 }
