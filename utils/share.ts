@@ -99,19 +99,14 @@ export async function shareScore(
       const imageUri = viewShotRef ? await captureShareCard(viewShotRef) : null;
 
       if (imageUri) {
-        if (Platform.OS === 'android') {
-          // Android: use expo-sharing which properly handles file URIs
-          await Sharing.shareAsync(imageUri, {
-            mimeType: 'image/png',
-            dialogTitle: text,
-          });
-        } else {
-          // iOS: Share API supports url for images
-          await Share.share({
-            message: text,
-            url: imageUri,
-          });
-        }
+        // Use expo-sharing on both platforms — it uses UIActivityViewController
+        // on iOS and the native share sheet on Android, which shows social media
+        // apps like Instagram, WhatsApp, etc.
+        await Sharing.shareAsync(imageUri, {
+          mimeType: 'image/png',
+          dialogTitle: 'Share your score',
+          UTI: 'public.png',
+        });
       } else {
         // Fallback to text-only
         await Share.share({ message: text });
