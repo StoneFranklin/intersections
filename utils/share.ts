@@ -60,6 +60,9 @@ async function captureShareCard(viewShotRef: React.RefObject<ViewShot | null>): 
 
     // Copy to a well-known path so the file has a proper .png extension for sharing.
     const dest = new File(Paths.cache, 'intersections-score.png');
+    if (dest.exists) {
+      dest.delete();
+    }
     const source = new File(uri);
     source.copy(dest);
     return dest.uri;
