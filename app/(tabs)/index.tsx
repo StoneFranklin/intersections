@@ -88,7 +88,7 @@ export default function GameScreen() {
   // Display name and avatar state
   const [displayName, setDisplayName] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [signInBannerDismissed, setSignInBannerDismissed] = useState(true); // Start hidden until we check
+  const [inviteBannerDismissed, setInviteBannerDismissed] = useState(true); // Start hidden until we check
   const displayNameRef = useRef<string | null>(null);
 
   // Archive completion percentage state
@@ -104,29 +104,27 @@ export default function GameScreen() {
     });
   }, [isPlaying, navigation]);
 
-  // Check if sign-in banner was dismissed
+
+  // Show invite tooltip every app open until they've actually shared
   useEffect(() => {
-    const checkBannerDismissed = async () => {
+    const checkInviteShared = async () => {
       try {
-        const dismissed = await AsyncStorage.getItem('signInBannerDismissed');
-        setSignInBannerDismissed(dismissed === 'true');
+        const shared = await AsyncStorage.getItem('inviteShared');
+        setInviteBannerDismissed(shared === 'true');
       } catch {
-        setSignInBannerDismissed(false);
+        setInviteBannerDismissed(false);
       }
     };
-    if (!user) {
-      checkBannerDismissed();
+    if (user) {
+      checkInviteShared();
     }
   }, [user]);
 
-  const dismissSignInBanner = async () => {
-    setSignInBannerDismissed(true);
-    try {
-      await AsyncStorage.setItem('signInBannerDismissed', 'true');
-    } catch (e) {
-      logger.error('Error saving banner dismissed state:', e);
-    }
+  // Just hides for this session — tooltip reappears next open until they share
+  const dismissInviteBanner = () => {
+    setInviteBannerDismissed(true);
   };
+
 
   // Track previous user for sign-out detection
   const prevUserForSignOutRef = useRef<string | null>(null);
@@ -834,8 +832,8 @@ export default function GameScreen() {
         setSigningIn={setSigningIn}
         signingInWithApple={signingInWithApple}
         setSigningInWithApple={setSigningInWithApple}
-        signInBannerDismissed={signInBannerDismissed}
-        onDismissSignInBanner={dismissSignInBanner}
+        inviteBannerDismissed={inviteBannerDismissed}
+        onDismissInviteBanner={dismissInviteBanner}
         isCurrentUserEntry={isCurrentUserEntry}
         onPlayDaily={handlePlayDaily}
         onRefreshLeaderboard={refreshLeaderboard}

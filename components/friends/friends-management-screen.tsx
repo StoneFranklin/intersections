@@ -10,9 +10,12 @@ import {
 } from '@/data/puzzleApi';
 import { Friend, FriendRequest } from '@/types/friends';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  Platform,
+  Share,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -23,6 +26,21 @@ import { ColorScheme } from '@/constants/theme';
 import { FriendRequestsList } from './friend-requests-list';
 import { FriendsList } from './friends-list';
 import { UserSearchModal } from './user-search-modal';
+
+const APP_STORE_URL = 'https://apps.apple.com/us/app/intersections-daily-trivia/id6756741688';
+const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.stonefranklin.intersections';
+const SHARE_MESSAGE = `Come play Intersections with me — a free daily trivia puzzle!\n\niOS: ${APP_STORE_URL}\nAndroid: ${PLAY_STORE_URL}`;
+
+async function shareApp() {
+  try {
+    const result = await Share.share({ message: SHARE_MESSAGE });
+    if (result.action === Share.sharedAction) {
+      await AsyncStorage.setItem('inviteShared', 'true');
+    }
+  } catch {
+    // user cancelled or share failed
+  }
+}
 
 interface FriendsManagementScreenProps {
   userId: string;
@@ -191,11 +209,16 @@ export function FriendsManagementScreen({
               color={isRefreshing ? colorScheme.textMuted : colorScheme.brandPrimary}
             />
           </TouchableOpacity>
+          <TouchableOpacity onPress={shareApp} style={styles.inviteButton} activeOpacity={0.8}>
+            <Ionicons name="share-social" size={15} color="#ffffff" />
+            <Text style={styles.inviteButtonText}>Invite</Text>
+          </TouchableOpacity>
           <TouchableOpacity
             onPress={() => setShowSearchModal(true)}
             style={styles.addButton}
           >
-            <Ionicons name="person-add" size={22} color={colorScheme.success} />
+            <Ionicons name="person-add" size={15} color="#ffffff" />
+            <Text style={styles.addButtonText}>Add</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -300,7 +323,18 @@ const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
     padding: 8,
   },
   addButton: {
-    padding: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: colorScheme.success,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 14,
+  },
+  addButtonText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#ffffff',
   },
   tabBar: {
     flexDirection: 'row',
@@ -344,5 +378,20 @@ const createStyles = (colorScheme: ColorScheme) => StyleSheet.create({
   },
   content: {
     flex: 1,
+  },
+  inviteButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: colorScheme.brandPrimary,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 14,
+    marginRight: 4,
+  },
+  inviteButtonText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#ffffff',
   },
 });

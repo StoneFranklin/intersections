@@ -14,6 +14,7 @@ import {
 import type { GameScore } from '@/types/game';
 import { formatTime, shareScore } from '@/utils/share';
 import { ShareCard } from '@/components/game/share-card';
+import { RainbowBorder } from '@/components/ui/rainbow-border';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -242,12 +243,15 @@ export default function LeaderboardPage() {
                     </Text>
                   </View>
                   {savedScore && (
-                    <TouchableOpacity
-                      style={styles.userRankShareButton}
-                      onPress={() => shareScore(savedScore, userRank, shareCardRef)}
-                    >
-                      <Ionicons name="share-outline" size={18} color={colorScheme.success} />
-                    </TouchableOpacity>
+                    <RainbowBorder borderRadius={20} borderWidth={2} innerBackground={colorScheme.backgroundPrimary} style={{ marginLeft: 12 }}>
+                      <TouchableOpacity
+                        style={styles.userRankShareButton}
+                        onPress={() => shareScore(savedScore, userRank, shareCardRef)}
+                      >
+                        <Ionicons name="share-outline" size={16} color={colorScheme.success} />
+                        <Text style={styles.userRankShareButtonText}>Share Score</Text>
+                      </TouchableOpacity>
+                    </RainbowBorder>
                   )}
                 </View>
               )}
@@ -267,12 +271,15 @@ export default function LeaderboardPage() {
                       </Text>
                     </View>
                     {savedScore && (
-                      <TouchableOpacity
-                        style={styles.userRankShareButton}
-                        onPress={() => shareScore(savedScore, userRank, shareCardRef)}
-                      >
-                        <Ionicons name="share-outline" size={18} color={colorScheme.success} />
-                      </TouchableOpacity>
+                      <RainbowBorder borderRadius={20} borderWidth={2} innerBackground={colorScheme.backgroundPrimary} style={{ marginLeft: 12 }}>
+                        <TouchableOpacity
+                          style={styles.userRankShareButton}
+                          onPress={() => shareScore(savedScore, userRank, shareCardRef)}
+                        >
+                          <Ionicons name="share-outline" size={16} color={colorScheme.success} />
+                          <Text style={styles.userRankShareButtonText}>Share Score</Text>
+                        </TouchableOpacity>
+                      </RainbowBorder>
                     )}
                   </View>
                 ) : null;

@@ -5,6 +5,7 @@ import { SignInBenefitsCard } from '@/components/game/sign-in-benefits-card';
 import { LeaderboardCompact } from '@/components/leaderboard/leaderboard-compact';
 import { BackButton } from '@/components/ui/back-button';
 import { Button } from '@/components/ui/button';
+import { RainbowBorder } from '@/components/ui/rainbow-border';
 import { XPProgressBar } from '@/components/xp/xp-progress-bar';
 import { useAuth } from '@/contexts/auth-context';
 import { useXP } from '@/contexts/xp-context';
@@ -413,25 +414,16 @@ export function GameContent({
             </View>
           </View>
 
-          {/* XP Gained Card */}
-          {user && xpAwarded && xpGained !== null && (
-            <View style={[styles.gameCompleteScoreCard, { marginTop: 0 }]}>
-              <View style={styles.xpGainedRow}>
-                <MaterialCommunityIcons name="star-circle" size={24} color={colorScheme.gold} />
-                <Text style={[styles.gameCompleteScoreValue, { color: colorScheme.gold, marginLeft: 8 }]}>
-                  +{xpGained} XP
-                </Text>
-              </View>
-              {leveledUp && previousLevel !== null && (
-                <View style={styles.levelUpRow}>
-                  <MaterialCommunityIcons name="arrow-up-circle" size={20} color={colorScheme.success} />
-                  <Text style={[styles.levelUpText, { color: colorScheme.success }]}>
-                    Level Up! You are now Level {level}
-                  </Text>
-                </View>
-              )}
-              <XPProgressBar currentLevel={level} progress={progress} leveledUp={leveledUp} />
-            </View>
+          {displayScore && (
+            <RainbowBorder borderRadius={20} borderWidth={2} innerBackground={colorScheme.backgroundPrimary} style={{ width: '100%', maxWidth: 400, marginBottom: 12 }}>
+              <TouchableOpacity
+                style={styles.gameCompleteShareButton}
+                onPress={() => shareScore(displayScore, displayRank ?? null, shareCardRef)}
+              >
+                <Ionicons name="share-outline" size={16} color={colorScheme.success} />
+                <Text style={styles.gameCompleteShareButtonText}>Share Score</Text>
+              </TouchableOpacity>
+            </RainbowBorder>
           )}
 
           {userId ? (
@@ -464,17 +456,26 @@ export function GameContent({
             <SignInBenefitsCard onSignInPress={onShowSignIn} />
           )}
 
-          <View style={styles.gameCompleteActions}>
-            {displayScore && (
-              <TouchableOpacity
-                style={styles.gameCompleteShareButton}
-                onPress={() => shareScore(displayScore, displayRank ?? null, shareCardRef)}
-              >
-                <Ionicons name="share-outline" size={20} color={colorScheme.warmBlack} />
-                <Text style={styles.gameCompleteShareButtonText}>Share Score</Text>
-              </TouchableOpacity>
-            )}
-          </View>
+          {/* XP Gained Card */}
+          {user && xpAwarded && xpGained !== null && (
+            <View style={[styles.gameCompleteScoreCard, { marginTop: 0 }]}>
+              <View style={styles.xpGainedRow}>
+                <MaterialCommunityIcons name="star-circle" size={24} color={colorScheme.gold} />
+                <Text style={[styles.gameCompleteScoreValue, { color: colorScheme.gold, marginLeft: 8 }]}>
+                  +{xpGained} XP
+                </Text>
+              </View>
+              {leveledUp && previousLevel !== null && (
+                <View style={styles.levelUpRow}>
+                  <MaterialCommunityIcons name="arrow-up-circle" size={20} color={colorScheme.success} />
+                  <Text style={[styles.levelUpText, { color: colorScheme.success }]}>
+                    Level Up! You are now Level {level}
+                  </Text>
+                </View>
+              )}
+              <XPProgressBar currentLevel={level} progress={progress} leveledUp={leveledUp} />
+            </View>
+          )}
 
           {displayScore && (
             <ShareCard ref={shareCardRef} score={displayScore} rank={displayRank ?? null} />

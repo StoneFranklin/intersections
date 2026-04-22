@@ -9,6 +9,7 @@ import { GameScore } from '@/types/game';
 import { logger } from '@/utils/logger';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { User } from '@supabase/supabase-js';
+import { RainbowBorder } from '@/components/ui/rainbow-border';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -29,6 +30,38 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeScheme } from '@/contexts/theme-context';
 
 import { createStyles } from '../index.styles';
+
+function RainbowFriendsButton({ onPress, pendingCount }: { onPress: () => void; pendingCount: number }) {
+  return (
+    <TouchableOpacity onPress={onPress} activeOpacity={0.8} style={{ marginRight: 8 }}>
+      <RainbowBorder borderRadius={20} borderWidth={2} innerBackground="#1a1a2e">
+        <View style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          paddingHorizontal: 12,
+          paddingVertical: 7,
+          gap: 6,
+        }}>
+          <Ionicons name="people" size={18} color="#ffffff" />
+          <Text style={{ color: '#ffffff', fontSize: 13, fontWeight: '700' }}>Friends</Text>
+          {pendingCount > 0 && (
+            <View style={{
+              backgroundColor: '#ef4444',
+              borderRadius: 8,
+              minWidth: 16,
+              height: 16,
+              justifyContent: 'center',
+              alignItems: 'center',
+              paddingHorizontal: 4,
+            }}>
+              <Text style={{ fontSize: 10, fontWeight: '700', color: '#ffffff' }}>{pendingCount}</Text>
+            </View>
+          )}
+        </View>
+      </RainbowBorder>
+    </TouchableOpacity>
+  );
+}
 
 let hasPlayedEntranceAnimations = false;
 
@@ -65,8 +98,9 @@ export interface HomeMenuProps {
   setSigningInWithApple: (signingIn: boolean) => void;
 
 
-  signInBannerDismissed: boolean;
-  onDismissSignInBanner: () => void;
+
+  inviteBannerDismissed: boolean;
+  onDismissInviteBanner: () => void;
 
   isCurrentUserEntry: (entry: LeaderboardEntry) => boolean;
 
@@ -110,8 +144,8 @@ export function HomeMenu({
   setSigningIn,
   signingInWithApple,
   setSigningInWithApple,
-  signInBannerDismissed,
-  onDismissSignInBanner,
+  inviteBannerDismissed,
+  onDismissInviteBanner,
   isCurrentUserEntry,
   onPlayDaily,
   onRefreshLeaderboard,
@@ -128,6 +162,8 @@ export function HomeMenu({
   const { colorScheme } = useThemeScheme();
   const { width } = useWindowDimensions();
   const styles = useMemo(() => createStyles(colorScheme), [colorScheme]);
+  const friendsButtonRef = useRef<View>(null);
+  const [friendsButtonLayout, setFriendsButtonLayout] = useState<{ x: number; y: number; width: number } | null>(null);
   const logoSize = Math.min(Math.max(width * 0.6, 180), 250);
   const logoFrameHeight = Math.round(logoSize * 0.8);
 
@@ -247,14 +283,19 @@ export function HomeMenu({
         <View style={styles.homeHeaderRight}>
           {user ? (
             <>
-              <TouchableOpacity style={styles.headerFriendsButton} onPress={() => router.push('/friends')}>
-                <Ionicons name="people" size={22} color={colorScheme.brandPrimary} />
-                {pendingFriendRequestCount > 0 && (
-                  <View style={styles.headerFriendsBadge}>
-                    <Text style={styles.headerFriendsBadgeText}>{pendingFriendRequestCount}</Text>
-                  </View>
-                )}
-              </TouchableOpacity>
+              <View
+                ref={friendsButtonRef}
+                onLayout={() => {
+                  friendsButtonRef.current?.measureInWindow((x, y, w) => {
+                    setFriendsButtonLayout({ x, y, width: w });
+                  });
+                }}
+              >
+                <RainbowFriendsButton
+                  onPress={() => router.push('/friends')}
+                  pendingCount={pendingFriendRequestCount}
+                />
+              </View>
               {user && (
                 <View style={styles.headerLevelBadge}>
                   <Text style={styles.headerLevelText}>Lv {level}</Text>
@@ -288,27 +329,7 @@ export function HomeMenu({
         </View>
       </View>
 
-      {!user && !signInBannerDismissed && (
-        <View style={styles.signInBanner}>
-          <View style={styles.signInBannerContent}>
-            <View style={styles.signInBannerText}>
-              <Text style={styles.signInBannerTitle}>
-                Sign in to see your global ranking, compete on the leaderboard, and sync across devices
-              </Text>
-            </View>
-            <Button
-              text="Sign In"
-              onPress={() => setShowSignIn(true)}
-              style={{ paddingHorizontal: 20, paddingVertical: 10 }}
-              textStyle={{ fontSize: 14 }}
-              glow
-            />
-          </View>
-          <TouchableOpacity style={styles.signInBannerDismiss} onPress={onDismissSignInBanner}>
-            <Ionicons name="close" size={20} color="#666" />
-          </TouchableOpacity>
-        </View>
-      )}
+
 
       <ScrollView
         style={{ flex: 1 }}
@@ -588,6 +609,21 @@ export function HomeMenu({
       <AppDownloadModal />
 
       </SafeAreaView>
+
+      {user && !inviteBannerDismissed && friendsButtonLayout && (
+        <View style={[styles.inviteTooltipRow, {
+          top: friendsButtonLayout.y + 44,
+          left: friendsButtonLayout.x + friendsButtonLayout.width / 2 - 120,
+        }]}>
+          <View style={styles.inviteTooltipArrow} />
+          <View style={styles.inviteTooltipBubble}>
+            <Text style={styles.inviteTooltipText}>Invite your friends to play!</Text>
+            <TouchableOpacity onPress={onDismissInviteBanner}>
+              <Ionicons name="close" size={16} color="#ffffff" />
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
     </View>
   );
 }
