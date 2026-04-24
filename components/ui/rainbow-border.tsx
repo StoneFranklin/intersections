@@ -26,13 +26,13 @@ export function RainbowBorder({
   const rotation = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    Animated.loop(
-      Animated.timing(rotation, {
-        toValue: 1,
-        duration: speed,
-        useNativeDriver: true,
-      })
-    ).start();
+    const animation = Animated.timing(rotation, {
+      toValue: 1,
+      duration: speed,
+      useNativeDriver: true,
+    });
+    animation.start();
+    return () => animation.stop();
   }, [rotation, speed]);
 
   const spin = rotation.interpolate({
