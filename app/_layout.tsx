@@ -151,6 +151,7 @@ function RootLayoutContent() {
           animation: 'slide_from_right',
         }}>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="admin" options={{ headerShown: false, title: 'Admin' }} />
           <Stack.Screen name="auth" options={{ headerShown: false, title: 'Intersections' }} />
           <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
           <Stack.Screen name="how-to-play" options={{ headerShown: false, title: 'How to Play' }} />

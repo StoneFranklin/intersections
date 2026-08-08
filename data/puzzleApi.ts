@@ -21,6 +21,105 @@ function isIntersectionsDailyPuzzle(payload: any): payload is IntersectionsDaily
   );
 }
 
+// ================== ADMIN API ==================
+
+/**
+ * Check whether the given user is an admin (based on profiles.is_admin)
+ */
+export async function isUserAdmin(userId: string): Promise<boolean> {
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('is_admin')
+      .eq('id', userId)
+      .maybeSingle();
+
+    if (error || !data) {
+      return false;
+    }
+
+    return data.is_admin === true;
+  } catch (e) {
+    logger.error('Error checking admin status:', e);
+    return false;
+  }
+}
+
+/**
+ * Create or update a daily puzzle for a given date (admin only; enforced by RLS)
+ */
+export async function upsertDailyPuzzle(
+  puzzle: IntersectionsDailyPuzzle
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { error } = await supabase
+      .from('daily_puzzle')
+      .upsert(
+        {
+          puzzle_date: puzzle.date,
+          payload: puzzle,
+        },
+        { onConflict: 'puzzle_date' }
+      );
+
+    if (error) {
+      logger.error('Error upserting daily puzzle:', error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (e) {
+    logger.error('Error in upsertDailyPuzzle:', e);
+    return { success: false, error: 'An unexpected error occurred' };
+  }
+}
+
+/**
+ * Get all puzzle dates, including future-dated ones (admin only; for the admin puzzle list).
+ * Unlike getAvailablePuzzleDates(), this does NOT filter out dates after today, since
+ * admins need to see and edit puzzles scheduled ahead of time.
+ */
+export async function getAllPuzzleDatesForAdmin(): Promise<string[]> {
+  try {
+    const { data, error } = await supabase
+      .from('daily_puzzle')
+      .select('puzzle_date')
+      .order('puzzle_date', { ascending: false });
+
+    if (error) {
+      logger.error('Error fetching all puzzle dates for admin:', error);
+      return [];
+    }
+
+    return (data || []).map(row => row.puzzle_date);
+  } catch (e) {
+    logger.error('Error in getAllPuzzleDatesForAdmin:', e);
+    return [];
+  }
+}
+
+/**
+ * Delete a daily puzzle for a given date (admin only; enforced by RLS)
+ */
+export async function deleteDailyPuzzle(date: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { error } = await supabase
+      .from('daily_puzzle')
+      .delete()
+      .eq('puzzle_date', date);
+
+    if (error) {
+      logger.error('Error deleting daily puzzle:', error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (e) {
+    logger.error('Error in deleteDailyPuzzle:', e);
+    return { success: false, error: 'An unexpected error occurred' };
+  }
+}
+
 export async function getDailyPuzzle(date: string): Promise<IntersectionsDailyPuzzle | null> {
   const { data, error } = await supabase
     .from('daily_puzzle')
